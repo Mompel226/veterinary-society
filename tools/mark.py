@@ -116,6 +116,10 @@ mode = sys.argv[1]
 if mode == 'draft-open':  print(HEAD + svg('open'))
 elif mode == 'draft-shut': print(HEAD + svg('shut', guides=True))
 elif mode == 'json':       print(json.dumps(dict(groups=groups), ensure_ascii=False))
+elif mode == 'header':
+    # the head and the name only, in their open places, for the top of the society's page
+    body = ''.join(f'<g transform="translate({g["open"]["x"]} {g["open"]["y"]}) scale({g["open"]["s"]})">{inner(g)}</g>' for g in groups if g['id'] in ('head', 'name'))
+    print(f'<svg class="mark" viewBox="0 20 1110 580" role="img" aria-label="The Veterinary Society mark: a stethoscope drawn as a horse’s head, the chest piece its eye">{body}</svg>')
 elif mode == 'page':
     # the page shows the open arrangement, drawing itself once on load
     body = ''.join(f'<g transform="translate({g["open"]["x"]} {g["open"]["y"]}) scale({g["open"]["s"]})">{inner(g)}</g>' for g in groups)

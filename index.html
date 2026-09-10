@@ -10,49 +10,55 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Veterinary Society — NLCS Jeju</title>
-<meta name="description" content="The NLCS Jeju Veterinary Society: clinical cases, hands-on skills, animal behaviour, and Island Immunity, its magazine on the diseases of Jeju’s farm animals. How to join.">
+<meta name="description" content="The NLCS Jeju Veterinary Society: clinical cases, hands-on skills, animal behaviour, ideas to vote on, and Island Immunity, its magazine on the diseases of Jeju’s farm animals. How to join.">
 <meta name="theme-color" content="#12262B">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>🐎</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..600&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500&display=swap">
 <style>
-:root{--ink:#12262B;--cream:#F3E7C9;--moss:#9DB7AE;--amber:#F5A623;--chalk:#EDF4F8;--dim:#A9BECB;--mute:#7F94A2;--rule:rgba(255,255,255,.09);
+:root{--ink:#12262B;--cream:#F3E7C9;--moss:#9DB7AE;--amber:#F5A623;--chalk:#EDF4F8;--dim:#A9BECB;--mute:#7F94A2;--rule:rgba(255,255,255,.09);--green:#4ADE80;
   --serif:Fraunces,"Iowan Old Style",Georgia,serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;--sans:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;--ease:cubic-bezier(.22,.61,.36,1)}
-*{box-sizing:border-box} html{color-scheme:dark}
+*{box-sizing:border-box} html{color-scheme:dark} [hidden]{display:none!important}
 body{margin:0;font-family:var(--sans);font-size:15.5px;line-height:1.6;color:var(--chalk);background:var(--ink);
   background-image:radial-gradient(70% 50% at 80% -10%,rgba(46,140,110,.18),transparent 70%);-webkit-font-smoothing:antialiased}
-a{color:inherit} h1,h2,h3,p,ul{margin:0} ul{padding:0;list-style:none}
+a{color:inherit} h1,h2,h3,p,ul,ol{margin:0} ul,ol{padding:0;list-style:none}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
 .wrap{max-width:1120px;margin:0 auto;padding:22px clamp(16px,3vw,40px) 40px}
 .crumb{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);text-decoration:none}
 .crumb::before{content:"\2190";color:var(--mute)} .crumb:hover{color:var(--chalk)}
 .eyebrow{font-family:var(--mono);font-size:10.5px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
-.head{margin-top:18px}
+/* the top: the words on the left, the mark on the right, small; the page gets on with it below */
+.head{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,38%);gap:16px 36px;align-items:center;margin-top:14px}
 .head h1{font-family:var(--serif);font-size:clamp(34px,4vw,56px);font-weight:400;line-height:1.08;letter-spacing:-.015em;margin-top:8px}
 .head h1 em{font-style:italic;color:var(--amber)}
-.lede{margin-top:12px;max-width:62ch;color:#C5D4DD;font-size:16px}
+.lede{margin-top:12px;max-width:56ch;color:#C5D4DD;font-size:16px}
 .maker{margin-top:12px;font-size:13px;color:#C5D4DD;display:flex;flex-wrap:wrap;align-items:center;gap:10px}
 .maker::before{content:"";width:22px;height:1px;background:var(--amber);opacity:.8} .maker strong{font-weight:500;color:var(--chalk)}
-/* the mark: a banner the width of the page, drawing itself once when the page opens */
-.banner{margin-top:22px;border-radius:8px;overflow:hidden;background:#12262B;background-image:radial-gradient(60% 90% at 70% 50%,rgba(26,54,59,.9),transparent 70%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.07)}
 .mark{width:100%;height:auto;display:block}
+/* the mark draws itself once, when the page opens */
 .mo-draw{stroke-dasharray:1000;stroke-dashoffset:0;animation:drawOn var(--t,1.2s) var(--wait,0s) cubic-bezier(.45,0,.2,1) both}
 @keyframes drawOn{from{stroke-dashoffset:1000}to{stroke-dashoffset:0}}
 .mo-pop{transform-box:fill-box;transform-origin:center;animation:popIn .6s var(--wait,0s) cubic-bezier(.34,1.56,.64,1) both}
 @keyframes popIn{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
 .mo-fade{animation:fadeUp .9s var(--wait,0s) ease-out both}
 @keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 .still .mo-draw,.still .mo-pop,.still .mo-fade{animation:none}
-.band{display:flex;align-items:center;gap:12px;margin-top:38px} .band::after{content:"";flex:1;height:1px;background:var(--rule)}
+.band{display:flex;align-items:center;gap:12px;margin-top:34px} .band::after{content:"";flex:1;height:1px;background:var(--rule)}
 .band small{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--mute)}
 /* what we do: one card per thing, in the second person */
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin-top:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin-top:14px}
 .card{position:relative;border:1px solid var(--rule);border-radius:6px;padding:16px 18px 18px;background:rgba(255,255,255,.03);transition:border-color .2s,transform .2s}
 .card:hover{border-color:rgba(245,166,35,.45);transform:translateY(-2px)}
-.card h3{font-family:var(--serif);font-size:20px;font-weight:400;line-height:1.2} .card h3 em{font-style:italic;color:var(--amber)}
+.card h3{font-family:var(--serif);font-size:20px;font-weight:400;line-height:1.2;padding-right:70px} .card h3 em{font-style:italic;color:var(--amber)}
 .card p{margin-top:8px;color:#C5D4DD;font-size:14.5px}
-.card .tag{position:absolute;top:12px;right:12px;font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--moss);border:1px solid rgba(157,183,174,.4);border-radius:2px;padding:2px 6px}
+/* a vote: the count, and a button that is lit when the vote is yours */
+.vote{position:absolute;top:12px;right:12px;display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;
+  color:var(--dim);border:1px solid rgba(169,190,203,.35);border-radius:999px;padding:4px 10px;background:rgba(7,15,21,.5);transition:.18s}
+.vote::before{content:"\25B2";font-size:9px} .vote:hover{color:var(--chalk);border-color:rgba(245,166,35,.6)}
+.vote.is-mine{color:#1B1206;background:var(--amber);border-color:var(--amber)}
+.vote:disabled{opacity:.5;cursor:default}
 /* the magazine: the cover stands exactly as tall as the words beside it (a few lines of script below) */
 .mag{display:flex;gap:36px;align-items:flex-start;margin-top:16px}
 .cover{flex:none;display:block;border-radius:6px;overflow:hidden;box-shadow:0 18px 50px rgba(0,0,0,.5);transition:transform .35s var(--ease),box-shadow .35s}
@@ -70,12 +76,34 @@ a{color:inherit} h1,h2,h3,p,ul{margin:0} ul{padding:0;list-style:none}
 .issue .who{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;color:var(--moss);padding-top:3px}
 .issue b{font-weight:500;color:var(--chalk)} .issue span{display:block;color:var(--dim);font-size:14px;margin-top:2px}
 .credits{margin-top:12px;color:var(--dim);font-size:14px} .credits b{font-weight:500;color:#D7E3EA}
-.join{margin-top:16px;border:1px solid rgba(245,166,35,.35);border-radius:6px;padding:18px 20px;background:rgba(245,166,35,.06);display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px 24px;align-items:center}
-.join h3{font-family:var(--serif);font-size:22px;font-weight:400} .join p{margin-top:6px;color:#C5D4DD}
-.join a.mail{font-family:var(--mono);font-size:12px;letter-spacing:.04em;color:var(--amber);text-decoration:none;border-bottom:1px solid rgba(245,166,35,.45);white-space:nowrap}
+/* interested: sign in, say what you would like to do, and you are on the list and may vote */
+.join{margin-top:14px;display:grid;grid-template-columns:minmax(280px,1fr) minmax(0,1.3fr);gap:16px;align-items:start}
+.panel{border:1px solid rgba(245,166,35,.35);border-radius:6px;padding:18px 20px;background:rgba(245,166,35,.06)}
+.panel h3{font-family:var(--serif);font-size:22px;font-weight:400} .panel p{margin-top:6px;color:#C5D4DD;font-size:14.5px}
+.panel .mail{font-family:var(--mono);font-size:12px;color:var(--amber);text-decoration:none;border-bottom:1px solid rgba(245,166,35,.45)}
+#gsi{margin-top:12px;min-height:40px}
+.form{margin-top:12px;display:grid;gap:8px}
+.form label{display:grid;gap:4px;font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.form input,.form select{font:inherit;font-size:14px;color:var(--chalk);background:rgba(7,15,21,.6);border:1px solid rgba(150,190,215,.3);border-radius:3px;padding:8px 10px}
+.form input:focus,.form select:focus{outline:2px solid var(--amber);outline-offset:1px}
+.go{justify-self:start;font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:#1B1206;background:var(--amber);border-radius:3px;padding:9px 16px}
+.go:disabled{opacity:.55;cursor:default}
+.who-i-am{margin-top:10px;font-size:13px;color:var(--dim)} .who-i-am b{color:var(--chalk);font-weight:500}
+.msg{margin-top:10px;font-size:13px;color:var(--moss);min-height:1.2em}
+.list{border:1px solid var(--rule);border-radius:6px;background:rgba(255,255,255,.03);padding:14px 16px}
+.list h3{font-family:var(--serif);font-size:20px;font-weight:400;display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.list h3 small{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;color:var(--mute)}
+.people{margin-top:10px;max-height:250px;overflow:auto;display:grid;gap:4px;padding-right:6px}
+.people li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;padding:7px 10px;border-radius:4px;background:rgba(7,15,21,.35)}
+.people b{font-weight:500;color:var(--chalk);font-size:14px} .people .yr{font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--moss);padding-top:3px}
+.people span{grid-column:1/-1;font-size:13px;color:var(--dim)}
+.people:empty::before{content:"Nobody yet. Be the first.";color:var(--mute);font-size:13.5px}
 .foot{margin-top:44px;padding-top:16px;border-top:1px solid var(--rule);font-size:12.5px;color:var(--dim)}
 .foot strong{font-weight:500;color:var(--chalk)} .foot p+p{margin-top:6px;font-family:var(--mono);font-size:9.5px;letter-spacing:.04em;color:var(--mute)}
-@media (max-width:760px){.mag{flex-direction:column} .cover img{width:min(100%,300px)} .join{grid-template-columns:1fr}}
+.toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,12px);z-index:30;max-width:min(92vw,520px);background:#F7F6F2;color:#1B2226;padding:11px 18px;border-radius:3px;font-size:13.5px;line-height:1.45;
+  box-shadow:0 10px 40px rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:opacity .22s,transform .22s}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+@media (max-width:760px){.head{grid-template-columns:1fr} .head .mark{max-width:380px} .mag{flex-direction:column} .cover img{width:min(100%,300px)} .join{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -85,41 +113,65 @@ a{color:inherit} h1,h2,h3,p,ul{margin:0} ul{padding:0;list-style:none}
 
   <!-- EDIT: the name, the one-paragraph description, and who runs it -->
   <header class="head">
-    <span class="eyebrow">NLCS Jeju · Student society</span>
-    <h1>Veterinary <em>Society</em></h1>
-    <p class="lede">Run by students who want to know what a vet knows. Here you work through real clinical cases, learn the hands-on skills on models, study how animals behave and how they learn, and write up what you find. Any year group. No experience needed.</p>
-    <p class="maker">Chair <strong>Henry Yuan</strong> · site made by <strong>Dr Daniel Mompel Riera</strong>, Biology, NLCS Jeju</p>
+    <div>
+      <span class="eyebrow">NLCS Jeju · Student society</span>
+      <h1>Veterinary <em>Society</em></h1>
+      <p class="lede">Run by students who want to know what a vet knows. Here you work through real clinical cases, learn the hands-on skills on models, study how animals behave and how they learn, and write up what you find. Any year group. No experience needed.</p>
+      <p class="maker">Chair <strong>Henry Yuan</strong> · site made by <strong>Dr Daniel Mompel Riera</strong>, Biology, NLCS Jeju</p>
+    </div>
+    <!-- The mark: a stethoscope that is a horse's head. It draws itself when the page opens.
+         Its numbers were made by tools/mark.py; leave the <svg> alone unless you mean to change it. -->
+    <svg class="mark" viewBox="0 20 1110 580" role="img" aria-label="The Veterinary Society mark: a stethoscope drawn as a horse’s head, the chest piece its eye"><g transform="translate(26 44) scale(1.24)"><path class="mo-draw" pathLength="1000" vector-effect="non-scaling-stroke" d="M 188 -4 C 174 34 198 64 234 72" fill="none" stroke="#F3E7C9" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" style="--t:0.22s;--wait:0.00s"/><path class="mo-draw" pathLength="1000" vector-effect="non-scaling-stroke" d="M 312 -2 C 320 38 296 66 262 72" fill="none" stroke="#F3E7C9" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" style="--t:0.22s;--wait:0.12s"/><path class="mo-draw" pathLength="1000" vector-effect="non-scaling-stroke" d="M 248 72 C 238 108 198 148 160 190 C 128 226 94 254 66 282 C 44 304 38 330 56 344 C 76 358 104 352 124 338 C 150 330 196 338 240 334 C 290 330 326 296 322 246 C 318 210 288 178 246 164" fill="none" stroke="#F3E7C9" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" style="--t:0.95s;--wait:0.30s"/><path class="mo-draw" pathLength="1000" vector-effect="non-scaling-stroke" d="M 300 66 C 350 102 384 186 388 300" fill="none" stroke="#9DB7AE" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" style="--t:0.4s;--wait:0.55s"/><path class="mo-draw" pathLength="1000" vector-effect="non-scaling-stroke" d="M 314 90 C 338 134 346 196 342 262" fill="none" stroke="#9DB7AE" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" style="--t:0.35s;--wait:0.65s"/><path class="mo-draw" pathLength="1000" vector-effect="non-scaling-stroke" d="M 330 118 C 354 162 362 216 360 278" fill="none" stroke="#9DB7AE" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" style="--t:0.35s;--wait:0.75s"/><path class="mo-draw" pathLength="1000" vector-effect="non-scaling-stroke" d="M 300 326 C 320 352 336 384 346 420" fill="none" stroke="#9DB7AE" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" style="--t:0.3s;--wait:0.95s"/><path class="mo-draw" pathLength="1000" vector-effect="non-scaling-stroke" d="M 64 298 C 74 292 84 294 90 302" fill="none" stroke="#F3E7C9" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" style="--t:0.18s;--wait:1.15s"/><path class="mo-draw" pathLength="1000" vector-effect="non-scaling-stroke" d="M 70 332 C 84 336 98 336 110 330" fill="none" stroke="#F3E7C9" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" style="--t:0.18s;--wait:1.22s"/><g class="mo-pop" style="--wait:1.28s"><circle cx="222" cy="156" r="27" fill="none" stroke="#F3E7C9" stroke-width="8" vector-effect="non-scaling-stroke"/></g><g class="mo-pop" style="--wait:1.36s"><circle cx="222" cy="156" r="12" fill="#F5A623" stroke="none" stroke-width="0" vector-effect="non-scaling-stroke"/></g></g><g transform="translate(612 318) scale(1.58)"><text class="mo-fade" style="--wait:1.45s" x="0" y="0" font-family="Fraunces, Georgia, serif" font-size="58" font-style="italic" font-weight="400" letter-spacing="0" fill="#F3E7C9">Veterinary</text><text class="mo-fade" style="--wait:1.55s" x="0" y="56" font-family="Fraunces, Georgia, serif" font-size="58" font-style="normal" font-weight="400" letter-spacing="0" fill="#F3E7C9">Society</text><text class="mo-fade" style="--wait:1.65s" x="3" y="90" font-family="'IBM Plex Mono', monospace" font-size="15" font-style="normal" font-weight="400" letter-spacing="4" fill="#9DB7AE">NLCS JEJU</text></g></svg>
   </header>
 
-  <!-- The mark: a stethoscope that is a horse's head, with the pig, the hen and the cow from the
-       magazine beside the name. It draws itself when the page opens. The numbers were made by
-       tools/mark.py; if you change them there, paste the new <svg> in here. -->
-  <div class="banner">
-    <svg class="mark" viewBox="0 0 1800 614" role="img" aria-label="The Veterinary Society mark: a stethoscope drawn as a horse’s head, the chest piece its eye, with a pig, a hen and a cow beside the name"><g transform="translate(26 44) scale(1.24)"><path class="mo-draw" pathLength="1000" vector-effect="non-scaling-stroke" d="M 188 -4 C 174 34 198 64 234 72" fill="none" stroke="#F3E7C9" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" style="--t:0.22s;--wait:0.00s"/><path class="mo-draw" pathLength="1000" vector-effect="non-scaling-stroke" d="M 312 -2 C 320 38 296 66 262 72" fill="none" stroke="#F3E7C9" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" style="--t:0.22s;--wait:0.12s"/><path class="mo-draw" pathLength="1000" vector-effect="non-scaling-stroke" d="M 248 72 C 238 108 198 148 160 190 C 128 226 94 254 66 282 C 44 304 38 330 56 344 C 76 358 104 352 124 338 C 150 330 196 338 240 334 C 290 330 326 296 322 246 C 318 210 288 178 246 164" fill="none" stroke="#F3E7C9" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" style="--t:0.95s;--wait:0.30s"/><path class="mo-draw" pathLength="1000" vector-effect="non-scaling-stroke" d="M 300 66 C 350 102 384 186 388 300" fill="none" stroke="#9DB7AE" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" style="--t:0.4s;--wait:0.55s"/><path class="mo-draw" pathLength="1000" vector-effect="non-scaling-stroke" d="M 314 90 C 338 134 346 196 342 262" fill="none" stroke="#9DB7AE" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" style="--t:0.35s;--wait:0.65s"/><path class="mo-draw" pathLength="1000" vector-effect="non-scaling-stroke" d="M 330 118 C 354 162 362 216 360 278" fill="none" stroke="#9DB7AE" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" style="--t:0.35s;--wait:0.75s"/><path class="mo-draw" pathLength="1000" vector-effect="non-scaling-stroke" d="M 300 326 C 320 352 336 384 346 420" fill="none" stroke="#9DB7AE" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" style="--t:0.3s;--wait:0.95s"/><path class="mo-draw" pathLength="1000" vector-effect="non-scaling-stroke" d="M 64 298 C 74 292 84 294 90 302" fill="none" stroke="#F3E7C9" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" style="--t:0.18s;--wait:1.15s"/><path class="mo-draw" pathLength="1000" vector-effect="non-scaling-stroke" d="M 70 332 C 84 336 98 336 110 330" fill="none" stroke="#F3E7C9" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" style="--t:0.18s;--wait:1.22s"/><g class="mo-pop" style="--wait:1.28s"><circle cx="222" cy="156" r="27" fill="none" stroke="#F3E7C9" stroke-width="8" vector-effect="non-scaling-stroke"/></g><g class="mo-pop" style="--wait:1.36s"><circle cx="222" cy="156" r="12" fill="#F5A623" stroke="none" stroke-width="0" vector-effect="non-scaling-stroke"/></g></g><g transform="translate(612 318) scale(1.58)"><text class="mo-fade" style="--wait:1.45s" x="0" y="0" font-family="Fraunces, Georgia, serif" font-size="58" font-style="italic" font-weight="400" letter-spacing="0" fill="#F3E7C9">Veterinary</text><text class="mo-fade" style="--wait:1.55s" x="0" y="56" font-family="Fraunces, Georgia, serif" font-size="58" font-style="normal" font-weight="400" letter-spacing="0" fill="#F3E7C9">Society</text><text class="mo-fade" style="--wait:1.65s" x="3" y="90" font-family="'IBM Plex Mono', monospace" font-size="15" font-style="normal" font-weight="400" letter-spacing="4" fill="#9DB7AE">NLCS JEJU</text></g><g transform="translate(1150 70) scale(0.78)"><path class="mo-draw" pathLength="1000" vector-effect="non-scaling-stroke" d="M 8 74 L 30 66 C 34 52 44 44 58 46 C 80 44 120 48 150 70 C 168 76 178 84 182 96 C 184 130 150 158 104 156 C 72 154 50 130 46 104 C 44 92 38 84 30 84 L 8 74" fill="none" stroke="#9DB7AE" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" style="--t:0.6s;--wait:1.55s"/><path class="mo-draw" pathLength="1000" vector-effect="non-scaling-stroke" d="M 178 90 C 196 60 216 50 226 30 M 180 96 C 206 78 222 72 230 60 M 182 102 C 204 96 218 96 226 90" fill="none" stroke="#9DB7AE" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" style="--t:0.3s;--wait:2.05s"/><path class="mo-draw" pathLength="1000" vector-effect="non-scaling-stroke" d="M 50 48 C 52 36 60 34 62 42 C 66 32 74 32 76 42 C 80 34 88 36 88 46" fill="none" stroke="#9DB7AE" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" style="--t:0.2s;--wait:2.25s"/><path class="mo-draw" pathLength="1000" vector-effect="non-scaling-stroke" d="M 96 156 L 96 184 M 84 186 L 108 186 M 122 154 L 124 184 M 112 186 L 136 186" fill="none" stroke="#9DB7AE" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" style="--t:0.25s;--wait:2.35s"/><path class="mo-draw" pathLength="1000" vector-effect="non-scaling-stroke" d="M 34 84 C 30 94 36 100 42 94" fill="none" stroke="#9DB7AE" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="--t:0.12s;--wait:2.50s"/><g class="mo-pop" style="--wait:2.55s"><circle cx="46" cy="58" r="3.5" fill="#9DB7AE" stroke="none" stroke-width="0" vector-effect="non-scaling-stroke"/></g></g><g transform="translate(1130 330) scale(0.86)"><path class="mo-draw" pathLength="1000" vector-effect="non-scaling-stroke" d="M 16 82 C 4 88 4 100 16 106 C 22 112 34 112 44 108 C 70 126 120 142 180 146 C 230 150 268 142 280 120 C 292 96 288 66 262 52 C 220 36 160 34 118 48 L 100 22 L 88 58 C 60 60 30 66 16 82" fill="none" stroke="#9DB7AE" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" style="--t:0.7s;--wait:1.25s"/><path class="mo-draw" pathLength="1000" vector-effect="non-scaling-stroke" d="M 266 60 C 286 44 300 62 284 72 C 276 76 276 64 284 62" fill="none" stroke="#9DB7AE" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" style="--t:0.25s;--wait:1.85s"/><path class="mo-draw" pathLength="1000" vector-effect="non-scaling-stroke" d="M 64 124 L 60 176 M 96 138 L 94 180 M 196 146 L 198 182 M 246 140 L 250 178" fill="none" stroke="#9DB7AE" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" style="--t:0.3s;--wait:1.95s"/><path class="mo-draw" pathLength="1000" vector-effect="non-scaling-stroke" d="M 10 92 C 12 88 16 88 18 92 M 10 100 C 12 96 16 96 18 100" fill="none" stroke="#9DB7AE" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="--t:0.15s;--wait:2.15s"/><g class="mo-pop" style="--wait:2.20s"><circle cx="50" cy="76" r="4" fill="#9DB7AE" stroke="none" stroke-width="0" vector-effect="non-scaling-stroke"/></g></g><g transform="translate(1440 40) scale(1.02)"><path class="mo-draw" pathLength="1000" vector-effect="non-scaling-stroke" d="M 96 92 C 84 140 84 200 98 236 C 104 272 176 272 182 236 C 196 200 196 140 184 92 C 174 56 106 56 96 92" fill="none" stroke="#9DB7AE" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" style="--t:0.7s;--wait:1.75s"/><path class="mo-draw" pathLength="1000" vector-effect="non-scaling-stroke" d="M 94 104 C 62 92 30 98 30 116 C 30 132 66 130 94 116" fill="none" stroke="#9DB7AE" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" style="--t:0.3s;--wait:2.30s"/><path class="mo-draw" pathLength="1000" vector-effect="non-scaling-stroke" d="M 186 104 C 218 92 250 98 250 116 C 250 132 214 130 186 116" fill="none" stroke="#9DB7AE" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" style="--t:0.3s;--wait:2.30s"/><path class="mo-draw" pathLength="1000" vector-effect="non-scaling-stroke" d="M 102 72 C 76 60 52 40 54 8 C 64 22 84 34 108 44" fill="none" stroke="#9DB7AE" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" style="--t:0.3s;--wait:2.55s"/><path class="mo-draw" pathLength="1000" vector-effect="non-scaling-stroke" d="M 178 72 C 204 60 228 40 226 8 C 216 22 196 34 172 44" fill="none" stroke="#9DB7AE" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" style="--t:0.3s;--wait:2.55s"/><path class="mo-draw" pathLength="1000" vector-effect="non-scaling-stroke" d="M 112 232 C 114 242 124 242 126 232 M 154 232 C 156 242 166 242 168 232" fill="none" stroke="#9DB7AE" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="--t:0.15s;--wait:2.85s"/><g class="mo-pop" style="--wait:2.90s"><circle cx="118" cy="152" r="4" fill="#9DB7AE" stroke="none" stroke-width="0" vector-effect="non-scaling-stroke"/></g><g class="mo-pop" style="--wait:2.95s"><circle cx="162" cy="152" r="4" fill="#9DB7AE" stroke="none" stroke-width="0" vector-effect="non-scaling-stroke"/></g></g></svg>
-  </div>
-
   <!-- EDIT: what the society does. One card each, written to the person reading: "here you…".
-       Copy a whole <li class="card">…</li> to add one; delete one to remove it. A card with
-       <span class="tag">idea</span> is something not tried yet, put here to inspire. -->
+       Copy a whole <li class="card">…</li> to add one; delete one to remove it. -->
   <div class="band"><span class="eyebrow">What we do</span></div>
   <ul class="grid">
     <li class="card"><h3>Clinical <em>cases</em></h3><p>Here you take a real case, a lame horse, a coughing calf, a dog that will not eat, and work it the way a vet would: history, examination, tests, a diagnosis, a plan.</p></li>
     <li class="card"><h3><em>Suturing</em></h3><p>Here you learn to close a wound on a practice pad: which stitch, which knot, how tight, and why it matters which you choose.</p></li>
-    <li class="card"><h3>Taking <em>blood</em></h3><p>Here you find the vein and draw blood on a model leg, then learn what a blood test can tell you and what it cannot.</p></li>
+    <li class="card"><h3>Taking <em>blood</em></h3><p>Here you find the vein and draw blood from a silicone mould with a tube running through it, then learn what a blood test can tell you and what it cannot.</p></li>
     <li class="card"><h3>Animal <em>behaviour</em></h3><p>Here you read an animal: what a flattened ear, a swishing tail or a lowered head is telling you, and what it means for handling it safely.</p></li>
     <li class="card"><h3>Training a <em>dog</em></h3><p>Here you learn how a dog learns: the marker, the reward, the timing, and why punishment teaches the wrong thing.</p></li>
     <li class="card"><h3>Writing it <em>up</em></h3><p>Here you turn what you found into pages other people can use. Issue 1 of the magazine is below; issue 2 is yours to write.</p></li>
   </ul>
 
-  <div class="band"><span class="eyebrow">Ideas for this year</span><small>not tried yet · pick one</small></div>
-  <ul class="grid">
-    <li class="card"><span class="tag">idea</span><h3>Meet a <em>vet</em></h3><p>Shadow a clinic for a day, or bring a vet to a meeting and ask what the job is really like: the hours, the hard cases, the best day.</p></li>
-    <li class="card"><span class="tag">idea</span><h3>The animals of <em>Jeju</em></h3><p>Jeju horses, black pigs, Hanwoo cattle and the island’s poultry farms: what keeps them healthy, what threatens them, and who looks after them.</p></li>
-    <li class="card"><span class="tag">idea</span><h3>One <em>Health</em></h3><p>Bird flu, rabies, brucellosis: diseases that move between animals and people. Why a vet is a public-health worker too.</p></li>
-    <li class="card"><span class="tag">idea</span><h3>Inside the <em>animal</em></h3><p>Dissection, X-rays and scans: what is in there, how it works, and how it looks when it goes wrong.</p></li>
-    <li class="card"><span class="tag">idea</span><h3>First aid for <em>pets</em></h3><p>The first ten minutes: bleeding, choking, heatstroke, a swallowed thing. What to do before the vet, and what not to.</p></li>
-    <li class="card"><span class="tag">idea</span><h3>A <em>debate</em></h3><p>Should Jeju’s roe deer be culled? Should a school keep animals? Take a side, bring the evidence, and argue it.</p></li>
+  <!-- EDIT: ideas for the year. Each has a vote button; the count comes from the society's own
+       sheet. Keep data-idea short, letters and hyphens only, and unique — it is what a vote is
+       filed under, so if you rename an idea keep its data-idea or its votes start again. -->
+  <div class="band"><span class="eyebrow">Ideas for this year</span><small>sign in below, then vote for the ones you want · the chair sees the count</small></div>
+  <ul class="grid" id="ideas">
+    <li class="card" data-idea="meet-a-vet"><h3>Meet a <em>vet</em></h3><p>Dr Mompel knows several vets. If enough of you want it, one could come to a meeting, or have you shadow a clinic for a day. Their time is precious, so the interest has to be real, and you arrive with your questions written down.</p></li>
+    <li class="card" data-idea="wild-jeju"><h3>The wild animals of <em>Jeju</em></h3><p>Roe deer, the island’s birds, the bats in the lava tubes, what the sea washes up: who looks after Jeju’s wild animals when they are hurt, and what a vet can do for them.</p></li>
+    <li class="card" data-idea="one-health"><h3>One <em>Health</em></h3><p>Bird flu, rabies, brucellosis: diseases that move between animals and people. What a public-health worker actually does all day, and why a vet is one too.</p></li>
+    <li class="card" data-idea="inside"><h3>Inside the <em>animal</em></h3><p>Dissection, X-rays and scans: what is in there, how it works, and how it looks when it goes wrong.</p></li>
+    <li class="card" data-idea="first-aid"><h3>First aid for <em>pets</em></h3><p>The first ten minutes: bleeding, choking, heatstroke, a swallowed thing. What to do before the vet, and what not to.</p></li>
+    <li class="card" data-idea="debate"><h3>A <em>debate</em></h3><p>Should Jeju’s roe deer be culled? Should a school keep animals? Take a side, bring the evidence, and argue it.</p></li>
   </ul>
+
+  <!-- Interested: sign in with the school Google account, say what you would like to do, and you
+       are on the list and can vote. The list shows names and years only. EDIT the chair's name
+       and address here when the chair changes. -->
+  <div class="band"><span class="eyebrow">Interested?</span><small id="listCount"></small></div>
+  <div class="join">
+    <div class="panel">
+      <h3>Put your name down</h3>
+      <p>Sign in with your school Google account, the same as for the labs. Then say what you would like to do, and you can vote on the ideas above.</p>
+      <div id="gsi"></div>
+      <p class="who-i-am" id="whoIAm" hidden></p>
+      <form class="form" id="form" hidden>
+        <label>Year group<select id="year"><option>Year 7</option><option>Year 8</option><option>Year 9</option><option>Year 10</option><option>Year 11</option><option>Year 12</option><option>Year 13</option></select></label>
+        <label>What would you like to do?<input id="note" maxlength="300" placeholder="e.g. learn to suture, or write for issue 2"></label>
+        <button class="go" id="go" type="submit">I’m interested</button>
+      </form>
+      <p class="msg" id="msg"></p>
+      <p>Or email the chair, Henry Yuan: <a class="mail" href="mailto:scyuan29@pupils.nlcsjeju.kr">scyuan29@pupils.nlcsjeju.kr</a></p>
+    </div>
+    <div class="list">
+      <h3>Who is interested <small id="listNote"></small></h3>
+      <ol class="people" id="people"></ol>
+    </div>
+  </div>
 
   <!-- EDIT: the magazine. To add issue 2: put the PDF in assets/, make a cover picture (see the
        README), copy this whole <section class="mag">, and change the words. -->
@@ -145,29 +197,132 @@ a{color:inherit} h1,h2,h3,p,ul{margin:0} ul{padding:0;list-style:none}
     </div>
   </section>
 
-  <!-- EDIT: who to write to. Change the name and the address when the chair changes. -->
-  <div class="band"><span class="eyebrow">Join</span></div>
-  <div class="join">
-    <div><h3>Would you like to join, or write for issue 2?</h3><p>Email the chair, Henry Yuan. Say which year you are in and what you would like to do.</p></div>
-    <a class="mail" href="mailto:scyuan29@pupils.nlcsjeju.kr">scyuan29@pupils.nlcsjeju.kr</a>
-  </div>
-
   <footer class="foot">
     <p>Made by <strong>Dr Daniel Mompel Riera</strong> · NLCS Jeju · the page is the society’s to change</p>
     <p>The mark is a stethoscope drawn as a horse’s head, the chest piece its eye, made for the society. Island Immunity is the work of its writers, who hold the rights to it.</p>
   </footer>
 </div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="config.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
-/* The cover stands exactly as tall as the words beside it, however many articles there are.
-   Its width follows, so nothing is cropped. On a phone the two stack and this steps aside. */
+/* ---- leave this alone unless you know what you are doing ----
+   Sign-in, the list of who is interested, and the votes. All of it talks to the society's own
+   Apps Script (apps-script/Code.gs) at the address in config.js. Without that address the page
+   still works and simply says the sign-in is not switched on. */
 (function () {
+  var C = window.VETSOC_CONFIG || {}, URL_ = C.scriptUrl || '', CID = C.googleClientId || '';
+  var $ = function (id) { return document.getElementById(id); };
+  var toastT = null;
+  function toast(m) { var t = $('toast'); if (!t) return; t.textContent = m; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(function () { t.classList.remove('on'); }, 4200); }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]; }); }
+
+  /* the sign-in this page holds — or one a lab on this site already holds, since they share it */
+  var KEY = 'vetsoc.signin', me = null;
+  function fresh(sv) { return sv && sv.token && Number(sv.exp) * 1000 > Date.now() + 60000 ? sv : null; }
+  function load() {
+    try { me = fresh(JSON.parse(localStorage.getItem(KEY) || 'null')); } catch (e) { me = null; }
+    if (me) return;
+    try {
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i); if (!/\.signin$/.test(k)) continue;
+        var sv = fresh(JSON.parse(localStorage.getItem(k) || 'null'));
+        if (sv) { me = sv; break; }
+      }
+    } catch (e) {}
+  }
+  function onCredential(r) {
+    try {
+      var p = JSON.parse(atob(r.credential.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+      me = { token: r.credential, exp: p.exp, name: p.name || '', email: p.email || '' };
+      localStorage.setItem(KEY, JSON.stringify(me));
+    } catch (e) { toast('That sign-in could not be read. Try again.'); return; }
+    paintMe(); refresh();
+  }
+  function paintMe() {
+    var w = $('whoIAm'), f = $('form'), g = $('gsi');
+    if (me) { w.hidden = false; w.innerHTML = 'Signed in as <b>' + esc(me.name || me.email) + '</b>'; f.hidden = false; if (g) g.hidden = true; }
+    else { w.hidden = true; f.hidden = true; if (g) g.hidden = false; }
+  }
+
+  function api(body) {
+    return fetch(URL_, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) })
+      .then(function (r) { return r.ok ? r.json() : null; });
+  }
+  var state = { people: [], votes: {}, mine: [], interested: false };
+  function paint() {
+    var ol = $('people'); ol.innerHTML = state.people.map(function (p) {
+      return '<li><b>' + esc(p.name) + '</b><span class="yr">' + esc(p.year) + '</span>' + (p.note ? '<span>' + esc(p.note) + '</span>' : '') + '</li>';
+    }).join('');
+    var n = state.people.length;
+    $('listCount').textContent = n ? n + ' interested' : '';
+    $('listNote').textContent = n ? 'names and years only' : '';
+    document.querySelectorAll('#ideas .card').forEach(function (card) {
+      var id = card.dataset.idea, b = card.querySelector('.vote');
+      if (!b) { b = document.createElement('button'); b.type = 'button'; b.className = 'vote'; card.appendChild(b); b.addEventListener('click', function () { vote(id, b); }); }
+      var n = state.votes[id] || 0, mine = state.mine.indexOf(id) >= 0;
+      b.textContent = n ? n + (mine ? ' · yours' : '') : 'vote';
+      b.classList.toggle('is-mine', mine);
+      b.title = mine ? 'Press again to take your vote back' : 'Vote for this';
+    });
+    if (me && state.interested) $('go').textContent = 'Update';
+  }
+  function take(j, quiet) {
+    if (!j || !j.ok) { if (!quiet) toast(j && j.why === 'not signed in' ? 'Your sign-in has run out. Sign in again.' : 'Could not reach the society\u2019s list just now.'); return false; }
+    state = j; paint(); return true;
+  }
+  function refresh() {
+    if (!URL_) return;
+    api(me ? { action: 'me', token: me.token } : { action: 'list' }).then(function (j) {
+      if (me && (!j || !j.ok)) { me = null; try { localStorage.removeItem(KEY); } catch (e) {} paintMe(); return api({ action: 'list' }).then(function (k) { take(k, true); }); }
+      take(j, true);
+    }).catch(function () {});
+  }
+  function vote(id, b) {
+    if (!URL_) { toast('Voting is not switched on yet.'); return; }
+    if (!me) { toast('Sign in below first, then vote.'); $('gsi').scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
+    b.disabled = true;
+    api({ action: 'vote', token: me.token, idea: id }).then(function (j) { b.disabled = false; take(j); }).catch(function () { b.disabled = false; toast('Could not reach the society\u2019s list just now.'); });
+  }
+
+  load(); paintMe();
+  if (!URL_) {
+    /* nothing to send to yet: no button, no form, and a plain word about why */
+    $('gsi').hidden = true; $('form').hidden = true; $('whoIAm').hidden = true;
+    $('msg').textContent = 'Sign-in and voting are not switched on yet: the teacher has to deploy the society\u2019s script (see the README).';
+    $('listNote').textContent = 'not switched on yet';
+    paint();
+  } else {
+    refresh();
+    $('form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (!me) return;
+      var go = $('go'); go.disabled = true; $('msg').textContent = 'Sending\u2026';
+      api({ action: 'interest', token: me.token, year: $('year').value, note: $('note').value.trim() })
+        .then(function (j) { go.disabled = false; if (take(j)) $('msg').textContent = 'You are on the list. Now vote for the ideas you want.'; else $('msg').textContent = ''; })
+        .catch(function () { go.disabled = false; $('msg').textContent = ''; toast('Could not reach the society\u2019s list just now.'); });
+    });
+  }
+  /* Google's button, once its script has loaded */
+  function mountGsi() {
+    if (!URL_ || !CID || !window.google || !google.accounts || !$('gsi')) return;
+    try {
+      google.accounts.id.initialize({ client_id: CID, callback: onCredential, auto_select: false });
+      google.accounts.id.renderButton($('gsi'), { theme: 'filled_black', size: 'large', text: 'signin_with', shape: 'rectangular' });
+    } catch (e) {}
+  }
+  if (window.google && google.accounts) mountGsi(); else document.querySelector('script[src*="gsi/client"]').addEventListener('load', mountGsi);
+
+  /* The cover stands exactly as tall as the words beside it, however many articles there are. */
   var col = document.querySelector('.mag__text'), img = document.querySelector('.cover img');
-  if (!col || !img || !('ResizeObserver' in window)) return;
-  var fit = function () {
-    if (innerWidth <= 760) { img.style.height = ''; img.style.width = ''; return; }
-    img.style.height = Math.round(col.getBoundingClientRect().height) + 'px'; img.style.width = 'auto';
-  };
-  new ResizeObserver(fit).observe(col); addEventListener('resize', fit); fit();
+  if (col && img && 'ResizeObserver' in window) {
+    var fit = function () {
+      if (innerWidth <= 760) { img.style.height = ''; img.style.width = ''; return; }
+      img.style.height = Math.round(col.getBoundingClientRect().height) + 'px'; img.style.width = 'auto';
+    };
+    new ResizeObserver(fit).observe(col); addEventListener('resize', fit); fit();
+  }
 })();
 </script>
 </body>
