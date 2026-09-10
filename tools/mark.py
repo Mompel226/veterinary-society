@@ -120,6 +120,12 @@ elif mode == 'header':
     # the head and the name only, in their open places, for the top of the society's page
     body = ''.join(f'<g transform="translate({g["open"]["x"]} {g["open"]["y"]}) scale({g["open"]["s"]})">{inner(g)}</g>' for g in groups if g['id'] in ('head', 'name'))
     print(f'<svg class="mark" viewBox="0 20 1110 580" role="img" aria-label="The Veterinary Society mark: a stethoscope drawn as a horse’s head, the chest piece its eye">{body}</svg>')
+elif mode == 'svgfile':
+    # a standalone file of the finished mark, open arrangement, for the README and anywhere else
+    body = ''.join(f'<g transform="translate({g["open"]["x"]} {g["open"]["y"]}) scale({g["open"]["s"]})">{inner(g, cls=False)}</g>' for g in groups)
+    body = body.replace(' style="--t:', ' data-t="').replace('s;--wait:', '" data-wait="').replace('s"/>', '"/>')
+    import re; body = re.sub(r' style="--wait:[0-9.]+s"', '', body)
+    print(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 614" width="1800" height="614"><rect width="1800" height="614" fill="#12262B"/><defs><radialGradient id="g" cx="70%" cy="50%" r="60%"><stop offset="0" stop-color="#1A363B"/><stop offset="1" stop-color="#12262B"/></radialGradient></defs><rect width="1800" height="614" fill="url(#g)"/>{body}</svg>')
 elif mode == 'page':
     # the page shows the open arrangement, drawing itself once on load
     body = ''.join(f'<g transform="translate({g["open"]["x"]} {g["open"]["y"]}) scale({g["open"]["s"]})">{inner(g)}</g>' for g in groups)

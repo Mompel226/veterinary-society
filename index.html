@@ -47,12 +47,21 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .still .mo-draw,.still .mo-pop,.still .mo-fade{animation:none}
 .band{display:flex;align-items:center;gap:12px;margin-top:34px} .band::after{content:"";flex:1;height:1px;background:var(--rule)}
 .band small{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--mute)}
-/* what we do: one card per thing, in the second person */
+/* what we do: one card per thing, in the second person. Each carries a picture behind it —
+   set on the card as style="--bg:url(assets/cards/name.jpg)" — with the words at the foot on a
+   veil of the page's own ground, so the picture shows above them and the text stays readable.
+   Point at a card and the veil thins a little. */
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin-top:14px}
-.card{position:relative;border:1px solid var(--rule);border-radius:6px;padding:16px 18px 18px;background:rgba(255,255,255,.03);transition:border-color .2s,transform .2s}
+.card{position:relative;isolation:isolate;overflow:hidden;min-height:300px;display:flex;flex-direction:column;justify-content:flex-end;
+  border:1px solid var(--rule);border-radius:6px;padding:16px 18px 18px;background:#0F2024;transition:border-color .2s,transform .2s}
+.card::before{content:"";position:absolute;inset:0;z-index:-2;background:var(--bg,none) center/cover no-repeat;transform:scale(1.03);transition:transform 1.4s var(--ease),filter .6s}
+.card::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:linear-gradient(to top,rgba(15,32,36,.97) 0,rgba(15,32,36,.92) 38%,rgba(15,32,36,.6) 62%,rgba(15,32,36,.18) 100%);transition:opacity .5s}
 .card:hover{border-color:rgba(245,166,35,.45);transform:translateY(-2px)}
-.card h3{font-family:var(--serif);font-size:20px;font-weight:400;line-height:1.2;padding-right:70px} .card h3 em{font-style:italic;color:var(--amber)}
-.card p{margin-top:8px;color:#C5D4DD;font-size:14.5px}
+.card:hover::before{transform:scale(1.08)} .card:hover::after{opacity:.9}
+.card h3{font-family:var(--serif);font-size:20px;font-weight:400;line-height:1.2;padding-right:70px;text-shadow:0 1px 12px rgba(15,32,36,.9)} .card h3 em{font-style:italic;color:var(--amber)}
+.card p{margin-top:8px;color:#D7E3EA;font-size:14.5px;text-shadow:0 1px 8px rgba(15,32,36,.9)}
+.card .vote{z-index:1}
 /* a vote: the count, and a button that is lit when the vote is yours */
 .vote{position:absolute;top:12px;right:12px;display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;
   color:var(--dim);border:1px solid rgba(169,190,203,.35);border-radius:999px;padding:4px 10px;background:rgba(7,15,21,.5);transition:.18s}
@@ -100,6 +109,9 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .people:empty::before{content:"Nobody yet. Be the first.";color:var(--mute);font-size:13.5px}
 .foot{margin-top:44px;padding-top:16px;border-top:1px solid var(--rule);font-size:12.5px;color:var(--dim)}
 .foot strong{font-weight:500;color:var(--chalk)} .foot p+p{margin-top:6px;font-family:var(--mono);font-size:9.5px;letter-spacing:.04em;color:var(--mute)}
+.credits-box{margin-top:10px} .credits-box summary{cursor:pointer;width:max-content;font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#A9BECB;border:1px solid rgba(150,190,215,.3);border-radius:2px;padding:5px 10px;background:rgba(7,15,21,.6);list-style:none}
+.credits-box summary::-webkit-details-marker{display:none} .credits-box summary::before{content:"+ "} .credits-box[open] summary::before{content:"\2013 "}
+.credits-box p{margin-top:8px;font-family:var(--mono);font-size:9.5px;letter-spacing:.04em;line-height:1.9;color:var(--mute)} .credits-box a{color:var(--dim)}
 .toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,12px);z-index:30;max-width:min(92vw,520px);background:#F7F6F2;color:#1B2226;padding:11px 18px;border-radius:3px;font-size:13.5px;line-height:1.45;
   box-shadow:0 10px 40px rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:opacity .22s,transform .22s}
 .toast.on{opacity:1;transform:translate(-50%,0)}
@@ -128,12 +140,12 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
        Copy a whole <li class="card">…</li> to add one; delete one to remove it. -->
   <div class="band"><span class="eyebrow">What we do</span></div>
   <ul class="grid">
-    <li class="card"><h3>Clinical <em>cases</em></h3><p>Here you take a real case, a lame horse, a coughing calf, a dog that will not eat, and work it the way a vet would: history, examination, tests, a diagnosis, a plan.</p></li>
-    <li class="card"><h3><em>Suturing</em></h3><p>Here you learn to close a wound on a practice pad: which stitch, which knot, how tight, and why it matters which you choose.</p></li>
-    <li class="card"><h3>Taking <em>blood</em></h3><p>Here you find the vein and draw blood from a silicone mould with a tube running through it, then learn what a blood test can tell you and what it cannot.</p></li>
-    <li class="card"><h3>Animal <em>behaviour</em></h3><p>Here you read an animal: what a flattened ear, a swishing tail or a lowered head is telling you, and what it means for handling it safely.</p></li>
-    <li class="card"><h3>Training a <em>dog</em></h3><p>Here you learn how a dog learns: the marker, the reward, the timing, and why punishment teaches the wrong thing.</p></li>
-    <li class="card"><h3>Writing it <em>up</em></h3><p>Here you turn what you found into pages other people can use. Issue 1 of the magazine is below; issue 2 is yours to write.</p></li>
+    <li class="card" style="--bg:url(assets/cards/cases.jpg)"><h3>Clinical <em>cases</em></h3><p>Here you take a real case, a lame horse, a coughing calf, a dog that will not eat, and work it the way a vet would: history, examination, tests, a diagnosis, a plan.</p></li>
+    <li class="card" style="--bg:url(assets/cards/suturing.jpg)"><h3><em>Suturing</em></h3><p>Here you learn to close a wound on a practice pad: which stitch, which knot, how tight, and why it matters which you choose.</p></li>
+    <li class="card" style="--bg:url(assets/cards/blood.jpg)"><h3>Taking <em>blood</em></h3><p>Here you find the vein and draw blood from a silicone mould with a tube running through it, then learn what a blood test can tell you and what it cannot.</p></li>
+    <li class="card" style="--bg:url(assets/cards/behaviour.jpg)"><h3>Animal <em>behaviour</em></h3><p>Here you read an animal: what a flattened ear, a swishing tail or a lowered head is telling you, and what it means for handling it safely.</p></li>
+    <li class="card" style="--bg:url(assets/cards/training.jpg)"><h3>Training a <em>dog</em></h3><p>Here you learn how a dog learns: the marker, the reward, the timing, and why punishment teaches the wrong thing.</p></li>
+    <li class="card" style="--bg:url(assets/cards/writing.jpg)"><h3>Writing it <em>up</em></h3><p>Here you turn what you found into pages other people can use. Issue 1 of the magazine is below; issue 2 is yours to write.</p></li>
   </ul>
 
   <!-- EDIT: ideas for the year. Each has a vote button; the count comes from the society's own
@@ -141,12 +153,12 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
        filed under, so if you rename an idea keep its data-idea or its votes start again. -->
   <div class="band"><span class="eyebrow">Ideas for this year</span><small>sign in below, then vote for the ones you want · the chair sees the count</small></div>
   <ul class="grid" id="ideas">
-    <li class="card" data-idea="meet-a-vet"><h3>Meet a <em>vet</em></h3><p>Dr Mompel knows several vets. If enough of you want it, one could come to a meeting, or have you shadow a clinic for a day. Their time is precious, so the interest has to be real, and you arrive with your questions written down.</p></li>
-    <li class="card" data-idea="wild-jeju"><h3>The wild animals of <em>Jeju</em></h3><p>Roe deer, the island’s birds, the bats in the lava tubes, what the sea washes up: who looks after Jeju’s wild animals when they are hurt, and what a vet can do for them.</p></li>
-    <li class="card" data-idea="one-health"><h3>One <em>Health</em></h3><p>Bird flu, rabies, brucellosis: diseases that move between animals and people. What a public-health worker actually does all day, and why a vet is one too.</p></li>
-    <li class="card" data-idea="inside"><h3>Inside the <em>animal</em></h3><p>Dissection, X-rays and scans: what is in there, how it works, and how it looks when it goes wrong.</p></li>
-    <li class="card" data-idea="first-aid"><h3>First aid for <em>pets</em></h3><p>The first ten minutes: bleeding, choking, heatstroke, a swallowed thing. What to do before the vet, and what not to.</p></li>
-    <li class="card" data-idea="debate"><h3>A <em>debate</em></h3><p>Should Jeju’s roe deer be culled? Should a school keep animals? Take a side, bring the evidence, and argue it.</p></li>
+    <li class="card" data-idea="meet-a-vet" style="--bg:url(assets/cards/meet.jpg)"><h3>Meet a <em>vet</em></h3><p>Dr Mompel knows several vets. If enough of you want it, one could come to a meeting, or have you shadow a clinic for a day. Their time is precious, so the interest has to be real, and you arrive with your questions written down.</p></li>
+    <li class="card" data-idea="wild-jeju" style="--bg:url(assets/cards/wild.jpg)"><h3>The wild animals of <em>Jeju</em></h3><p>Roe deer, the island’s birds, the bats in the lava tubes, what the sea washes up: who looks after Jeju’s wild animals when they are hurt, and what a vet can do for them.</p></li>
+    <li class="card" data-idea="one-health" style="--bg:url(assets/cards/onehealth.jpg)"><h3>One <em>Health</em></h3><p>Bird flu, rabies, brucellosis: diseases that move between animals and people. What a public-health worker actually does all day, and why a vet is one too.</p></li>
+    <li class="card" data-idea="inside" style="--bg:url(assets/cards/inside.jpg)"><h3>Inside the <em>animal</em></h3><p>Dissection, X-rays and scans: what is in there, how it works, and how it looks when it goes wrong.</p></li>
+    <li class="card" data-idea="first-aid" style="--bg:url(assets/cards/firstaid.jpg)"><h3>First aid for <em>pets</em></h3><p>The first ten minutes: bleeding, choking, heatstroke, a swallowed thing. What to do before the vet, and what not to.</p></li>
+    <li class="card" data-idea="debate" style="--bg:url(assets/cards/debate.jpg)"><h3>A <em>debate</em></h3><p>Should Jeju’s roe deer be culled? Should a school keep animals? Take a side, bring the evidence, and argue it.</p></li>
   </ul>
 
   <!-- Interested: sign in with the school Google account, say what you would like to do, and you
@@ -200,6 +212,8 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
   <footer class="foot">
     <p>Made by <strong>Dr Daniel Mompel Riera</strong> · NLCS Jeju · the page is the society’s to change</p>
     <p>The mark is a stethoscope drawn as a horse’s head, the chest piece its eye, made for the society. Island Immunity is the work of its writers, who hold the rights to it.</p>
+    <!-- EDIT: if you change a card's picture, change its line here. Every picture must be one you may use: public domain, CC0 or CC BY, and credited. -->
+    <details class="credits-box"><summary>Picture credits</summary><p id="picCredits"><a href="https://commons.wikimedia.org/wiki/File:U.S._Army_Capt._Brooke_Henderson%2C_a_veterinarian_with_the_993rd_Medical_Detachment%2C_U.S._Army_Reserve%2C_examines_a_Maltese_mix_puppy_April_18%2C_2012%2C_in_Nome%2C_Alaska%2C_before_the_dog%27s_scheduled_neutering_120418-F-ZH346-002.jpg" target="_blank" rel="noopener">Clinical cases — an Army Reserve veterinarian examines a puppy in Nome, Alaska; Maj Guy Hayes, US Air Force, public domain</a> · <a href="https://commons.wikimedia.org/wiki/File:Two_veterinarians_from_Veterinary_Readiness_Activity%2C_Rheinland_Pfalz_practicing_sutures_%288772602%29.jpg" target="_blank" rel="noopener">Suturing — veterinarians of Veterinary Readiness Activity Rheinland-Pfalz practising sutures; Michelle Thum, US Army Public Health Command Europe, public domain</a> · <a href="https://commons.wikimedia.org/wiki/File:Biological_Sample_Collection_%2851687833590%29.jpg" target="_blank" rel="noopener">Taking blood — a National Park Service veterinarian draws a blood sample; Grand Canyon National Park, CC BY 2.0</a> · <a href="https://commons.wikimedia.org/wiki/File:Dog_body_language_confident_upright_posture_alert_focused_dog.JPG" target="_blank" rel="noopener">Animal behaviour — a dog standing alert and confident; Gopal Aggarwal, CC BY 2.5</a> · <a href="https://commons.wikimedia.org/wiki/File:Airmen_conduct_military_working_dog_training_%284692751%29.jpg" target="_blank" rel="noopener">Training a dog — a military working dog and its handler in training, 52nd Security Forces Squadron; US Air Force, public domain</a> · Writing it up — the cover of Island Immunity, issue 1, by the society · <a href="https://commons.wikimedia.org/wiki/File:Dover_Air_Force_Base_Veterinarian_Treatment_Facility_150227-F-PT194-044.jpg" target="_blank" rel="noopener">Meet a vet — the Veterinary Treatment Facility at Dover Air Force Base; Airman 1st Class William Johnson, US Air Force, public domain</a> · <a href="https://commons.wikimedia.org/wiki/File:Capreolus_pygargus_384465298.jpg" target="_blank" rel="noopener">The wild animals of Jeju — a Siberian roe deer, Capreolus pygargus, the deer that lives on Jeju; Алина Урусова, CC BY 4.0</a> · <a href="https://commons.wikimedia.org/wiki/File:Chicken_vaccination_afghanistan.jpg" target="_blank" rel="noopener">One Health — a veterinarian vaccinates a chicken; Ben Barber, USAID, public domain</a> · <a href="https://commons.wikimedia.org/wiki/File:Plate_III_from_%27The_Anatomy_of_the_Horse%27_by_George_Stubbs%2C_1853.JPG" target="_blank" rel="noopener">Inside the animal — plate III of The Anatomy of the Horse, George Stubbs, 1766, in the 1853 printing; public domain</a> · <a href="https://commons.wikimedia.org/wiki/File:A_WWI_allied_soldier_bandages_the_paw_of_a_Red_Cross_working_dog_in_Flanders.jpg" target="_blank" rel="noopener">First aid for pets — a soldier bandages the paw of a Red Cross dog in Flanders, First World War; public domain</a> · <a href="https://commons.wikimedia.org/wiki/File:Zwei_Rehb%C3%B6cke_im_Kr%C3%A4ftemessen_%29_%28_Two_roe_deer_in_a_showdown_%28Explore%29_-_Flickr_-_K-PIXEL-N.jpg" target="_blank" rel="noopener">A debate — two roe bucks in a showdown; K-PIXEL-N, CC BY 4.0</a>.</p></details>
   </footer>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
