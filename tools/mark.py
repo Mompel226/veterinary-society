@@ -10,17 +10,25 @@ def path(cmds):
 
 # ---------- the head: a stethoscope that is a horse (local box ~0..400 x -10..425) ----------
 head_paths = [
-  dict(d=path([('M',(188,-4)), ('C',(174,34),(198,64),(234,72))]), width=9, colour=CREAM, at=0.00, seconds=.22),
-  dict(d=path([('M',(312,-2)), ('C',(320,38),(296,66),(262,72))]), width=9, colour=CREAM, at=0.12, seconds=.22),
+  # left ear: up the front edge to the tip, back down the rear edge to the poll
+  dict(d=path([('M',(230,74)), ('C',(214,48),(200,20),(196,-8)), ('C',(214,10),(234,40),(244,68))]), width=9, colour=CREAM, at=0.00, seconds=.25),
+  # right ear
+  dict(d=path([('M',(266,70)), ('C',(276,38),(290,14),(304,-4)), ('C',(306,24),(292,52),(276,74))]), width=9, colour=CREAM, at=0.10, seconds=.25),
+  # the tube: poll -> forehead -> nose -> muzzle -> lips -> jaw -> jowl -> cheek -> eye
   dict(d=path([('M',(248,72)),
                ('C',(238,108),(198,148),(160,190)), ('C',(128,226),(94,254),(66,282)),
                ('C',(44,304),(38,330),(56,344)),    ('C',(76,358),(104,352),(124,338)),
                ('C',(150,330),(196,338),(240,334)), ('C',(290,330),(326,296),(322,246)),
                ('C',(318,210),(288,178),(246,164))]), width=9, colour=CREAM, at=0.30, seconds=.95),
-  dict(d=path([('M',(300,66)), ('C',(350,102),(384,186),(388,300))]), width=6, colour=MOSS, at=0.55, seconds=.4),
-  dict(d=path([('M',(314,90)), ('C',(338,134),(346,196),(342,262))]), width=5, colour=MOSS, at=0.65, seconds=.35),
-  dict(d=path([('M',(330,118)), ('C',(354,162),(362,216),(360,278))]), width=5, colour=MOSS, at=0.75, seconds=.35),
+  # a forelock between the ears, and the mane down the crest
+  dict(d=path([('M',(252,70)), ('C',(238,84),(226,104),(222,124))]), width=5, colour=MOSS, at=0.5, seconds=.2),
+  dict(d=path([('M',(292,68)), ('C',(348,100),(384,180),(390,300))]), width=6, colour=MOSS, at=0.55, seconds=.4),
+  dict(d=path([('M',(300,92)), ('C',(332,132),(346,190),(344,258))]), width=5, colour=MOSS, at=0.62, seconds=.35),
+  dict(d=path([('M',(314,122)), ('C',(348,160),(362,214),(362,280))]), width=5, colour=MOSS, at=0.69, seconds=.35),
+  dict(d=path([('M',(326,160)), ('C',(364,200),(378,246),(380,300))]), width=5, colour=MOSS, at=0.76, seconds=.35),
+  # the throat, down from the jowl
   dict(d=path([('M',(300,326)), ('C',(320,352),(336,384),(346,420))]), width=6, colour=MOSS, at=0.95, seconds=.3),
+  # a nostril and the mouth
   dict(d=path([('M',(64,298)), ('C',(74,292),(84,294),(90,302))]), width=6, colour=CREAM, at=1.15, seconds=.18),
   dict(d=path([('M',(70,332)), ('C',(84,336),(98,336),(110,330))]), width=5, colour=CREAM, at=1.22, seconds=.18),
 ]
@@ -36,34 +44,32 @@ name_text = [
 
 # ---------- the pig, side on, facing left (local ~0..300 x 0..185) ----------
 pig_paths = [
-  dict(d=path([('M',(16,82)), ('C',(4,88),(4,100),(16,106)),                       # the snout
-               ('C',(22,112),(34,112),(44,108)),                                   # under the snout
-               ('C',(70,126),(120,142),(180,146)), ('C',(230,150),(268,142),(280,120)),  # the belly, back to the rump
-               ('C',(292,96),(288,66),(262,52)),                                   # the rump, up
-               ('C',(220,36),(160,34),(118,48)),                                   # the back
-               ('L',(100,22)), ('L',(88,58)),                                      # the ear, up and back down
-               ('C',(60,60),(30,66),(16,82))]), width=5, colour=MOSS, at=1.25, seconds=.7),
-  dict(d=path([('M',(266,60)), ('C',(286,44),(300,62),(284,72)), ('C',(276,76),(276,64),(284,62))]), width=4, colour=MOSS, at=1.85, seconds=.25),  # the curl of the tail
-  dict(d=path([('M',(64,124)), ('L',(60,176)), ('M',(96,138)), ('L',(94,180)), ('M',(196,146)), ('L',(198,182)), ('M',(246,140)), ('L',(250,178))]), width=5, colour=MOSS, at=1.95, seconds=.3),  # four legs
-  dict(d=path([('M',(10,92)), ('C',(12,88),(16,88),(18,92)), ('M',(10,100)), ('C',(12,96),(16,96),(18,100))]), width=3, colour=MOSS, at=2.15, seconds=.15),  # the two nostrils
+  # the body, one round shape that is also the head
+  dict(d=path([('M',(72,64)), ('C',(112,32),(222,32),(262,66)), ('C',(292,92),(290,140),(258,158)),
+               ('C',(220,176),(112,176),(74,152)), ('C',(46,134),(44,86),(72,64))]), width=5, colour=MOSS, at=1.25, seconds=.6),
+  # the snout: a disc on the front
+  dict(d=path([('M',(46,96)), ('C',(30,98),(28,124),(46,126)), ('C',(62,128),(64,94),(46,96))]), width=4, colour=MOSS, at=1.8, seconds=.2),
+  dict(d=path([('M',(40,106)), ('L',(40,108)), ('M',(40,116)), ('L',(40,118))]), width=5, colour=MOSS, at=1.95, seconds=.08),   # the nostrils
+  dict(d=path([('M',(60,134)), ('C',(70,142),(82,140),(90,132))]), width=4, colour=MOSS, at=2.0, seconds=.12),                  # the mouth
+  dict(d=path([('M',(102,54)), ('L',(112,20)), ('L',(140,50))]), width=5, colour=MOSS, at=2.05, seconds=.2),                    # the ear
+  dict(d=path([('M',(274,86)), ('C',(300,70),(306,100),(288,104)), ('C',(278,104),(278,92),(288,90))]), width=4, colour=MOSS, at=2.2, seconds=.25),  # the curl of the tail
+  dict(d=path([('M',(102,172)), ('L',(102,190)), ('M',(130,175)), ('L',(130,190)), ('M',(200,175)), ('L',(200,190)), ('M',(232,170)), ('L',(234,190))]), width=5, colour=MOSS, at=2.4, seconds=.25),  # four legs
 ]
-pig_marks = [ dict(cx=50, cy=76, r=4, fill=MOSS, at=2.2) ]
+pig_marks = [ dict(cx=78, cy=86, r=4, fill=MOSS, at=2.55) ]
 
 # ---------- the hen, side on, facing left (local ~0..230 x 0..200) ----------
 hen_paths = [
-  dict(d=path([('M',(8,74)), ('L',(30,66)),                                        # the beak
-               ('C',(34,52),(44,44),(58,46)),                                      # the head
-               ('C',(80,44),(120,48),(150,70)),                                    # the neck and the back
-               ('C',(168,76),(178,84),(182,96)),                                   # the tail root
-               ('C',(184,130),(150,158),(104,156)),                                # the belly
-               ('C',(72,154),(50,130),(46,104)),                                   # the breast
-               ('C',(44,92),(38,84),(30,84)), ('L',(8,74))]), width=5, colour=MOSS, at=1.55, seconds=.6),
-  dict(d=path([('M',(178,90)), ('C',(196,60),(216,50),(226,30)), ('M',(180,96)), ('C',(206,78),(222,72),(230,60)), ('M',(182,102)), ('C',(204,96),(218,96),(226,90))]), width=4, colour=MOSS, at=2.05, seconds=.3),  # the tail feathers
-  dict(d=path([('M',(50,48)), ('C',(52,36),(60,34),(62,42)), ('C',(66,32),(74,32),(76,42)), ('C',(80,34),(88,36),(88,46))]), width=4, colour=MOSS, at=2.25, seconds=.2),  # the comb
-  dict(d=path([('M',(96,156)), ('L',(96,184)), ('M',(84,186)), ('L',(108,186)), ('M',(122,154)), ('L',(124,184)), ('M',(112,186)), ('L',(136,186))]), width=4, colour=MOSS, at=2.35, seconds=.25),  # legs and feet
-  dict(d=path([('M',(34,84)), ('C',(30,94),(36,100),(42,94))]), width=3, colour=MOSS, at=2.5, seconds=.12),   # the wattle
+  # the body, an egg lying on its side; the head sits on a short neck at its front
+  dict(d=path([('M',(92,70)), ('C',(126,48),(180,58),(188,104)), ('C',(194,144),(156,168),(112,166)),
+               ('C',(72,164),(46,140),(50,106)), ('C',(54,86),(70,74),(92,70))]), width=5, colour=MOSS, at=1.55, seconds=.55),
+  dict(d=path([('M',(72,80)), ('C',(54,60),(58,26),(84,18)), ('C',(110,10),(128,30),(118,54)), ('C',(112,68),(100,72),(92,70))]), width=5, colour=MOSS, at=2.05, seconds=.3),  # the head
+  dict(d=path([('M',(62,36)), ('L',(38,44)), ('L',(62,52))]), width=4, colour=MOSS, at=2.3, seconds=.12),   # the beak
+  dict(d=path([('M',(80,20)), ('C',(78,4),(90,2),(92,14)), ('C',(96,0),(110,2),(108,16)), ('C',(114,8),(124,12),(122,26))]), width=4, colour=MOSS, at=2.4, seconds=.2),  # the comb
+  dict(d=path([('M',(68,56)), ('C',(62,70),(76,76),(82,64))]), width=3, colour=MOSS, at=2.55, seconds=.1),   # the wattle
+  dict(d=path([('M',(180,80)), ('C',(198,54),(214,46),(228,32)), ('M',(186,90)), ('C',(208,76),(224,76),(236,70)), ('M',(188,102)), ('C',(208,100),(222,106),(230,114))]), width=4, colour=MOSS, at=2.6, seconds=.3),  # the tail
+  dict(d=path([('M',(104,166)), ('L',(104,190)), ('M',(92,192)), ('L',(118,192)), ('M',(130,165)), ('L',(132,190)), ('M',(120,192)), ('L',(146,192))]), width=4, colour=MOSS, at=2.85, seconds=.2),  # legs and feet
 ]
-hen_marks = [ dict(cx=46, cy=58, r=3.5, fill=MOSS, at=2.55) ]
+hen_marks = [ dict(cx=94, cy=36, r=4, fill=MOSS, at=3.0) ]
 
 # ---------- the cow, head on (local ~0..280 x 0..300) ----------
 cow_paths = [
