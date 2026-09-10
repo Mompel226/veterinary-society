@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/mark.svg" alt="The Veterinary Society mark: a stethoscope drawn as a horse’s head, with a pig, a hen and a cow beside the name" width="100%">
+<img src="assets/mark.svg" alt="The Veterinary Society mark: a horse’s head drawn in one line, with a pig, a hen and a cow beside the name" width="100%">
 
 <br>
 
@@ -80,9 +80,8 @@ steps 2 to 6 again there, and paste the new address into `config.js`. That is al
 | `assets/` | the magazine, its cover, the pictures behind the cards, and the mark |
 | `tools/mark.py` | the numbers the mark is drawn from |
 
-The mark is a stethoscope drawn as a horse’s head: the ear tubes are the ears, the tube runs
-round the muzzle and up the cheek, and the chest piece is the eye. The pig, the hen and the cow
-are the magazine’s other animals.
+The mark is a horse’s head drawn in one line, from the poll round the muzzle and up the cheek to
+the eye, with a forelock and mane. The pig, the hen and the cow are the magazine’s other animals.
 
 </details>
 
