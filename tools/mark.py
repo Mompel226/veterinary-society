@@ -1,4 +1,6 @@
 # The Veterinary Society mark, in two arrangements on one 1800x614 plate.
+# Every stroke scales with the drawing (no vector-effect): the lines are part of the proportion, and a
+# stroke fixed in screen pixels made the header and the phone strip heavy and filled the ears solid.
 #   shut: the head and the name, small, in the band a shut door shows (y 219-395)
 #   open: the head big at the left beside the words, the name in the middle, and the magazine's
 #         other three animals — pig, hen, cow — drawing themselves in on the right.
@@ -8,7 +10,7 @@ CREAM, MOSS, AMBER = '#F3E7C9', '#9DB7AE', '#F5A623'
 def path(cmds):
     return ' '.join(c[0] + ' ' + ' '.join(f'{x:.0f} {y:.0f}' for x, y in c[1:]) for c in cmds)
 
-# ---------- the head: a stethoscope that is a horse (local box ~0..400 x -10..425) ----------
+# ---------- the head: a horse in one line (local box ~0..400 x -10..425) ----------
 head_paths = [
   # left ear: up the front edge to the tip, back down the rear edge to the poll
   dict(d=path([('M',(230,74)), ('C',(214,48),(200,20),(196,-8)), ('C',(214,10),(234,40),(244,68))]), width=9, colour=CREAM, at=0.00, seconds=.25),
@@ -96,12 +98,12 @@ groups = [
 def inner(g, cls=True):
     out = ''
     for p in g.get('paths', []):
-        out += (f'<path{" class=\"mo-draw\"" if cls else ""} pathLength="1000" vector-effect="non-scaling-stroke" d="{p["d"]}" fill="none" '
+        out += (f'<path{" class=\"mo-draw\"" if cls else ""} pathLength="1000" d="{p["d"]}" fill="none" '
                 f'stroke="{p["colour"]}" stroke-width="{p["width"]}" stroke-linecap="round" stroke-linejoin="round" '
                 f'style="--t:{p["seconds"]}s;--wait:{p["at"]:.2f}s"/>')
     for m in g.get('marks', []):
         out += (f'<g{" class=\"mo-pop\"" if cls else ""} style="--wait:{m["at"]:.2f}s"><circle cx="{m["cx"]}" cy="{m["cy"]}" r="{m["r"]}" '
-                f'fill="{m.get("fill","none")}" stroke="{m.get("colour","none")}" stroke-width="{m.get("width",0)}" vector-effect="non-scaling-stroke"/></g>')
+                f'fill="{m.get("fill","none")}" stroke="{m.get("colour","none")}" stroke-width="{m.get("width",0)}"/></g>')
     for x in g.get('text', []):
         out += (f'<text{" class=\"mo-fade\"" if cls else ""} style="--wait:{x["at"]:.2f}s" x="{x["x"]}" y="{x["y"]}" font-family="{x["family"]}" '
                 f'font-size="{x["size"]}" font-style="{x.get("style","normal")}" font-weight="{x.get("weight",400)}" '
@@ -121,11 +123,11 @@ HEAD = '<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="https:
 mode = sys.argv[1]
 if mode == 'draft-open':  print(HEAD + svg('open'))
 elif mode == 'draft-shut': print(HEAD + svg('shut', guides=True))
-elif mode == 'json':       print(json.dumps(dict(groups=groups), ensure_ascii=False))
+elif mode == 'json':       print(json.dumps(dict(scaleStrokes=True, groups=groups), ensure_ascii=False))   # scaleStrokes: the hub draws these without vector-effect too
 elif mode == 'header':
     # the head and the name only, in their open places, for the top of the society's page
     body = ''.join(f'<g transform="translate({g["open"]["x"]} {g["open"]["y"]}) scale({g["open"]["s"]})">{inner(g)}</g>' for g in groups if g['id'] in ('head', 'name'))
-    print(f'<svg class="mark" viewBox="0 20 1110 580" role="img" aria-label="The Veterinary Society mark: a stethoscope drawn as a horse’s head, the chest piece its eye">{body}</svg>')
+    print(f'<svg class="mark" viewBox="0 20 1110 580" role="img" aria-label="The Veterinary Society mark: a horse’s head drawn in one line, beside the words Veterinary Society, NLCS Jeju">{body}</svg>')
 elif mode == 'svgfile':
     # a standalone file of the finished mark, open arrangement, for the README and anywhere else
     body = ''.join(f'<g transform="translate({g["open"]["x"]} {g["open"]["y"]}) scale({g["open"]["s"]})">{inner(g, cls=False)}</g>' for g in groups)
@@ -135,4 +137,4 @@ elif mode == 'svgfile':
 elif mode == 'page':
     # the page shows the open arrangement, drawing itself once on load
     body = ''.join(f'<g transform="translate({g["open"]["x"]} {g["open"]["y"]}) scale({g["open"]["s"]})">{inner(g)}</g>' for g in groups)
-    print(f'<svg class="mark" viewBox="0 0 1800 614" role="img" aria-label="The Veterinary Society mark: a stethoscope drawn as a horse’s head, the chest piece its eye, with a pig, a hen and a cow beside the name">{body}</svg>')
+    print(f'<svg class="mark" viewBox="0 0 1800 614" role="img" aria-label="The Veterinary Society mark: a horse’s head drawn in one line, with a pig, a hen and a cow beside the name">{body}</svg>')
