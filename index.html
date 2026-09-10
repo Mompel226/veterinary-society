@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..600&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500&display=swap">
 <style>
-:root{--ink:#12262B;--cream:#F3E7C9;--moss:#9DB7AE;--amber:#F5A623;--chalk:#EDF4F8;--dim:#A9BECB;--mute:#7F94A2;--rule:rgba(255,255,255,.09);--green:#4ADE80;
+:root{--ink:#12262B;--cream:#F3E7C9;--moss:#9DB7AE;--amber:#F5A623;--chalk:#EDF4F8;--dim:#A9BECB;--mute:#7F94A2;--rule:rgba(255,255,255,.09);--green:#4ADE80;--sky:#7CCBE6;
   --serif:Fraunces,"Iowan Old Style",Georgia,serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;--sans:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;--ease:cubic-bezier(.22,.61,.36,1)}
 *{box-sizing:border-box} html{color-scheme:dark} [hidden]{display:none!important}
 body{margin:0;font-family:var(--sans);font-size:15.5px;line-height:1.6;color:var(--chalk);background:var(--ink);
@@ -45,28 +45,35 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 @keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 .still .mo-draw,.still .mo-pop,.still .mo-fade{animation:none}
-.band{display:flex;align-items:center;gap:12px;margin-top:34px} .band::after{content:"";flex:1;height:1px;background:var(--rule)}
-.band small{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--mute)}
+/* section bands: each section has a colour — sky for what we do, amber for the ideas, green for
+   joining and voting, cream for the magazine — carried by the heading, the dot before it, the
+   fading rule after it, and a line along the top of that section's cards */
+.do{--band:var(--sky)} .ideas{--band:var(--amber)} .join-band{--band:var(--green)} .mag-band{--band:var(--cream)}
+.band{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px 14px;margin-top:44px}
+.band::before{content:"";align-self:center;width:10px;height:10px;border-radius:50%;background:var(--band,var(--dim));box-shadow:0 0 0 4px color-mix(in srgb,var(--band,var(--dim)) 22%,transparent)}
+.band::after{content:"";flex:1;align-self:center;height:1px;background:linear-gradient(90deg,color-mix(in srgb,var(--band,var(--dim)) 55%,transparent),var(--rule))}
+.band h2{font-family:var(--serif);font-size:clamp(24px,2.7vw,32px);font-weight:400;line-height:1.1;letter-spacing:-.01em;color:var(--band,var(--chalk))}
+.band small{font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;color:var(--dim)}
 /* what we do: one card per thing, in the second person. Each carries a photograph across the
    top — set on the card as style="--bg:url(assets/cards/name.jpg)" — that fades into the card
    where the words begin, so the picture shows whole and the words sit on the card's own ground.
    Any well-framed landscape photograph works; nothing needs positioning. */
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin-top:14px}
 .card{position:relative;isolation:isolate;overflow:hidden;
-  border:1px solid var(--rule);border-radius:6px;padding:168px 18px 18px;background:#0F2024;transition:border-color .2s,transform .2s}
+  border:1px solid var(--rule);border-top:3px solid var(--band,var(--rule));border-radius:6px;padding:168px 18px 18px;background:#0F2024;transition:border-color .2s,transform .2s}
 .card::before{content:"";position:absolute;left:0;right:0;top:0;height:210px;z-index:-1;
   background:var(--bg,none) center/cover no-repeat;
   -webkit-mask-image:linear-gradient(#000 64%,transparent);mask-image:linear-gradient(#000 64%,transparent);
   transform:scale(1.02);transition:transform 1.4s var(--ease)}
-.card:hover{border-color:rgba(245,166,35,.45);transform:translateY(-2px)}
+.card:hover{border-color:rgba(245,166,35,.45);border-top-color:var(--band,rgba(245,166,35,.45));transform:translateY(-2px)}
 .card:hover::before{transform:scale(1.07)}
 .card h3{font-family:var(--serif);font-size:20px;font-weight:400;line-height:1.2;padding-right:70px} .card h3 em{font-style:italic;color:var(--amber)}
 .card p{margin-top:8px;color:#D7E3EA;font-size:14.5px}
-.card .vote{z-index:1;background:rgba(7,15,21,.7)}
+.card .vote{z-index:1}
 /* a vote: the count, and a button that is lit when the vote is yours */
-.vote{position:absolute;top:12px;right:12px;display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;
-  color:var(--dim);border:1px solid rgba(169,190,203,.35);border-radius:999px;padding:4px 10px;background:rgba(7,15,21,.5);transition:.18s}
-.vote::before{content:"\25B2";font-size:9px} .vote:hover{color:var(--chalk);border-color:rgba(245,166,35,.6)}
+.vote{position:absolute;top:12px;right:12px;display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.08em;
+  color:#06140B;border:1px solid var(--green);border-radius:999px;padding:6px 13px;background:var(--green);box-shadow:0 2px 10px rgba(0,0,0,.45);transition:.18s}
+.vote::before{content:"\25B2";font-size:10px} .vote:hover{background:#8AF0AE;border-color:#8AF0AE;transform:translateY(-1px)}
 .vote.is-mine{color:#1B1206;background:var(--amber);border-color:var(--amber)}
 .vote:disabled{opacity:.5;cursor:default}
 /* the magazine: the cover stands exactly as tall as the words beside it (a few lines of script below) */
@@ -139,8 +146,8 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 
   <!-- EDIT: what the society does. One card each, written to the person reading: "here you…".
        Copy a whole <li class="card">…</li> to add one; delete one to remove it. -->
-  <div class="band"><span class="eyebrow">What we do</span></div>
-  <ul class="grid">
+  <div class="band do"><h2>What we do</h2></div>
+  <ul class="grid do">
     <li class="card" style="--bg:url(assets/cards/cases.jpg)"><h3>Clinical <em>cases</em></h3><p>Here you take a real case, a lame horse, a coughing calf, a dog that will not eat, and work it the way a vet would: history, examination, tests, a diagnosis, a plan.</p></li>
     <li class="card" style="--bg:url(assets/cards/suturing.jpg)"><h3><em>Suturing</em></h3><p>Here you learn to close a wound on a practice pad: which stitch, which knot, how tight, and why it matters which you choose.</p></li>
     <li class="card" style="--bg:url(assets/cards/blood.jpg)"><h3>Taking <em>blood</em></h3><p>Here you find the vein and draw blood from a silicone mould with a tube running through it, then learn what a blood test can tell you and what it cannot.</p></li>
@@ -152,8 +159,8 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
   <!-- EDIT: ideas for the year. Each has a vote button; the count comes from the society's own
        sheet. Keep data-idea short, letters and hyphens only, and unique — it is what a vote is
        filed under, so if you rename an idea keep its data-idea or its votes start again. -->
-  <div class="band"><span class="eyebrow">Ideas for this year</span><small>sign in below, then vote for the ones you want · the chair sees the count</small></div>
-  <ul class="grid" id="ideas">
+  <div class="band ideas"><h2>Ideas for this year</h2><small>sign in below, then vote for the ones you want · the chair sees the count</small></div>
+  <ul class="grid ideas" id="ideas">
     <li class="card" data-idea="meet-a-vet" style="--bg:url(assets/cards/meet.jpg)"><h3>Meet a <em>vet</em></h3><p>Dr Mompel knows several vets. If enough of you want it, one could come to a meeting, or have you shadow a clinic for a day. Their time is precious, so the interest has to be real, and you arrive with your questions written down.</p></li>
     <li class="card" data-idea="wild-jeju" style="--bg:url(assets/cards/wild.jpg)"><h3>The wild animals of <em>Jeju</em></h3><p>Roe deer, the island’s birds, the bats in the lava tubes, what the sea washes up: who looks after Jeju’s wild animals when they are hurt, and what a vet can do for them.</p></li>
     <li class="card" data-idea="one-health" style="--bg:url(assets/cards/onehealth.jpg)"><h3>One <em>Health</em></h3><p>Bird flu, rabies, brucellosis: diseases that move between animals and people. What a public-health worker actually does all day, and why a vet is one too.</p></li>
@@ -165,7 +172,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
   <!-- Interested: sign in with the school Google account, say what you would like to do, and you
        are on the list and can vote. The list shows names and years only. EDIT the chair's name
        and address here when the chair changes. -->
-  <div class="band"><span class="eyebrow">Interested?</span><small id="listCount"></small></div>
+  <div class="band join-band"><h2>Interested?</h2><small id="listCount"></small></div>
   <div class="join">
     <div class="panel">
       <h3>Put your name down</h3>
@@ -188,7 +195,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 
   <!-- EDIT: the magazine. To add issue 2: put the PDF in assets/, make a cover picture (see the
        README), copy this whole <section class="mag">, and change the words. -->
-  <div class="band"><span class="eyebrow">The magazine</span></div>
+  <div class="band mag-band"><h2>The magazine</h2></div>
   <section class="mag">
     <a class="cover" href="assets/Island-Immunity-1.pdf" target="_blank" rel="noopener" aria-label="Open Island Immunity, issue 1, as a PDF">
       <picture>
