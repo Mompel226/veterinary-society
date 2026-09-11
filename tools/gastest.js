@@ -584,35 +584,81 @@ section('choosing the Classroom class');
 }
 
 section('is the website able to read this?');
+/* the fake internet: config.js on the site, and each deployment's own answer */
+function web(G, opts) {
+  G.UrlFetchApp.fetch = (url, o) => {
+    G.__fetches.push(url);
+    if (url.indexOf('config.js') > 0) {
+      if (!opts.configJs) return { getResponseCode: () => 404, getContentText: () => 'no' };
+      return { getResponseCode: () => 200, getContentText: () => "window.VETSOC_CONFIG={scriptUrl: '" + opts.configJs + "'};" };
+    }
+    if (url.indexOf('script.google.com') === 0 || url.indexOf('script.google.com') > 0) {
+      var id = (/\/s\/([^\/]+)\//.exec(url) || [])[1];
+      var good = opts.open && opts.open.indexOf(id) >= 0;
+      return { getResponseCode: () => (good ? 200 : 404), getContentText: () => (good ? '{"ok":true,"members":[]}' : '<!DOCTYPE html>') };
+    }
+    const m = /id_token=([^&]+)/.exec(url); const t = G.__tokens[decodeURIComponent(m ? m[1] : '')];
+    return { getResponseCode: () => (t ? 200 : 400), getContentText: () => JSON.stringify(t || {}) };
+  };
+}
+const OPEN = 'https://script.google.com/macros/s/AKfyOPEN000000/exec';
+const SHUT = 'https://script.google.com/macros/s/AKfySHUT000000/exec';
 {
   const { G, api } = seeded();
   api.checkWebApp();
   ok('undeployed: it says how to deploy', G.__dialogs.map(d => d.html).join(' ').includes('New deployment'));
 }
 {
+  /* the happy case: the website calls the deployment that answers */
   const { G, api } = seeded();
-  G.__webAppUrl = 'https://script.google.com/a/macros/nlcsjeju.kr/s/AKfy123/exec';
-  G.__webReply = { getResponseCode: () => 401, getContentText: () => '<!DOCTYPE html><html lang="ko">' };
+  G.__webAppUrl = OPEN;
+  web(G, { configJs: OPEN, open: ['AKfyOPEN000000'] });
   api.checkWebApp();
   const said = G.__dialogs.map(d => d.html).join(' ');
-  ok('a locked deployment is named as such', said.includes('carrying no sign-in'), said.slice(0, 200));
-  ok('and it names the deployment it asked', said.includes('AKfy123') || said.includes('…'), said.slice(0, 200));
-  ok('it says Google’s own answer', said.includes('Google answered 401'));
-  ok('it separates a wrong deployment from a school that forbids it',
-     said.includes('different</b> deployment') && said.includes('Workspace setting'));
-  ok('the address it offers is the plain one', said.includes('script.google.com/macros/s/AKfy123/exec') && !said.includes('/a/macros/'));
-  ok('and it asked as a stranger would, following nothing', G.__fetches.some(u => u.indexOf('/a/macros/') < 0 && u.indexOf('action=list') > 0));
+  ok('it says the website is reading it', said.includes('reading the register'), said.slice(0, 200));
+  ok('and it asked the site for its own config.js', G.__fetches.some(u => u.indexOf('config.js') > 0));
 }
 {
+  /* Daniel's case: config.js points at one deployment, the script's newest is another */
   const { G, api } = seeded();
-  G.__webAppUrl = 'https://script.google.com/macros/s/AKfy123/exec';
-  G.__webReply = { getResponseCode: () => 200, getContentText: () => '{"ok":true,"members":[]}' };
+  G.__webAppUrl = SHUT;
+  web(G, { configJs: OPEN, open: ['AKfyOPEN000000'] });
   api.checkWebApp();
   const said = G.__dialogs.map(d => d.html).join(' ');
-  ok('an open deployment is called working', said.includes('can read the register'), said.slice(0, 200));
-  ok('and hands over the address for config.js', said.includes('https://script.google.com/macros/s/AKfy123/exec'));
-  ok('with a button to copy it', said.includes('Copy the address'));
-  ok('drawn in the society’s colours, with its mark', said.includes('#12262B') && said.includes('<svg'));
+  ok('the working one is what counts, not the newest', said.includes('reading the register'), said.slice(0, 240));
+  ok('and the other is named, to archive', said.includes('AKfySHUT00') && said.includes('Archive'));
+}
+{
+  /* the reverse: config.js is stale and points at a dead deployment */
+  const { G, api } = seeded();
+  G.__webAppUrl = OPEN;
+  web(G, { configJs: SHUT, open: ['AKfyOPEN000000'] });
+  api.checkWebApp();
+  const said = G.__dialogs.map(d => d.html).join(' ');
+  ok('it says there are two', said.includes('Two different deployments') || said.includes('New deployment</b> makes a new address'), said.slice(0, 240));
+  ok('it names the one the website calls', said.includes('AKfySHUT00'));
+  ok('and offers the one that works', said.includes(OPEN) && said.includes('Copy the address'));
+}
+{
+  /* nothing answers at all */
+  const { G, api } = seeded();
+  G.__webAppUrl = SHUT;
+  web(G, { configJs: SHUT, open: [] });
+  api.checkWebApp();
+  const said = G.__dialogs.map(d => d.html).join(' ');
+  ok('it reports Google’s answer', said.includes('Google answered 404'), said.slice(0, 200));
+  ok('it tells him to archive the spares', said.includes('more than one'));
+  ok('and names the school as the other possibility', said.includes('Workspace setting'));
+}
+{
+  /* the site is not published yet, so config.js cannot be read */
+  const { G, api } = seeded();
+  G.__webAppUrl = OPEN;
+  web(G, { configJs: '', open: ['AKfyOPEN000000'] });
+  api.checkWebApp();
+  const said = G.__dialogs.map(d => d.html).join(' ');
+  ok('it still checks its own deployment', said.includes('answers a visitor'), said.slice(0, 200));
+  ok('and says why it could not check the site', said.includes('could not read'));
 }
 
 section('when Google will not say who you are');
