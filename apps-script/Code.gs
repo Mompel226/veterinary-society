@@ -59,8 +59,9 @@ var DATA_ROW = 3;                     /* row 1 headings and dates, row 2 notes a
 var SITE = 'https://nlcsbiology.com/veterinary-society/';
 var DOMAINS = ['pupils.nlcsjeju.kr', 'nlcsjeju.kr'];
 var PUPILS = '@pupils.nlcsjeju.kr';     /* what a bare name in the Email column means */
-var S_CLIENT = 'Google Client ID', S_COURSE = 'Classroom course ID', S_POST = 'Post the next meeting to Google Classroom',
+var S_CLIENT = 'Google Client ID', S_COURSE = 'Classroom course ID',
     S_LAST = 'Last posted', S_SITE = 'The website', S_READ = 'Last read by the website';
+var WANT_POST = 'postWanted';        /* a chair asking for an announcement a teacher will make */
 var CACHE_KEY = 'list-v2', CACHE_SECONDS = 600;
 var YEARS = ['Y7', 'Y8', 'Y9', 'Y10', 'Y11', 'Y12', 'Y13', 'Teacher'];
 /* a teacher is known by a title and a surname, not by a first name: Dr Mompel Riera, not Daniel */
@@ -99,6 +100,7 @@ function panel() {
   var when = next ? Utilities.formatDate(next.date, tz, 'EEEE d MMMM') + (_hasTime(next.date) ? ', ' + Utilities.formatDate(next.date, tz, 'HH:mm') : '') : '';
   var members = reg.members.filter(function (p) { return !p.staff; }).length;
   var staff = reg.members.length - members;
+  var lastPost = String(_setting(S_LAST) || ''), site = String(_setting(S_SITE) || SITE);
   var body =
     '<p class="eyebrow">Next meeting</p>' +
     (next ? '<p style="font:600 16px/1.3 Georgia,serif;color:#EDF4F8;margin:2px 0 4px">' + when + '</p>' +
@@ -115,6 +117,9 @@ function panel() {
     '<button class="btn quiet" data-do="syncClassroom">🎒  Update the class</button>' +
     '<button class="btn quiet" data-do="dress">✨  Tidy the sheet</button>' +
     '</div><p class="note" id="s" style="margin-top:12px"></p>' +
+    '<p class="note" style="margin-top:10px;border-top:1px solid rgba(255,255,255,.10);padding-top:10px">' +
+    (lastPost ? 'Last told the class: ' + lastPost + '<br>' : '') +
+    '<a href="' + site + '" target="_blank" style="color:#F5A623">open the society\u2019s page \u2197</a></p>' +
     '<script>var s=document.getElementById("s");' +
     'Array.prototype.forEach.call(document.querySelectorAll("[data-do]"),function(b){' +
     'b.addEventListener("click",function(){s.textContent="Working…";' +
@@ -126,33 +131,57 @@ function panel() {
   } catch (e) { _ui('The panel needs the spreadsheet open in front of you.'); }
 }
 
-/* posting straight away — a teacher may; the chair ticks the box in Settings and the teacher's
-   trigger does it for them */
+/* Posting straight away: a teacher may. A chair may not — Google only lets a teacher of the
+   class announce — so their press leaves a request, and the teacher's timer makes the post a few
+   minutes later, under the teacher's name. Nobody has to tick anything. */
 function postNow() {
-  try { announce(_me()); _say('Posted', '<p class="ok">The announcement is in Google Classroom.</p>' +
-    '<p class="note">Google Classroom shows it to the class straight away.</p>', 240); }
-  catch (e) {
-    if (_isScopeTrouble(e)) { _say('One permission short', _scopeHelp('post to Google Classroom'), 560); return; }
-    _say('Not posted', '<p class="warn">' + e.message + '</p>' +
-      '<p>If it says you may not post: only a teacher of the class can announce. Tick <b>Post the next meeting to Google Classroom</b> in the <b>Settings</b> tab (cell B4) instead — the teacher who installed the triggers posts it for you.</p>', 300);
+  try {
+    announce(_me());
+    _say('Posted', '<p class="ok">The announcement is in Google Classroom.</p><p class="note">The class sees it straight away.</p>', 240);
+    return 'Posted to Google Classroom.';
+  } catch (e) {
+    if (_isScopeTrouble(e)) { _say('One permission short', _scopeHelp('post to Google Classroom')); return 'One permission short.'; }
+    if (/permission|not allowed|forbidden|403/i.test(e.message)) {
+      try { CacheService.getScriptCache().put(WANT_POST, _me() || 'the chair', 21600); } catch (e2) {}
+      _log('Announcement asked for by ' + (_me() || 'the chair'), _me());
+      _say('Asked for',
+        '<p>Only a teacher of the class may announce in Google Classroom, so this has been <b>asked for</b> instead.</p>' +
+        '<p class="ok">Dr Mompel\u2019s computer will post it within a few minutes.</p>' +
+        '<p class="note">Nothing else to do. You can close this.</p>', 280);
+      return 'Asked a teacher to post it.';
+    }
+    _say('Not posted', '<p class="warn">' + e.message + '</p>', 260);
+    return 'Not posted: ' + e.message;
   }
+}
+/* the teacher's timer: has anybody asked for an announcement since it last looked? */
+function postPending() {
+  var cache;
+  try { cache = CacheService.getScriptCache(); } catch (e) { return; }
+  var who = cache.get(WANT_POST);
+  if (!who) return;
+  cache.remove(WANT_POST);
+  try { announce(who); }
+  catch (e) { _log('Could not post the announcement ' + who + ' asked for: ' + e.message, _me()); }
 }
 
 function setup() {
   var ss = SpreadsheetApp.getActive();
   var reg = ss.getSheetByName(T_REG) || ss.insertSheet(T_REG, 0);
   if (reg.getLastRow() < 1) { reg.appendRow(HEAD); reg.appendRow(NOTE); }
-  _tab(ss, T_VOTES, ['When', 'Email', 'Idea']);
+  _tab(ss, T_VOTES, ['When', 'Email', 'Idea', 'In words']);
   _tab(ss, T_LOG, ['When', 'What', 'By']);
   var st = ss.getSheetByName(T_SET) || ss.insertSheet(T_SET);
   if (st.getLastRow() < 1) st.appendRow(['Setting', 'Type it here \u2192', 'What it is for']);
-  var want = [[S_CLIENT, CLIENT_ID], [S_COURSE, ''], [S_POST, false], [S_LAST, ''], [S_READ, ''], [S_SITE, SITE]];
+  var want = [[S_CLIENT, CLIENT_ID], [S_COURSE, ''], [S_LAST, ''], [S_READ, ''], [S_SITE, SITE]];
   want.forEach(function (kv) {
     var row = _settingRow(st, kv[0]);
     if (!row) { st.appendRow(kv); row = st.getLastRow(); }
-    if (kv[0] === S_POST) st.getRange(row, 2).insertCheckboxes();
     if (kv[0] === S_CLIENT && !String(st.getRange(row, 2).getValue()).trim()) st.getRange(row, 2).setValue(CLIENT_ID);
   });
+  /* the tick box that used to live here is a button in the panel now */
+  var oldBox = _settingRow(st, 'Post the next meeting to Google Classroom');
+  if (oldBox) st.deleteRow(oldBox);
   _startHere(ss);
   _stampJoined(reg);
   dress();
@@ -166,38 +195,49 @@ function setup() {
 function _startHere(ss) {
   var sh = ss.getSheetByName(T_START) || ss.insertSheet(T_START, 0);
   sh.clear();
+  /* the left column is coloured by what the line is: the society's ink for a heading, its amber
+     for a thing to do, paper for the words beside it */
   var lines = [
-    ['Veterinary Society — the sheet behind the website', ''],
-    ['', ''],
-    ['What this sheet is', 'The society\u2019s own register. The website reads it: when the next meeting is, what it will be, and who came to the ones before. It shows first names and year groups only — addresses and surnames stay here.'],
-    ['', ''],
-    ['Every week', ''],
-    ['1. Add the meeting', 'Menu ▸ Veterinary Society ▸ Add the next meeting. Type the date and what you will do. A new column appears on the Register tab.'],
-    ['2. Tell the class', 'Settings tab ▸ tick "Post the next meeting to Google Classroom". It posts, then unticks itself.'],
-    ['3. After the meeting', 'Register tab ▸ tick the box for everyone who came. A ticked box turns green.'],
-    ['', ''],
-    ['Once, to switch it on', ''],
-    ['4. Say where announcements go', 'Menu ▸ Choose the Classroom class.'],
-    ['5. Put the website in touch', 'In the script editor: Deploy ▸ New deployment ▸ Web app ▸ execute as Me, access Anyone. Copy the address ending /exec into config.js in the veterinary-society repository.'],
-    ['6. Let the chair post', 'Dr Mompel, in his own Google account: Menu ▸ Install the triggers. Only a teacher may announce in Classroom, and an installed trigger runs as whoever installed it.'],
-    ['', ''],
-    ['If something looks wrong', 'Menu ▸ Tidy the sheet up puts the look back and changes nothing you wrote. Menu ▸ Refresh the website now makes the site read the sheet again at once.'],
-    ['The website', SITE]
+    ['title', 'Veterinary Society', 'The sheet behind the website'],
+    ['note',  'What this sheet is', 'The society\u2019s own register. The website reads it: when the next meeting is, what it will be, and who came to the ones before. It shows preferred names and year groups only \u2014 addresses and surnames stay here.'],
+    ['note',  'The panel', 'It opens down the right-hand side whenever you open this sheet, with a button for everything below. If you close it: menu \uD83D\uDC34 Veterinary Society \u25B8 \uD83D\uDDC2 Open the panel.'],
+    ['band',  'Every week', ''],
+    ['step',  '1.  Add the meeting', 'Panel \u25B8 \uD83D\uDCC5 Add a meeting. Type the date and what you will do. A new column appears on the Register tab, and the website says when the next meeting is.'],
+    ['step',  '2.  Tell the class', 'Panel \u25B8 \uD83D\uDCE3 Tell the class. A teacher posts it to Google Classroom there and then; if the chair presses it, the teacher\u2019s computer posts it within five minutes.'],
+    ['step',  '3.  After the meeting', 'Register tab \u25B8 tick the box for everyone who came. A ticked box turns green, and the website shows who came to what.'],
+    ['band',  'Now and then', ''],
+    ['step',  'Somebody new', 'They sign up on the website themselves, or you type them into the next empty row of the Register \u2014 the row dresses itself.'],
+    ['step',  'Keep the class in step', 'Panel \u25B8 \uD83C\uDF92 Update the class. It shows who to invite and who to take out before it does anything. A teacher only.'],
+    ['step',  'Something looks wrong', '\u2728 Tidy the sheet puts the look back and changes nothing you wrote. \uD83E\uDE7A Check the website says whether the page and this sheet are talking.'],
+    ['band',  'Once, to switch it on', ''],
+    ['step',  'The website\u2019s address', 'Script editor \u25B8 Deploy \u25B8 New deployment \u25B8 Web app, execute as Me, access Anyone. Put the /exec address into config.js in the veterinary-society repository.'],
+    ['step',  'Which class', 'Menu \u25B8 \uD83C\uDF93 Choose the Classroom class. A teacher only.'],
+    ['step',  'Let the chair announce', 'Menu \u25B8 \uD83D\uDD14 Install the triggers, in the teacher\u2019s own account. Only a teacher may announce in Classroom, and an installed trigger runs as whoever installed it.'],
+    ['note',  'The website', SITE]
   ];
-  sh.getRange(1, 1, lines.length, 2).setValues(lines);
+  sh.getRange(1, 1, lines.length, 2).setValues(lines.map(function (l) { return [l[1], l[2]]; }));
   sh.setTabColor(AMBER);
   sh.getRange(1, 1, lines.length, 2).setFontFamily('Arial').setFontSize(10).setVerticalAlignment('top').setWrap(true);
-  sh.getRange(1, 1).setFontSize(16).setFontWeight('bold').setFontColor(INK);
-  ['Every week', 'Once, to switch it on'].forEach(function (t) {
-    for (var r = 1; r <= lines.length; r++) if (String(sh.getRange(r, 1).getValue()) === t) {
-      sh.getRange(r, 1, 1, 2).setBackground(INK).setFontColor(CREAM).setFontWeight('bold');
-      sh.setRowHeight(r, 28);
+  sh.setColumnWidth(1, 250); sh.setColumnWidth(2, 760);
+  lines.forEach(function (l, i) {
+    var r = i + 1, left = sh.getRange(r, 1), right = sh.getRange(r, 2), both = sh.getRange(r, 1, 1, 2);
+    if (l[0] === 'title') {
+      both.setBackground(INK);
+      left.setFontSize(18).setFontWeight('bold').setFontColor(CREAM).setVerticalAlignment('middle');
+      right.setFontSize(11).setFontColor(MOSS).setFontStyle('italic').setVerticalAlignment('middle');
+      sh.setRowHeight(r, 54);
+    } else if (l[0] === 'band') {
+      both.setBackground('#1D3B42');
+      left.setFontSize(11).setFontWeight('bold').setFontColor(AMBER).setVerticalAlignment('middle');
+      sh.setRowHeight(r, 32);
+    } else {
+      left.setBackground(SOFT).setFontWeight('bold').setFontColor('#1B2226');
+      right.setBackground(PAPER).setFontColor('#3B4650');
+      sh.setRowHeight(r, l[0] === 'note' ? 62 : 46);
     }
   });
-  sh.getRange(3, 1, lines.length - 2, 1).setFontWeight('bold').setFontColor('#1B2226');
-  sh.getRange(3, 2, lines.length - 2, 1).setFontColor('#3B4650');
-  sh.setColumnWidth(1, 300); sh.setColumnWidth(2, 700);
   sh.setFrozenRows(1);
+  try { sh.setHiddenGridlines(true); } catch (e) {}
   try { sh.activate(); } catch (e) {}
   return sh;
 }
@@ -225,7 +265,7 @@ function _stampJoined(sh) {
 function dress() {
   var ss = SpreadsheetApp.getActive();
   _dressRegister(ss.getSheetByName(T_REG));
-  _dressLedger(ss.getSheetByName(T_VOTES), [150, 260, 180]);
+  _dressLedger(ss.getSheetByName(T_VOTES), [150, 260, 170, 230], T_VOTES);
   _dressLedger(ss.getSheetByName(T_LOG), [150, 560, 240]);
   _dressSettings(ss.getSheetByName(T_SET));
   _toast('Tidied.');
@@ -319,7 +359,7 @@ function _hasSomebody(sh, row) {
   for (var c = 0; c < HEAD.length; c++) if (String(v[c]).trim()) return true;
   return false;
 }
-function _dressLedger(sh, widths) {
+function _dressLedger(sh, widths, which) {
   if (!sh) return;
   _plain(sh, MOSS);
   _heads(sh, 1, widths.length);
@@ -327,8 +367,21 @@ function _dressLedger(sh, widths) {
   sh.setFrozenRows(1);
   var last = sh.getLastRow();
   if (last > 1) {
-    sh.getRange(2, 1, last - 1, 1).setNumberFormat('d mmm yyyy  HH:mm');
-    sh.getRange(2, 1, last - 1, widths.length).applyRowBanding(SpreadsheetApp.BandingTheme.LIGHT_GREY, false, false);
+    var rows = last - 1;
+    sh.getRange(2, 1, rows, 1).setNumberFormat('d mmm yyyy  HH:mm');
+    var bands = [];
+    for (var i = 0; i < rows; i++) { var b = (i % 2) ? BAND : PAPER, line = []; for (var c = 0; c < widths.length; c++) line.push(b); bands.push(line); }
+    sh.getRange(2, 1, rows, widths.length).setBackgrounds(bands);
+    if (which === T_VOTES) {
+      /* keep the name the page files a vote under, and say it in words beside */
+      sh.getRange(2, 3, rows, 1).setFontColor('#5C6C77').setFontSize(9.5);
+      sh.getRange(2, 4, rows, 1).setFontWeight('bold').setFontColor('#1B2226');
+      var slugs = sh.getRange(2, 3, rows, 1).getValues(), words = sh.getRange(2, 4, rows, 1).getValues(), any = false;
+      for (var r = 0; r < rows; r++) {
+        if (String(slugs[r][0]).trim() && !String(words[r][0]).trim()) { words[r][0] = _inWords(slugs[r][0]); any = true; }
+      }
+      if (any) sh.getRange(2, 4, rows, 1).setValues(words);
+    }
   }
 }
 function _dressSettings(sh) {
@@ -339,7 +392,6 @@ function _dressSettings(sh) {
   var help = {};
   help[S_CLIENT] = 'The Google Client ID the Biology labs use. Dr Mompel has it. Without it nobody can sign in.';
   help[S_COURSE] = 'Which class gets the announcement. Menu ▸ Find my Classroom course ID — it is not the number in the Classroom web address.';
-  help[S_POST]   = 'Tick this to announce the next meeting in Google Classroom. It unticks itself once it has posted.';
   help[S_LAST]   = 'Filled in by the script.';
   help[S_READ]   = 'Filled in by the script: the last time the website asked for the register, and which version answered. This is the proof that the page and this sheet are talking.';
   help[S_SITE]   = 'Where the page lives.';
@@ -355,8 +407,8 @@ function _dressSettings(sh) {
     sh.setRowHeights(2, last - 1, 44);
   }
   sh.setColumnWidth(1, 300); sh.setColumnWidth(2, 380); sh.setColumnWidth(3, 460);
-  var post = _settingRow(sh, S_POST);
-  if (post) sh.getRange(post, 1, 1, 3).setBackground(SOFT);
+  var client = _settingRow(sh, S_CLIENT);
+  if (client) sh.getRange(client, 1, 1, 3).setBackground(SOFT);
 }
 function _tab(ss, name, head) {
   var sh = ss.getSheetByName(name) || ss.insertSheet(name);
@@ -621,7 +673,7 @@ function _handle(d) {
     if (action === 'vote') {
       var idea = String(d.idea || '').replace(/[^a-z0-9-]/g, '').slice(0, 40);
       if (!idea) return { ok: false, why: 'which idea?' };
-      var vs = _tab(ss, T_VOTES, ['When', 'Email', 'Idea']);
+      var vs = _tab(ss, T_VOTES, ['When', 'Email', 'Idea', 'In words']);
       var last = vs.getLastRow(), found = 0;
       if (last > 1) {
         var rows = vs.getRange(2, 2, last - 1, 2).getValues();
@@ -629,7 +681,7 @@ function _handle(d) {
           if (String(rows[i][0]).toLowerCase() === who.email && String(rows[i][1]) === idea) { vs.deleteRow(i + 2); found++; }
         }
       }
-      if (!found) vs.appendRow([new Date(), who.email, idea]);
+      if (!found) vs.appendRow([new Date(), who.email, idea, _inWords(idea)]);
       _flush();
       return _list(who);
     }
@@ -731,6 +783,11 @@ function _list(who) {
     });
   }
   return out;
+}
+/* meet-a-vet → Meet a vet: a column of slugs reads as a column of ideas */
+function _inWords(slug) {
+  var w = String(slug || '').replace(/-/g, ' ').trim();
+  return w ? w.charAt(0).toUpperCase() + w.slice(1) : '';
 }
 function _rowOf(sh, col, email) {
   var last = sh.getLastRow(); if (last < DATA_ROW) return 0;
@@ -1218,13 +1275,17 @@ function classroomCancel() {
    the register reach the website at once. */
 function installTriggers() {
   var ss = SpreadsheetApp.getActive();
-  ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'onRegisterEdit') ScriptApp.deleteTrigger(t); });
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    var f = t.getHandlerFunction();
+    if (f === 'onRegisterEdit' || f === 'postPending') ScriptApp.deleteTrigger(t);
+  });
   ScriptApp.newTrigger('onRegisterEdit').forSpreadsheet(ss).onEdit().create();
+  ScriptApp.newTrigger('postPending').timeBased().everyMinutes(5).create();
   var who = _me();
   _say('Installed',
     '<p><span class="ok">Done.</span> Two things now work:</p>' +
     '<ul><li>every edit reaches the website at once</li>' +
-    '<li>the tick box in <b>Settings B4</b> posts to Google Classroom as <b>' + (who || 'you') + '</b></li></ul>' +
+    '<li>when the chair presses <b>Tell the class</b>, the announcement goes out as <b>' + (who || 'you') + '</b> within five minutes</li></ul>' +
     '<p class="note">That is what lets the chair announce a meeting without being a teacher.</p>', 320);
 }
 function onRegisterEdit(e) {
@@ -1237,12 +1298,5 @@ function onRegisterEdit(e) {
       for (var i = 0; i < r.getNumRows(); i++) _dressRow(sh, r.getRow() + i);
       return;
     }
-    if (sh.getName() !== T_SET || r.getColumn() !== 2) return;
-    var key = String(sh.getRange(r.getRow(), 1).getValue()).trim();
-    if (key !== S_POST || r.getValue() !== true) return;
-    var by = (e.user && e.user.getEmail && e.user.getEmail()) || '';
-    try { announce(by); _toast('Posted to Google Classroom.'); }
-    catch (err) { _log('Could not post: ' + err.message, by); _toast('Not posted: ' + err.message); }
-    r.setValue(false);
   } catch (err) { _log('Trigger error: ' + err.message, ''); }
 }

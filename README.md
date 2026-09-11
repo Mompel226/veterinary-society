@@ -45,9 +45,9 @@ Everything the page shows about members and meetings lives in one Google Sheet, 
 own. It has nothing to do with the school's marks. The chair keeps the sheet; the website reads
 it. Nothing is typed into the website itself.
 
-**The sheet has five tabs**, along the bottom of the window: *Start here* (what to do each
-week), **Register**, *Votes*, *Log*, and *Settings*. The one that matters day to day is
-**Register**:
+**The sheet has five tabs**, along the bottom of the window: *Start here* (what to do each week,
+colour-coded), **Register**, *Votes* (one row per vote, with the idea written out in words),
+*Log*, and *Settings*. The one that matters day to day is **Register**:
 
 | A | B | C | D | E | F | G | H | I, J, K … |
 |---|---|---|---|---|---|---|---|---|
@@ -73,7 +73,7 @@ there when you need them.
 |---|---|
 | 🗂 **Open the panel** | The panel down the right-hand side: when the next meeting is, how many members and teachers, and buttons for the jobs below. It opens by itself whenever the sheet is opened; this is for putting it back if you close it. |
 | 📅 **Add the next meeting** | Asks the date and what you will do, then makes a new column for it. The website shows it as *Next meeting* straight away. |
-| 📣 **Post the next meeting now** | Announces that meeting in Google Classroom. **A teacher only** — if you are the chair, tick the box in **Settings B4** instead and the teacher's computer posts it for you. |
+| 📣 **Post the next meeting now** | Announces that meeting in Google Classroom. A **teacher** posts it there and then; when the **chair** presses it, the teacher's computer posts it within five minutes, under the teacher's name. Nothing to tick. |
 | 👀 **Preview that announcement** | Shows the words first, without sending anything. |
 | 🔄 **Refresh the website now** | The site keeps its answer for ten minutes. This makes it read the sheet again at once. Rarely needed — an edit does it anyway. |
 | 🩺 **Check the website can read this** | Asks the website what address it is calling, tries it, and — more to the point — reports when the page last read this sheet. Use it whenever the page looks empty. |
@@ -106,10 +106,10 @@ dialog lists everybody in that state, and offers to take the invitations back. S
 the chair. Teachers on the register are left alone; the class's teachers are not students, and
 this only ever touches students.
 
-**To tell the class:** open the **Settings** tab — the last of the five along the bottom of the
-window — and tick the box in **B4**, beside *Post the next meeting to Google Classroom*. An
-announcement is posted, and the box unticks itself, ready for next time. (Menu ▸ *Preview the
-Classroom announcement* shows you what it will say, first.)
+**To tell the class:** panel ▸ 📣 **Tell the class**. If you are a teacher of the class it goes
+out at once; if you are the chair it is *asked for*, and the teacher's computer posts it within
+five minutes — Google only lets a teacher announce. (👀 *Preview that announcement* shows you
+what it will say, first.)
 
 **To start the register from a list you already have** — a CCA sign-up sheet, last year's
 members, a list the school gave you. Put it in these columns, in this order, and paste it into
@@ -209,7 +209,8 @@ Nothing else needs typing.
 #### Where *Settings* is, and what is in it
 
 It is a **tab of this spreadsheet**, the last of the five along the bottom edge of the window,
-beside the *+*:
+beside the *+*. Day to day you need nothing in it — the panel does that work — but this is what
+is in it:
 
 ```
  ┌───────────┬──────────┬───────┬─────┬────────────┐
@@ -225,10 +226,9 @@ filled in — but this is what each row is:
 |---|---|---|
 | **B2** | Google Client ID | `749068441640-jgh9s0rbg8ed9hl14mtv6kdhg5jg6ddf.apps.googleusercontent.com`, **already written in**. It is not a secret — the same line is in [`config.js`](config.js) on the website — so it lives in the script and is copied here for you. **If the school ever changes it**, type the new one into **B2**: what is in the sheet wins over what is in the script. Blank it and nobody can sign in. |
 | **B3** | Classroom course ID | written by menu ▸ *Choose the Classroom class* (step 5). |
-| **B4** | Post the next meeting to Google Classroom | the **tick box you use each week**. Tick it; it posts, then unticks itself. |
-| **B5** | Last posted | written by the script — when it last posted, and for which meeting. |
-| **B6** | Last read by the website | written by the script — the last time the page asked this sheet for the register, and which version answered. This is the proof that the two are talking. |
-| **B7** | The website | where the page lives, for reference. |
+| **B4** | Last posted | written by the script — when it last posted, and for which meeting. Also shown in the panel. |
+| **B5** | Last read by the website | written by the script — the last time the page asked this sheet for the register, and which version answered. This is the proof that the two are talking. |
+| **B6** | The website | where the page lives. The panel has a link to it. |
 
 Only ever type in **column B**. Columns A and C are labels; if one gets edited by accident, menu
 ▸ *Tidy the sheet up* writes them back.
