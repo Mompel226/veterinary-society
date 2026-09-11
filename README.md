@@ -178,7 +178,7 @@ it with the chair as an **Editor**.
 paste the whole of [`apps-script/Code.gs`](apps-script/Code.gs). Save. Nothing in it needs
 editing — the Google Client ID is already in it.
 
-**3 · Add the Classroom service.** In the script editor, beside **Services**, press **+**,
+**3 · Add the Classroom service, and the manifest.** In the script editor, beside **Services**, press **+**,
 choose **Google Classroom API**, Add. (The manifest this project expects is
 [`apps-script/appsscript.json`](apps-script/appsscript.json), if you would rather paste it:
 Project Settings ▸ *Show appsscript.json*.)
@@ -280,7 +280,7 @@ says *Working, but a version behind* when the deployment is running older code.
 | *Specified permissions are not sufficient to call …* | The script's **manifest** does not ask for that permission yet, so Google never offered it. Script editor ▸ **⚙ Project Settings** ▸ tick **Show "appsscript.json" manifest file in editor**; open **appsscript.json** in the file list; replace all of it with [`apps-script/appsscript.json`](apps-script/appsscript.json) from here; **Save**; run the same menu item again and **Review permissions ▸ Allow**. The script shows you the same steps, with the manifest to copy, whenever it hits this. Nothing is lost. |
 | The editor sits on *Execution started* and nothing happens | A script run from the editor is waiting for a click in the **spreadsheet** window. Switch to it. Better: run these from the menu. |
 | A name on the page is wrong, or you want to be *Dr Smith* rather than *John* | It is the **Preferred name** column, **D**, on the Register tab. Type what you want shown; the page follows within a minute (or menu ▸ 🔄 *Refresh the website now*). Nothing ever overwrites what is typed there. |
-| The pop-ups come up as plain grey boxes | Run menu ▸ 🧪 **Test the pop-up window**: it says which of the three steps Google refused and why, and writes it to the **Log**. Everything still works meanwhile — the grey boxes ask *Yes / No* and do the same jobs. |
+| The pop-ups come up as plain grey boxes | The manifest is missing `script.container.ui`, the permission a drawn window needs. Replace **appsscript.json** with the one here, run something from the menu, and press **Allow**. Menu ▸ 🧪 **Test the pop-up window** says exactly which step Google refused if it is something else. Everything still works meanwhile — the grey boxes ask *Yes / No* and do the same jobs. |
 
 **If the sheet ever has to move** to another account: open a copy there and do steps 2 to 8
 again, then paste the new `/exec` address into `config.js`. Nothing else changes.
