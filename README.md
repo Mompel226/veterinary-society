@@ -8,7 +8,7 @@
 
 **NLCS Jeju · a society run by students who want to know what a vet knows.**
 
-[![Open the site](https://img.shields.io/badge/▶_Open_the_site-F5A623?style=for-the-badge&logoColor=1B1206&color=F5A623)](https://mompel226.github.io/veterinary-society/)
+[![Open the site](https://img.shields.io/badge/▶_Open_the_site-F5A623?style=for-the-badge&logoColor=1B1206&color=F5A623)](https://nlcsbiology.com/veterinary-society/)
 
 ![Clinical cases](https://img.shields.io/badge/clinical-cases-2A8C7A?style=flat-square)
 ![Suturing](https://img.shields.io/badge/hands--on-suturing_·_taking_blood-D0554B?style=flat-square)
@@ -25,7 +25,7 @@
 
 Clinical cases worked the way a vet would work them. Suturing on a practice pad. Taking blood
 from a silicone mould with a vein in it. How animals behave, and how a dog learns. Then writing
-it up: **[Island Immunity](https://mompel226.github.io/veterinary-society/assets/Island-Immunity-1.pdf)**,
+it up: **[Island Immunity](https://nlcsbiology.com/veterinary-society/assets/Island-Immunity-1.pdf)**,
 issue 1, four Jeju farm animals and the diseases that threaten them, written and edited by
 the society.
 
@@ -212,7 +212,8 @@ announcement go out properly.
 |---|---|
 | The page shows *"Sign-in and voting are not switched on yet"* | `config.js` has no address in `scriptUrl` yet (step 8), or the commit has not reached GitHub Pages — give it a minute. |
 | The page shows nothing where the register should be, and `scriptUrl` **is** filled in | The deployment is not open to **Anyone** (step 6). Menu ▸ 🩺 *Check the website can read this* will say so — Google answers **401** or **404** to a request that carries no sign-in. If **Anyone** is not offered in the deployment settings at all, the school has turned anonymous web apps off; say so and the page can be changed to sign people in before it asks for anything. |
-| You redeployed and got a new address | Each **New deployment** makes a new `/exec`. Use *Check the website can read this* to get the current one, and put that in `config.js`. **Manage deployments ▸ pencil ▸ Deploy** updates the existing one and keeps its address. |
+| You redeployed and got a new address | Each **New deployment** makes a new `/exec`, and opening one of them to *Anyone* does nothing for the others. **Manage deployments ▸ pencil ▸ Deploy** updates the existing one and keeps its address. Keep one deployment and archive the rest (⋮ ▸ Archive). |
+| *Check the website can read this* says 404, but the site plainly works | It was asking this script's **newest** deployment, which may not be the one `config.js` calls. It now asks the site for its own `config.js` first and tests **that** address — the one that actually matters — and names both when they differ. |
 | *Exception: Specified permissions are not sufficient to call Session.getEffectiveUser* | An old authorisation. Paste the current `Code.gs` again, run the menu item again, and allow the permissions Google asks for. Nothing is lost. |
 | The editor sits on *Execution started* and nothing happens | A script run from the editor is waiting for a click in the **spreadsheet** window. Switch to it. Better: run these from the menu. |
 | Members appear, but a name is wrong | It is the *Preferred name* column, D, in the Register tab. Change it there; the page follows within a minute. |

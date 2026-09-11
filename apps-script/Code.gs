@@ -2,7 +2,7 @@
    Veterinary Society — the register, the sign-ups, the votes, and the next meeting
    ------------------------------------------------------------
    This lives in the society's OWN Google Sheet (Extensions ▸ Apps Script), the one the chair is
-   given, and is deployed as a web app that the page at mompel226.github.io/veterinary-society/
+   given, and is deployed as a web app that the page at nlcsbiology.com/veterinary-society/
    talks to. The sheet has four tabs:
 
      Register   one row per member, one column per meeting.
@@ -51,7 +51,7 @@ var HEAD = ['Korean name', 'English name', 'Surname', 'Preferred name', 'Email',
 var NOTE = ['', '', '', 'shown on the site', 'never shown — the first part is enough', 'shown', '', ''];
 var MEET_COL = HEAD.length + 1;       /* I: the first meeting column */
 var DATA_ROW = 3;                     /* row 1 headings and dates, row 2 notes and plans */
-var SITE = 'https://mompel226.github.io/veterinary-society/';
+var SITE = 'https://nlcsbiology.com/veterinary-society/';
 var DOMAINS = ['pupils.nlcsjeju.kr', 'nlcsjeju.kr'];
 var PUPILS = '@pupils.nlcsjeju.kr';     /* what a bare name in the Email column means */
 var S_CLIENT = 'Google Client ID', S_COURSE = 'Classroom course ID', S_POST = 'Post the next meeting to Google Classroom',
@@ -623,12 +623,68 @@ function _newMeeting(date, plan) {
 }
 function refreshWebsite() { _flush(); _toast('Done. The website reads the register afresh from now.'); }
 
-/* The website reads this script the way a stranger would: signed in to nothing. So does
-   UrlFetchApp from in here, which is what makes this a real test rather than a guess. */
+/* ---------- can the website read this? ----------
+   The honest question is not "is this script deployed" but "does the address the website is
+   calling answer a stranger". So this asks the website for its own config.js, takes the address
+   out of it, and tries that — then tries this script's current deployment, which may be a
+   different one entirely. Every `Deploy ▸ New deployment` mints a new address; setting one of
+   them to Anyone does nothing for the others. */
+function _ask(url) {
+  if (!url) return { code: 0, ok: false };
+  try {
+    var r = UrlFetchApp.fetch(url + (url.indexOf('?') < 0 ? '?' : '&') + 'action=list',
+                              { muteHttpExceptions: true, followRedirects: true });
+    var c = r.getResponseCode(), b = r.getContentText().slice(0, 300);
+    return { code: c, ok: c === 200 && b.indexOf('"ok"') >= 0 };
+  } catch (e) { return { code: 0, ok: false, why: String(e) }; }
+}
+function _siteScriptUrl() {
+  var site = String(_setting(S_SITE) || SITE);
+  if (site.slice(-1) !== '/') site += '/';
+  try {
+    var r = UrlFetchApp.fetch(site + 'config.js', { muteHttpExceptions: true });
+    if (r.getResponseCode() !== 200) return '';
+    var m = /scriptUrl\s*:\s*'([^']*)'/.exec(r.getContentText());
+    return m ? m[1].trim() : '';
+  } catch (e) { return ''; }
+}
+function _idOf(url) { var m = /\/s\/([^\/]+)\//.exec(String(url)); return m ? m[1] : ''; }
+function _shortId(url) { var id = _idOf(url); return id ? id.slice(0, 10) + '…' + id.slice(-6) : '—'; }
+
 function checkWebApp() {
-  var url;
-  try { url = ScriptApp.getService().getUrl(); } catch (e) { url = ''; }
-  if (!url) {
+  var mine = ''; try { mine = _plainUrl(ScriptApp.getService().getUrl() || ''); } catch (e) {}
+  var theirs = _plainUrl(_siteScriptUrl());
+  var site = String(_setting(S_SITE) || SITE);
+
+  /* 1. what the website is calling, if it says */
+  if (theirs) {
+    var a = _ask(theirs);
+    if (a.ok) {
+      _say('Working',
+        '<p><span class="ok">The website is reading the register.</span></p>' +
+        '<p class="note">It calls <code style="display:inline;padding:2px 6px">' + _shortId(theirs) + '</code>, and that answers a visitor who has not signed in — which is what matters.</p>' +
+        (mine && _idOf(mine) !== _idOf(theirs)
+          ? '<p class="note">(This script\u2019s newest deployment is a different one, <code style="display:inline;padding:2px 6px">' + _shortId(mine) + '</code>. Leave it be, or archive it: Deploy ▸ Manage deployments ▸ ⋮ ▸ Archive.)</p>' : ''),
+        340, 'Working: the website can read the register.');
+      return;
+    }
+    /* the website's address does not answer — does this script's own? */
+    var b = mine ? _ask(mine) : { ok: false, code: 0 };
+    if (b.ok) {
+      _say('Two different deployments',
+        '<p>The website is calling <code style="display:inline;padding:2px 6px">' + _shortId(theirs) + '</code>, and Google answers <span class="warn">' + (a.code || '—') + '</span> to a visitor who has not signed in.</p>' +
+        '<p>This script\u2019s own deployment, <code style="display:inline;padding:2px 6px">' + _shortId(mine) + '</code>, <span class="ok">does answer</span>. Every <b>New deployment</b> makes a new address, and only one of them was opened to everyone.</p>' +
+        '<p>Put this address into <b>config.js</b> instead:</p>' + _urlBox(mine) +
+        '<p class="note">Then archive the other: Deploy ▸ Manage deployments ▸ ⋮ ▸ Archive.</p>',
+        480, 'config.js points at a deployment that is not public. Use ' + mine);
+      return;
+    }
+    _cannotRead(a.code || b.code, theirs, mine);
+    return;
+  }
+
+  /* 2. the website did not say — fall back to this script's own deployment */
+  if (!mine) {
     _say('Not deployed yet',
       '<p>The website has nothing to read yet. In the script editor:</p>' +
       '<ol><li><b>Deploy ▸ New deployment ▸ Web app</b></li>' +
@@ -636,40 +692,29 @@ function checkWebApp() {
       '<p class="note">Then run this check again.</p>', 320);
     return;
   }
-  var given = url; url = _plainUrl(url);
-  /* ask both shapes of the address: the plain one a stranger must be able to use, and the
-     school-shaped one the editor shows. Which of them answers says what is wrong. */
-  var tries = [url], code = 0, body = '';
-  if (given !== url) tries.push(given);
-  var said = [];
-  for (var i = 0; i < tries.length; i++) {
-    var c = 0, b = '';
-    try {
-      var r = UrlFetchApp.fetch(tries[i] + '?action=list', { muteHttpExceptions: true, followRedirects: false });
-      c = r.getResponseCode(); b = r.getContentText().slice(0, 200);
-    } catch (e) { b = String(e); }
-    said.push(c);
-    if (i === 0) { code = c; body = b; }
-    if (c === 200 && b.indexOf('"ok"') >= 0) { code = c; body = b; url = tries[i]; break; }
-  }
-  var id = (/\/s\/([^\/]+)\//.exec(url) || [])[1] || '';
-  if (code === 200 && body.indexOf('"ok"') >= 0) {
+  var c = _ask(mine);
+  if (c.ok) {
     _say('Working',
-      '<p><span class="ok">The website can read the register.</span></p>' +
-      '<p>Put this address in <b>config.js</b> in the veterinary-society repository, after <code style="display:inline;padding:2px 5px">scriptUrl</code>:</p>' +
-      _urlBox(url) +
-      '<p class="note">Already there? Nothing to do.</p>', 400, 'Working. Paste this into config.js: ' + url);
+      '<p><span class="ok">This deployment answers a visitor who has not signed in.</span></p>' +
+      '<p>Put the address in <b>config.js</b> in the veterinary-society repository, after <code style="display:inline;padding:2px 5px">scriptUrl</code>:</p>' +
+      _urlBox(mine) +
+      '<p class="note">I could not read <code style="display:inline;padding:2px 5px">' + site + 'config.js</code> to check what the website is calling — that is all right, it may simply not be published yet.</p>',
+      440, 'Working. Paste this into config.js: ' + mine);
     return;
   }
+  _cannotRead(c.code, '', mine);
+}
+
+function _cannotRead(code, theirs, mine) {
+  var url = theirs || mine;
   _say('The website cannot read this yet',
-    '<p><span class="warn">Google answered ' + said.join(' and ') + '</span> to a request carrying no sign-in — which is how the page asks.</p>' +
-    '<p>This is the deployment being asked. <b>Deploy ▸ Manage deployments</b>: is this the one you set to <b>Anyone</b>?</p>' +
-    '<div class="url">…/s/<b>' + id.slice(0, 12) + '</b>…' + id.slice(-6) + '</div>' +
-    '<ul><li>If it is a <b>different</b> deployment, delete the old ones (⋮ ▸ Archive) and run this again — the script asks the one Google calls current.</li>' +
-    '<li>If it is the <b>same</b> one and it still says Anyone, then the school is refusing anonymous access. That is a Workspace setting, not yours: Admin console ▸ Apps ▸ Google Workspace ▸ Drive and Docs ▸ Sharing settings, and Apps Script web apps published to <i>Anyone</i>.</li></ul>' +
-    '<p class="note">Tell Dr Mompel either way. If the school will not allow it, the page can be changed to sign people in before it asks for anything, which works inside the school.</p>' +
+    '<p><span class="warn">Google answered ' + (code || '—') + '</span> to a request carrying no sign-in — which is how the page asks.</p>' +
+    '<p>The deployment being asked is <code style="display:inline;padding:2px 6px">' + _shortId(url) + '</code>. In <b>Deploy ▸ Manage deployments</b>, is that the one you set to <b>Anyone</b>?</p>' +
+    '<ul><li>If there is <b>more than one</b> deployment, archive the ones you are not using (⋮ ▸ Archive) — only one of them was opened, and the address in config.js may be another.</li>' +
+    '<li>If it <b>is</b> the right one and it still says Anyone, the school is refusing anonymous access. That is a Workspace setting, not yours.</li></ul>' +
+    '<p class="note">Tell Dr Mompel either way. If the school will not allow it, the page can be changed to sign people in before it asks for anything.</p>' +
     _urlBox(url), 560,
-    'The website cannot read this yet (Google answered ' + said.join(' and ') + ') for deployment ' + id.slice(0, 12) + '.');
+    'The website cannot read this yet (Google answered ' + code + ') for deployment ' + _shortId(url));
 }
 /* The editor shows a school account one of two school-shaped addresses —
      script.google.com/a/macros/<school>/s/…      and
