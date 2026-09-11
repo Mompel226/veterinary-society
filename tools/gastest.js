@@ -137,7 +137,10 @@ function makeGlobals(now) {
     ScriptApp: {
       getService: () => ({ getUrl: () => G.__webAppUrl }),
       getProjectTriggers: () => G.__triggers,
-      newTrigger: (fn) => ({ forSpreadsheet: () => ({ onEdit: () => ({ create: () => { G.__triggers.push({ getHandlerFunction: () => fn }); } }) }) }),
+      newTrigger: (fn) => ({
+        forSpreadsheet: () => ({ onEdit: () => ({ create: () => { G.__triggers.push({ getHandlerFunction: () => fn }); } }) }),
+        timeBased: () => ({ everyMinutes: () => ({ create: () => { G.__triggers.push({ getHandlerFunction: () => fn }); } }) })
+      }),
       deleteTrigger: t => { G.__triggers = G.__triggers.filter(x => x !== t); }
     },
     Classroom: {
@@ -239,9 +242,23 @@ section('the sheet is set up');
   api.setup();      /* twice must not double anything */
   eq('setup run twice leaves one heading row', reg.getRange(1, 1).getValue(), 'Korean name');
   const st0 = G.__ss.getSheetByName('Settings');
-  eq('setup run twice leaves one settings row per key', st0.getLastRow(), 7);
+  eq('setup run twice leaves one settings row per key', st0.getLastRow(), 6);
   eq('Settings says where to type', st0.getRange(1, 1, 1, 3).getValues()[0], ['Setting', 'Type it here \u2192', 'What it is for']);
   eq('and the first setting sits under that heading', st0.getRange(2, 1).getValue(), 'Google Client ID');
+}
+
+section('a vote says what it was for');
+{
+  const { G, api } = seeded();
+  api._handle({ action: 'vote', token: 'TOK-JIEUN', idea: 'meet-a-vet' });
+  const vs = G.__ss.getSheetByName('Votes');
+  eq('the column the page files it under', vs.getRange(2, 3).getValue(), 'meet-a-vet');
+  eq('and the same thing in words', vs.getRange(2, 4).getValue(), 'Meet a vet');
+  eq('the headings say so', vs.getRange(1, 1, 1, 4).getValues()[0], ['When', 'Email', 'Idea', 'In words']);
+  /* an older sheet, whose votes were written before there was a column for words */
+  vs.appendRow([new Date(2026, 8, 1), 'x@pupils.nlcsjeju.kr', 'wild-jeju']);
+  api.dress();
+  eq('tidying fills in the ones that came before', vs.getRange(3, 4).getValue(), 'Wild jeju');
 }
 
 section('the sheet is dressed');
@@ -280,8 +297,9 @@ section('the sheet is dressed');
   const st = G.__ss.getSheetByName('Settings');
   ok('every setting says what it is for', String(st.getRange(api._settingRow(st, 'Classroom course ID'), 3).getValue()).includes('announcement'));
   eq('the heading row is not mistaken for a setting', st.look_of(1, 1).bg, '#12262B');
-  ok('the box you type in is boxed off', st.look_of(2, 2).bg === '#FFFFFF');
-  ok('the box you tick is picked out', st.look_of(api._settingRow(st, 'Post the next meeting to Google Classroom'), 1).bg === '#FFF6E5');
+  ok('the box you type in is boxed off', st.look_of(2, 2).bg === '#FFF6E5' || st.look_of(2, 2).bg === '#FFFFFF');
+  ok('the one setting that must be right is picked out', st.look_of(api._settingRow(st, 'Google Client ID'), 1).bg === '#FFF6E5');
+  ok('and the tick box is gone from Settings', api._settingRow(st, 'Post the next meeting to Google Classroom') === 0);
   ok('the tabs are coloured', reg.tab === '#12262B' && st.tab === '#F5A623');
 
   /* running it again must not stack anything up */
@@ -314,9 +332,13 @@ section('setting up does not stop and wait');
   eq('the tabs are in the order the README names', G.__ss.sheets.map(x => x.name),
      ['Start here', 'Register', 'Votes', 'Log', 'Settings']);
   const text = start.getRange(1, 1, 20, 2).getValues().flat().join(' | ');
-  ok('it says how to add a meeting', text.includes('Add the next meeting'));
-  ok('it says how to tell the class', text.includes('Post the next meeting to Google Classroom'));
+  ok('it says how to add a meeting', text.includes('Add the meeting') && text.includes('Add a meeting'));
+  ok('it says how to tell the class', text.includes('Tell the class'));
   ok('it says who installs the triggers', text.includes('Install the triggers'));
+  ok('the left column is coloured by what the line is',
+     start.look_of(1, 1).bg === '#12262B' && start.look_of(4, 1).bg === '#1D3B42' && start.look_of(5, 1).bg === '#FFF6E5',
+     JSON.stringify([start.look_of(1, 1).bg, start.look_of(4, 1).bg, start.look_of(5, 1).bg]));
+  ok('and the words beside it sit on paper', start.look_of(5, 2).bg === '#FFFFFF');
   ok('and it is put in front of you', start.active === true);
   /* a Client ID typed into Settings by hand beats the one in the script */
   st.getRange(api._settingRow(st, 'Google Client ID'), 2).setValue('SCHOOL-CHANGED-IT');
@@ -636,29 +658,33 @@ section('the Classroom announcement');
   ok('with no meeting to come it refuses', /diary/.test(why), why);
 }
 
-section('the tick box that posts');
+section('telling the class');
 {
-  const { G, api, st } = seeded();
-  const row = api._settingRow(st, 'Post the next meeting to Google Classroom');
-  const cell = st.getRange(row, 2);
-  cell.setValue(true);
-  api.onRegisterEdit({ range: cell, user: { getEmail: () => 'chair@pupils.nlcsjeju.kr' } });
-  eq('it posted', G.__classroom.length, 1);
-  eq('and untticked itself, ready for next time', cell.getValue(), false);
-  cell.setValue(false);
-  api.onRegisterEdit({ range: cell, user: { getEmail: () => 'chair@pupils.nlcsjeju.kr' } });
-  eq('unticking posts nothing', G.__classroom.length, 1);
-  api.onRegisterEdit({ range: G.__ss.getSheetByName('Register').getRange(3, 9) });
-  eq('and neither does ticking a register box', G.__classroom.length, 1);
+  const { G, api } = seeded();
+  eq('a teacher posts there and then', api.postNow(), 'Posted to Google Classroom.');
+  eq('one announcement', G.__classroom.length, 1);
 }
 {
-  const { G, api, st } = seeded(new Date(2026, 8, 18, 9, 0));
-  const cell = st.getRange(api._settingRow(st, 'Post the next meeting to Google Classroom'), 2);
-  cell.setValue(true);
-  api.onRegisterEdit({ range: cell, user: { getEmail: () => 'chair@pupils.nlcsjeju.kr' } });
-  eq('with nothing in the diary it posts nothing', G.__classroom.length, 0);
-  ok('the Log says why', String(G.__ss.getSheetByName('Log').getRange(2, 2).getValue()).includes('Could not post'));
-  eq('and the box is cleared anyway', cell.getValue(), false);
+  const { G, api } = seeded();
+  G.Classroom.Courses.Announcements.create = () => { throw new Error('The caller does not have permission'); };
+  const said = api.postNow();
+  ok('a chair is told it has been asked for', said.includes('Asked a teacher'), said);
+  eq('and nothing went out yet', G.__classroom.length, 0);
+  ok('the dialog says who will do it', G.__dialogs.map(d => d.html).join(' ').includes('within a few minutes'));
+  ok('the Log records the request', String(G.__ss.getSheetByName('Log').getRange(2, 2).getValue()).includes('asked for'));
+
+  /* the teacher's timer comes round */
+  delete G.Classroom.Courses.Announcements.create;
+  G.Classroom.Courses.Announcements.create = (res, course) => { G.__classroom.push({ res, course }); return { id: 'a1' }; };
+  api.postPending();
+  eq('and it goes out', G.__classroom.length, 1);
+  api.postPending();
+  eq('only once', G.__classroom.length, 1);
+}
+{
+  const { G, api } = seeded();
+  api.postPending();
+  eq('with nobody asking, the timer does nothing', G.__classroom.length, 0);
 }
 
 section('choosing the Classroom class');
@@ -784,7 +810,7 @@ section('when Google will not say who you are');
   const { G, api } = seeded();
   G.Session = { getEffectiveUser: () => { throw new Error('Specified permissions are not sufficient to call Session.getEffectiveUser'); } };
   api.installTriggers();
-  eq('the trigger is still installed', G.__triggers.length, 1);
+  eq('the triggers are still installed', G.__triggers.length, 2);
   ok('and it says so without a name', G.__dialogs.map(d => d.html).join(' ').includes('as <b>you</b>'));
   G.Classroom.Courses.list = () => ({ courses: [{ id: '9', name: 'BioGuardians' }] });
   G.__answer = ['1'];
@@ -827,9 +853,8 @@ section('the panel and the announcement');
 {
   const { G, api, st } = seeded();
   st.getRange(api._settingRow(st, 'Classroom course ID'), 2).setValue('');
-  api.postNow();
-  const html = G.__dialogs.map(d => d.html).join(' ');
-  ok('when it cannot post it explains the other way', html.includes('Settings') && html.includes('B4'), html.slice(0, 200));
+  const said = api.postNow();
+  ok('with no class chosen it says so', said.indexOf('Not posted') === 0, said);
   eq('and nothing went out', G.__classroom.length, 0);
 }
 
@@ -1039,7 +1064,9 @@ section('the triggers');
 {
   const { G, api } = seeded();
   api.installTriggers(); api.installTriggers();
-  eq('installing twice leaves one', G.__triggers.length, 1);
+  eq('installing twice leaves one of each', G.__triggers.length, 2);
+  ok('an eye on the sheet and a timer for the chair’s requests',
+     G.__triggers.map(t => t.getHandlerFunction()).sort().join(',') === 'onRegisterEdit,postPending');
   ok('it is told who will post', G.__dialogs.map(d => d.html).join(' ').includes('dmompelriera@nlcsjeju.kr'));
 }
 
