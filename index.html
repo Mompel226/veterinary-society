@@ -49,7 +49,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
    joining and voting, cream for the magazine — carried by the heading, the dot before it, the
    fading rule after it, and a line along the top of that section's cards */
 .do{--band:var(--sky)} .ideas{--band:var(--amber)} .join-band{--band:var(--green)} .mag-band{--band:var(--cream)}
-.band{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px 14px;margin-top:44px}
+.band{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px 14px;margin-top:44px;scroll-margin-top:14px}
 .band::before{content:"";align-self:center;width:10px;height:10px;border-radius:50%;background:var(--band,var(--dim));box-shadow:0 0 0 4px color-mix(in srgb,var(--band,var(--dim)) 22%,transparent)}
 .band::after{content:"";flex:1;align-self:center;height:1px;background:linear-gradient(90deg,color-mix(in srgb,var(--band,var(--dim)) 55%,transparent),var(--rule))}
 .band h2{font-family:var(--serif);font-size:clamp(24px,2.7vw,32px);font-weight:400;line-height:1.1;letter-spacing:-.01em;color:var(--band,var(--chalk))}
@@ -95,6 +95,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .credits{margin-top:12px;color:var(--dim);font-size:14px} .credits b{font-weight:500;color:#D7E3EA}
 /* interested: sign in, say what you would like to do, and you are on the list and may vote */
 .join{margin-top:14px;display:grid;grid-template-columns:minmax(280px,1fr) minmax(0,1.3fr);gap:16px;align-items:start}
+.panel,.list{min-width:0}
 .panel{border:1px solid rgba(245,166,35,.35);border-radius:6px;padding:18px 20px;background:rgba(245,166,35,.06)}
 .panel h3{font-family:var(--serif);font-size:22px;font-weight:400} .panel p{margin-top:6px;color:#C5D4DD;font-size:14.5px}
 .panel .mail{font-family:var(--mono);font-size:12px;color:var(--amber);text-decoration:none;border-bottom:1px solid rgba(245,166,35,.45)}
@@ -110,11 +111,30 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .list{border:1px solid var(--rule);border-radius:6px;background:rgba(255,255,255,.03);padding:14px 16px}
 .list h3{font-family:var(--serif);font-size:20px;font-weight:400;display:flex;align-items:baseline;justify-content:space-between;gap:10px}
 .list h3 small{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;color:var(--mute)}
-.people{margin-top:10px;max-height:250px;overflow:auto;display:grid;gap:4px;padding-right:6px}
-.people li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;padding:7px 10px;border-radius:4px;background:rgba(7,15,21,.35)}
-.people b{font-weight:500;color:var(--chalk);font-size:14px} .people .yr{font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--moss);padding-top:3px}
-.people span{grid-column:1/-1;font-size:13px;color:var(--dim)}
-.people:empty::before{content:"Nobody yet. Be the first.";color:var(--mute);font-size:13.5px}
+/* the register: a member per row, a meeting per column. Only what a stranger may see — a
+   preferred name, a year group and a tick. Names, addresses and year lists stay in the sheet. */
+.reg-wrap{margin-top:10px;max-height:320px;overflow:auto}
+.reg{border-collapse:separate;border-spacing:0;width:100%;font-size:13.5px}
+.reg th,.reg td{padding:6px 8px;text-align:center;white-space:nowrap}
+.reg thead th{position:sticky;top:0;z-index:2;background:#132A2F;font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.06em;color:var(--moss);border-bottom:1px solid var(--rule)}
+.reg tbody th{position:sticky;left:0;z-index:1;background:#0F2024;text-align:left;font-weight:500;color:var(--chalk)}
+.reg tbody th{display:flex;align-items:baseline;gap:7px;min-width:148px}
+.reg thead th:first-child{left:0;z-index:3;background:#132A2F;text-align:left}
+.reg .yr{font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--moss)}
+.reg tbody tr:nth-child(odd) th,.reg tbody tr:nth-child(odd) td{background:rgba(7,15,21,.35)}
+.reg tbody tr:nth-child(odd) th{background:#11252A}
+.reg .tick{color:var(--green);font-size:15px} .reg .no{color:rgba(169,190,203,.3)}
+.reg .tally{margin-left:auto;font-family:var(--mono);font-size:10.5px;color:var(--dim)}
+.reg--empty{display:none}
+.list .none{margin-top:10px;color:var(--mute);font-size:13.5px}
+/* the next meeting, read from the register: the first column whose date is today or later */
+.next{margin-top:26px;display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px;
+  border:1px solid rgba(74,222,128,.4);border-left:4px solid var(--green);border-radius:6px;
+  padding:14px 18px;background:linear-gradient(90deg,rgba(74,222,128,.12),rgba(74,222,128,.03))}
+.next__eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--green)}
+.next__when{font-family:var(--serif);font-size:clamp(19px,2vw,26px);color:var(--chalk)}
+.next__plan{color:#D7E3EA;font-size:14.5px}
+.next__soon{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;color:#06140B;background:var(--green);border-radius:999px;padding:3px 10px}
 .foot{margin-top:44px;padding-top:16px;border-top:1px solid var(--rule);font-size:12.5px;color:var(--dim)}
 .foot strong{font-weight:500;color:var(--chalk)} .foot p+p{margin-top:6px;font-family:var(--mono);font-size:9.5px;letter-spacing:.04em;color:var(--mute)}
 .credits-box{margin-top:10px} .credits-box summary{cursor:pointer;width:max-content;font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#A9BECB;border:1px solid rgba(150,190,215,.3);border-radius:2px;padding:5px 10px;background:rgba(7,15,21,.6);list-style:none}
@@ -123,7 +143,10 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,12px);z-index:30;max-width:min(92vw,520px);background:#F7F6F2;color:#1B2226;padding:11px 18px;border-radius:3px;font-size:13.5px;line-height:1.45;
   box-shadow:0 10px 40px rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:opacity .22s,transform .22s}
 .toast.on{opacity:1;transform:translate(-50%,0)}
-@media (max-width:760px){.head{grid-template-columns:1fr} .head .mark{max-width:380px} .mag{flex-direction:column} .cover{align-self:flex-start} .cover img{width:min(300px,100vw - 32px)} .join{grid-template-columns:1fr}}
+@media (max-width:760px){.head{grid-template-columns:1fr} .head .mark{max-width:380px} .join{grid-template-columns:minmax(0,1fr)}}
+/* Below this width the magazine stands the cover above its words rather than beside them: side
+   by side, neither has room. The same number is in the script that matches their heights. */
+@media (max-width:1000px){.mag{flex-direction:column} .cover{align-self:flex-start} .cover img{width:min(300px,100vw - 32px)}}
 </style>
 </head>
 <body>
@@ -143,6 +166,15 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
          Its numbers were made by tools/mark.py; leave the <svg> alone unless you mean to change it. -->
     <svg class="mark" viewBox="0 20 1110 580" role="img" aria-label="The Veterinary Society mark: a horse’s head drawn in one line, beside the words Veterinary Society, NLCS Jeju"><g transform="translate(26 44) scale(1.24)"><path class="mo-draw" pathLength="1000" d="M 230 74 C 214 48 200 20 196 -8 C 214 10 234 40 244 68" fill="none" stroke="#F3E7C9" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" style="--t:0.25s;--wait:0.00s"/><path class="mo-draw" pathLength="1000" d="M 266 70 C 276 38 290 14 304 -4 C 306 24 292 52 276 74" fill="none" stroke="#F3E7C9" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" style="--t:0.25s;--wait:0.10s"/><path class="mo-draw" pathLength="1000" d="M 248 72 C 238 108 198 148 160 190 C 128 226 94 254 66 282 C 44 304 38 330 56 344 C 76 358 104 352 124 338 C 150 330 196 338 240 334 C 290 330 326 296 322 246 C 318 210 288 178 246 164" fill="none" stroke="#F3E7C9" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" style="--t:0.95s;--wait:0.30s"/><path class="mo-draw" pathLength="1000" d="M 252 70 C 238 84 226 104 222 124" fill="none" stroke="#9DB7AE" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" style="--t:0.2s;--wait:0.50s"/><path class="mo-draw" pathLength="1000" d="M 292 68 C 348 100 384 180 390 300" fill="none" stroke="#9DB7AE" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" style="--t:0.4s;--wait:0.55s"/><path class="mo-draw" pathLength="1000" d="M 300 92 C 332 132 346 190 344 258" fill="none" stroke="#9DB7AE" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" style="--t:0.35s;--wait:0.62s"/><path class="mo-draw" pathLength="1000" d="M 314 122 C 348 160 362 214 362 280" fill="none" stroke="#9DB7AE" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" style="--t:0.35s;--wait:0.69s"/><path class="mo-draw" pathLength="1000" d="M 326 160 C 364 200 378 246 380 300" fill="none" stroke="#9DB7AE" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" style="--t:0.35s;--wait:0.76s"/><path class="mo-draw" pathLength="1000" d="M 300 326 C 320 352 336 384 346 420" fill="none" stroke="#9DB7AE" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" style="--t:0.3s;--wait:0.95s"/><path class="mo-draw" pathLength="1000" d="M 64 298 C 74 292 84 294 90 302" fill="none" stroke="#F3E7C9" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" style="--t:0.18s;--wait:1.15s"/><path class="mo-draw" pathLength="1000" d="M 70 332 C 84 336 98 336 110 330" fill="none" stroke="#F3E7C9" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" style="--t:0.18s;--wait:1.22s"/><g class="mo-pop" style="--wait:1.28s"><circle cx="222" cy="156" r="27" fill="none" stroke="#F3E7C9" stroke-width="8"/></g><g class="mo-pop" style="--wait:1.36s"><circle cx="222" cy="156" r="12" fill="#F5A623" stroke="none" stroke-width="0"/></g></g><g transform="translate(612 318) scale(1.58)"><text class="mo-fade" style="--wait:1.45s" x="0" y="0" font-family="Fraunces, Georgia, serif" font-size="58" font-style="italic" font-weight="400" letter-spacing="0" fill="#F3E7C9">Veterinary</text><text class="mo-fade" style="--wait:1.55s" x="0" y="56" font-family="Fraunces, Georgia, serif" font-size="58" font-style="normal" font-weight="400" letter-spacing="0" fill="#F3E7C9">Society</text><text class="mo-fade" style="--wait:1.65s" x="3" y="90" font-family="'IBM Plex Mono', monospace" font-size="15" font-style="normal" font-weight="400" letter-spacing="4" fill="#9DB7AE">NLCS JEJU</text></g></svg>
   </header>
+
+  <!-- The next meeting. Nothing is written here: it comes from the register, where the chair
+       adds a column with the date of the meeting in it. Hidden until there is one. -->
+  <section class="next" id="next" hidden>
+    <span class="next__eyebrow">Next meeting</span>
+    <span class="next__when" id="nextWhen"></span>
+    <span class="next__soon" id="nextSoon" hidden></span>
+    <span class="next__plan" id="nextPlan"></span>
+  </section>
 
   <!-- EDIT: what the society does. One card each, written to the person reading: "here you…".
        Copy a whole <li class="card">…</li> to add one; delete one to remove it. -->
@@ -169,27 +201,30 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
     <li class="card" data-idea="debate" style="--bg:url(assets/cards/debate.jpg)"><h3>A <em>debate</em></h3><p>Should Jeju’s roe deer be culled? Should a school keep animals? Take a side, bring the evidence, and argue it.</p></li>
   </ul>
 
-  <!-- Interested: sign in with the school Google account, say what you would like to do, and you
-       are on the list and can vote. The list shows names and years only. EDIT the chair's name
+  <!-- Members and the register. A student signs in with the school Google account, puts their
+       name down, and can vote. The register beside it comes from the society's sheet: a column
+       per meeting, a tick for everyone who came. The page is only ever sent preferred names,
+       year groups and ticks — never an address, a surname or a full name. EDIT the chair's name
        and address here when the chair changes. -->
-  <div class="band join-band"><h2>Interested?</h2><small id="listCount"></small></div>
+  <div class="band join-band" id="register"><h2>Members and the register</h2><small id="listCount"></small></div>
   <div class="join">
     <div class="panel">
       <h3>Put your name down</h3>
-      <p>Sign in with your school Google account, the same as for the labs. Then say what you would like to do, and you can vote on the ideas above.</p>
+      <p>Sign in with your school Google account, the same as for the labs. Then say what you would like to do, and you can vote on the ideas above. Your address stays with the chair; the page shows your first name and year only.</p>
       <div id="gsi"></div>
       <p class="who-i-am" id="whoIAm" hidden></p>
       <form class="form" id="form" hidden>
         <label>Year group<select id="year"><option>Year 7</option><option>Year 8</option><option>Year 9</option><option>Year 10</option><option>Year 11</option><option>Year 12</option><option>Year 13</option></select></label>
         <label>What would you like to do?<input id="note" maxlength="300" placeholder="e.g. learn to suture, or write for issue 2"></label>
-        <button class="go" id="go" type="submit">I’m interested</button>
+        <button class="go" id="go" type="submit">Put me down</button>
       </form>
       <p class="msg" id="msg"></p>
       <p>Or email the chair, Henry Yuan: <a class="mail" href="mailto:scyuan29@pupils.nlcsjeju.kr">scyuan29@pupils.nlcsjeju.kr</a></p>
     </div>
     <div class="list">
-      <h3>Who is interested <small id="listNote"></small></h3>
-      <ol class="people" id="people"></ol>
+      <h3>Who comes <small id="listNote"></small></h3>
+      <div class="reg-wrap"><table class="reg" id="reg"></table></div>
+      <p class="none" id="regNone">Nobody yet. Be the first.</p>
     </div>
   </div>
 
@@ -272,14 +307,55 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
     return fetch(URL_, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) })
       .then(function (r) { return r.ok ? r.json() : null; });
   }
-  var state = { people: [], votes: {}, mine: [], interested: false };
+  var state = { members: [], meetings: [], next: null, votes: {}, mine: [], member: false };
+
+  /* the dates the register carries are plain local stamps: 2026-09-17T15:40 */
+  function when(stamp) { var m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(String(stamp || '')); return m ? new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]) : null; }
+  var DAY = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  var MON = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  function longDate(d, withTime) {
+    var s = DAY[d.getDay()] + ' ' + d.getDate() + ' ' + MON[d.getMonth()];
+    if (withTime) s += ', ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+    return s;
+  }
+  function shortDate(d) { return d.getDate() + ' ' + MON[d.getMonth()].slice(0, 3); }
+  function daysAway(d) { var a = new Date(); a.setHours(0, 0, 0, 0); var b = new Date(d); b.setHours(0, 0, 0, 0); return Math.round((b - a) / 86400000); }
+
+  function paintNext() {
+    var box = $('next'), n = state.next, d = n && when(n.date);
+    if (!d) { box.hidden = true; return; }
+    box.hidden = false;
+    $('nextWhen').textContent = longDate(d, n.time);
+    $('nextPlan').textContent = n.plan || '';
+    var away = daysAway(d), soon = $('nextSoon');
+    soon.hidden = away > 7;
+    soon.textContent = away <= 0 ? 'today' : away === 1 ? 'tomorrow' : 'in ' + away + ' days';
+  }
+
+  function paintRegister() {
+    var t = $('reg'), ms = state.meetings || [], ps = state.members || [];
+    $('regNone').hidden = ps.length > 0;
+    if (!ps.length) { t.innerHTML = ''; return; }
+    var head = '<thead><tr><th>Member</th>' + ms.map(function (m) {
+      var d = when(m.date); return '<th title="' + esc(m.plan || '') + '">' + esc(d ? shortDate(d) : '') + '</th>';
+    }).join('') + '</tr></thead>';
+    var body = '<tbody>' + ps.map(function (p) {
+      var came = 0; (p.present || []).forEach(function (x) { if (x) came++; });
+      return '<tr><th scope="row">' + esc(p.name) + (p.year ? '<span class="yr">' + esc(p.year) + '</span>' : '') +
+        (ms.length ? '<span class="tally" title="meetings come to">' + came + '/' + ms.length + '</span>' : '') + '</th>' +
+        ms.map(function (m, i) {
+          var yes = (p.present || [])[i];
+          return '<td class="' + (yes ? 'tick' : 'no') + '" aria-label="' + (yes ? 'came' : 'did not come') + '">' + (yes ? '\u2713' : '\u00B7') + '</td>';
+        }).join('') + '</tr>';
+    }).join('') + '</tbody>';
+    t.innerHTML = head + body;
+  }
+
   function paint() {
-    var ol = $('people'); ol.innerHTML = state.people.map(function (p) {
-      return '<li><b>' + esc(p.name) + '</b><span class="yr">' + esc(p.year) + '</span>' + (p.note ? '<span>' + esc(p.note) + '</span>' : '') + '</li>';
-    }).join('');
-    var n = state.people.length;
-    $('listCount').textContent = n ? n + ' interested' : '';
-    $('listNote').textContent = n ? 'names and years only' : '';
+    paintNext(); paintRegister();
+    var n = (state.members || []).length, mt = (state.meetings || []).length;
+    $('listCount').textContent = n ? n + ' member' + (n === 1 ? '' : 's') + (mt ? ' \u00B7 ' + mt + ' meeting' + (mt === 1 ? '' : 's') + ' so far' : '') : '';
+    $('listNote').textContent = n ? 'first names and years only' : '';
     document.querySelectorAll('#ideas .card').forEach(function (card) {
       var id = card.dataset.idea, b = card.querySelector('.vote');
       if (!b) { b = document.createElement('button'); b.type = 'button'; b.className = 'vote'; card.appendChild(b); b.addEventListener('click', function () { vote(id, b); }); }
@@ -288,7 +364,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
       b.classList.toggle('is-mine', mine);
       b.title = mine ? 'Press again to take your vote back' : 'Vote for this';
     });
-    if (me && state.interested) $('go').textContent = 'Update';
+    if (me && state.member) $('go').textContent = 'Update what I wrote';
   }
   function take(j, quiet) {
     if (!j || !j.ok) { if (!quiet) toast(j && j.why === 'not signed in' ? 'Your sign-in has run out. Sign in again.' : 'Could not reach the society\u2019s list just now.'); return false; }
@@ -314,6 +390,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
     $('gsi').hidden = true; $('form').hidden = true; $('whoIAm').hidden = true;
     $('msg').textContent = 'Sign-in and voting are not switched on yet: the teacher has to deploy the society\u2019s script (see the README).';
     $('listNote').textContent = 'not switched on yet';
+    $('regNone').textContent = 'The register is not switched on yet.';
     paint();
   } else {
     refresh();
@@ -321,7 +398,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
       e.preventDefault();
       if (!me) return;
       var go = $('go'); go.disabled = true; $('msg').textContent = 'Sending\u2026';
-      api({ action: 'interest', token: me.token, year: $('year').value, note: $('note').value.trim() })
+      api({ action: 'join', token: me.token, year: $('year').value, note: $('note').value.trim() })
         .then(function (j) { go.disabled = false; if (take(j)) $('msg').textContent = 'You are on the list. Now vote for the ideas you want.'; else $('msg').textContent = ''; })
         .catch(function () { go.disabled = false; $('msg').textContent = ''; toast('Could not reach the society\u2019s list just now.'); });
     });
@@ -339,9 +416,17 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
   /* The cover stands exactly as tall as the words beside it, however many articles there are. */
   var col = document.querySelector('.mag__text'), img = document.querySelector('.cover img');
   if (col && img && 'ResizeObserver' in window) {
+    /* The cover may never take more than this much of the row. Without it, tall words made a
+       wide cover, which left the words less room, which made them taller again: at some widths
+       the two chased each other until the page itself grew sideways. The share is read from the
+       row, which nothing here can widen, so the chase has an end. */
+    var row = document.querySelector('.mag'), SHARE = 0.48, SIDE_BY_SIDE = 1000;   /* the same 1000px as the stylesheet */
     var fit = function () {
-      if (innerWidth <= 760) { img.style.height = ''; img.style.width = ''; return; }
-      img.style.height = Math.round(col.getBoundingClientRect().height) + 'px'; img.style.width = 'auto';
+      if (innerWidth <= SIDE_BY_SIDE) { img.style.height = ''; img.style.width = ''; return; }
+      var ratio = (img.naturalWidth && img.naturalHeight) ? img.naturalWidth / img.naturalHeight : 600 / 849;
+      var most = Math.max(220, Math.round((row ? row.getBoundingClientRect().width : 600) * SHARE));
+      img.style.height = Math.min(Math.round(col.getBoundingClientRect().height), Math.round(most / ratio)) + 'px';
+      img.style.width = 'auto';
     };
     new ResizeObserver(fit).observe(col); addEventListener('resize', fit); fit();
   }
