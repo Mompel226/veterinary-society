@@ -62,6 +62,17 @@ the website says *Next meeting — Thursday 17 September, 15:40*, and what it is
 
 **After the meeting:** tick the box for everyone who came. The website shows the ticks.
 
+**To keep the Google Classroom class in step:** menu ▸ 🎒 **Update who is in the class**. It
+reads the register, asks Google who is in the class, and shows you two lists by name — *to
+invite* (on the register, not in the class) and *to take out* (in the class, not on the
+register) — before it touches anything. Then you press one of two buttons: invite the new ones,
+or invite and take the others out. Nobody is removed unless you ask for that second one.
+
+Two things Google decides, not us: a script may not simply put somebody in a class — it sends an
+**invitation**, which they accept — and only a **teacher of the class** may see or change who is
+in it, so this is one for Dr Mompel rather than the chair. Teachers on the register are left
+alone; the class's teachers are not students, and this only ever touches students.
+
 **To tell the class:** open the **Settings** tab — the last of the five along the bottom of the
 window — and tick the box in **B4**, beside *Post the next meeting to Google Classroom*. An
 announcement is posted, and the box unticks itself, ready for next time. (Menu ▸ *Preview the

@@ -78,6 +78,7 @@ function onOpen() {
     .addSeparator()
     .addItem('⚙️  Set up the tabs', 'setup')
     .addItem('🎓  Choose the Classroom class', 'chooseCourse')
+    .addItem('🎒  Update who is in the class', 'syncClassroom')
     .addItem('🔔  Install the triggers (a teacher, once)', 'installTriggers')
     .addToUi();
 }
@@ -101,6 +102,7 @@ function panel() {
     '<button class="btn" data-do="postNow">📣  Tell the class</button>' +
     '<button class="btn quiet" data-do="checkWebApp">🩺  Check the website</button>' +
     '<button class="btn quiet" data-do="refreshWebsite">🔄  Refresh the website</button>' +
+    '<button class="btn quiet" data-do="syncClassroom">🎒  Update the class</button>' +
     '<button class="btn quiet" data-do="dress">✨  Tidy the sheet</button>' +
     '</div><p class="note" id="s" style="margin-top:12px"></p>' +
     '<script>var s=document.getElementById("s");' +
@@ -783,6 +785,122 @@ function announce(by) {
 function _log(what, by) {
   var sh = _tab(SpreadsheetApp.getActive(), T_LOG, ['When', 'What', 'By']);
   sh.appendRow([new Date(), what, String(by || '')]);
+}
+
+/* ---------- the Classroom roster ----------
+   The register in this sheet is who the society is. Google Classroom should say the same, and
+   keeping the two the same by hand is the sort of job nobody does twice. So: invite whoever is
+   on the register and not in the class, and — only when asked, and only after the names have
+   been read — take out whoever is in the class and not on the register.
+
+   Google will not let a script simply add somebody to a class: it invites them, and they accept.
+   Removing needs no permission from them, which is exactly why it is never done without asking
+   here. Teachers on the register are left alone; they belong in the class as teachers, and this
+   only ever touches students. */
+function _courseOr(sayIt) {
+  var id = String(_setting(S_COURSE) || '').trim();
+  if (!id && sayIt) _say('No class chosen yet', '<p>Tell it which class first: menu ▸ 🎓 <b>Choose the Classroom class</b>.</p>', 220);
+  return id;
+}
+function _classroomReady(sayIt) {
+  if (typeof Classroom !== 'undefined') return true;
+  if (sayIt) _say('One thing is missing', '<p>The Classroom service is not switched on in this script yet.</p>' +
+    '<ol><li>Script editor ▸ <b>Services</b></li><li>press <b>+</b></li><li><b>Google Classroom API</b> ▸ Add</li></ol>', 300);
+  return false;
+}
+/* everyone Google thinks is a student of the class, and everyone already invited */
+function _classNow(course) {
+  var out = { students: [], invited: {} }, token = null;
+  do {
+    var r = Classroom.Courses.Students.list(course, { pageSize: 100, pageToken: token }) || {};
+    ((r.students) || []).forEach(function (st) {
+      var p = st.profile || {};
+      out.students.push({ id: st.userId, email: String((p.emailAddress || '')).toLowerCase(), name: ((p.name || {}).fullName) || '' });
+    });
+    token = r.nextPageToken;
+  } while (token);
+  token = null;
+  do {
+    var q = Classroom.Invitations.list({ courseId: course, pageSize: 100, pageToken: token }) || {};
+    ((q.invitations) || []).forEach(function (iv) { out.invited[String(iv.userId || '').toLowerCase()] = true; });
+    token = q.nextPageToken;
+  } while (token);
+  return out;
+}
+/* what would change, without changing anything */
+function classroomPlan() {
+  var course = _courseOr(false); if (!course || !_classroomReady(false)) return null;
+  var reg = _register(new Date());
+  var want = {}, wantList = [];
+  reg.members.forEach(function (p) {
+    if (p.staff || !p.email) return;                    /* teachers are not students of the class */
+    if (want[p.email]) return;
+    want[p.email] = true; wantList.push({ email: p.email, name: p.name });
+  });
+  var now = _classNow(course);
+  var have = {};
+  now.students.forEach(function (st) { if (st.email) have[st.email] = st; });
+  var plan = { course: course, invite: [], remove: [], already: 0, pending: 0 };
+  wantList.forEach(function (p) {
+    if (have[p.email]) { plan.already++; return; }
+    if (now.invited[p.email]) { plan.pending++; return; }
+    plan.invite.push(p);
+  });
+  var me = _me().toLowerCase();
+  now.students.forEach(function (st) {
+    if (st.email && !want[st.email] && st.email !== me) plan.remove.push(st);
+  });
+  try { plan.name = (Classroom.Courses.get(course) || {}).name || ''; } catch (e) { plan.name = ''; }
+  return plan;
+}
+function syncClassroom() {
+  if (!_classroomReady(true)) return;
+  if (!_courseOr(true)) return;
+  var plan;
+  try { plan = classroomPlan(); }
+  catch (e) { _say('Google would not say', '<p class="warn">' + e.message + '</p>' +
+    '<p class="note">Only a teacher of the class may see or change who is in it. If you are the chair, ask Dr Mompel to run this.</p>', 280); return; }
+  if (!plan) return;
+  var list = function (people, none) {
+    if (!people.length) return '<p class="note">' + none + '</p>';
+    return '<ul>' + people.map(function (p) { return '<li>' + (p.name ? p.name + ' <span class="note">' + p.email + '</span>' : p.email) + '</li>'; }).join('') + '</ul>';
+  };
+  var body =
+    '<p class="eyebrow">' + (plan.name || 'the class') + '</p>' +
+    '<p><b>To invite</b> — on the register, not in the class</p>' + list(plan.invite, 'Nobody. Everyone on the register is in the class already.') +
+    '<p style="margin-top:12px"><b>To take out</b> — in the class, not on the register</p>' + list(plan.remove, 'Nobody.') +
+    '<p class="note">' + plan.already + ' already in · ' + plan.pending + ' invited and not yet accepted · teachers are left alone.</p>' +
+    '<div class="row" style="margin-top:12px">' +
+    (plan.invite.length ? '<button class="btn" id="inv">Invite the ' + plan.invite.length + ' new one' + (plan.invite.length === 1 ? '' : 's') + '</button>' : '') +
+    (plan.remove.length ? '<button class="btn quiet" id="both">Invite, and take out the ' + plan.remove.length + '</button>' : '') +
+    '</div><p class="note" id="s"></p>' +
+    '<script>function go(rm){var s=document.getElementById("s");s.textContent="Working\u2026";' +
+    'Array.prototype.forEach.call(document.querySelectorAll("button"),function(b){b.disabled=true});' +
+    'google.script.run.withSuccessHandler(function(t){s.textContent=t})' +
+    '.withFailureHandler(function(e){s.textContent=e.message})' +
+    '.classroomApply(rm)}' +
+    'var i=document.getElementById("inv"); if(i)i.addEventListener("click",function(){go(false)});' +
+    'var b=document.getElementById("both"); if(b)b.addEventListener("click",function(){go(true)});<\/script>';
+  _say('Who is in the class', body, 560, 'To invite: ' + plan.invite.length + '. To take out: ' + plan.remove.length + '.');
+}
+/* the plan is worked out again here: what a dialog was told a minute ago is not authority */
+function classroomApply(alsoRemove) {
+  var plan = classroomPlan();
+  if (!plan) return 'No class chosen.';
+  var course = plan.course, invited = 0, removed = 0, failed = [];
+  plan.invite.forEach(function (p) {
+    try { Classroom.Invitations.create({ courseId: course, userId: p.email, role: 'STUDENT' }); invited++; }
+    catch (e) { failed.push(p.email + ': ' + e.message); }
+  });
+  if (alsoRemove) {
+    plan.remove.forEach(function (st) {
+      try { Classroom.Courses.Students.remove(course, st.id || st.email); removed++; }
+      catch (e) { failed.push(st.email + ': ' + e.message); }
+    });
+  }
+  var said = invited + ' invited' + (alsoRemove ? ', ' + removed + ' taken out' : '') + (failed.length ? ', ' + failed.length + ' would not' : '') + '.';
+  _log('Classroom roster: ' + said + (failed.length ? ' (' + failed.join('; ') + ')' : ''), _me());
+  return said + (failed.length ? ' See the Log tab.' : ' They have an invitation to accept.');
 }
 
 /* ---------- triggers: installed once, by the teacher ----------
