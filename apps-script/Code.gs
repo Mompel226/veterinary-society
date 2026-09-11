@@ -936,7 +936,7 @@ function _classroomReady(sayIt) {
 }
 /* everyone Google thinks is a student of the class, and everyone already invited */
 function _classNow(course) {
-  var out = { students: [], invited: {} }, token = null;
+  var out = { students: [], invited: {}, pending: [] }, token = null;
   do {
     var r = Classroom.Courses.Students.list(course, { pageSize: 100, pageToken: token }) || {};
     ((r.students) || []).forEach(function (st) {
@@ -948,7 +948,11 @@ function _classNow(course) {
   token = null;
   do {
     var q = Classroom.Invitations.list({ courseId: course, pageSize: 100, pageToken: token }) || {};
-    ((q.invitations) || []).forEach(function (iv) { out.invited[String(iv.userId || '').toLowerCase()] = true; });
+    ((q.invitations) || []).forEach(function (iv) {
+      var who = String(iv.userId || '').toLowerCase();
+      out.invited[who] = true;
+      out.pending.push({ id: iv.id, who: who });
+    });
     token = q.nextPageToken;
   } while (token);
   return out;
@@ -966,17 +970,22 @@ function classroomPlan() {
   var now = _classNow(course);
   var have = {};
   now.students.forEach(function (st) { if (st.email) have[st.email] = st; });
-  var plan = { course: course, invite: [], remove: [], already: 0, pending: 0 };
+  var plan = { course: course, invite: [], remove: [], already: 0, pending: 0, pendingList: [], name: '', link: '' };
   wantList.forEach(function (p) {
     if (have[p.email]) { plan.already++; return; }
-    if (now.invited[p.email]) { plan.pending++; return; }
+    if (now.invited[p.email]) { plan.pending++; plan.pendingList.push(p); return; }
     plan.invite.push(p);
   });
   var me = _me().toLowerCase();
   now.students.forEach(function (st) {
     if (st.email && !want[st.email] && st.email !== me) plan.remove.push(st);
   });
-  try { plan.name = (Classroom.Courses.get(course) || {}).name || ''; } catch (e) { plan.name = ''; }
+  plan.invitations = now.pending;
+  try {
+    var c = Classroom.Courses.get(course) || {};
+    plan.name = c.name || '';
+    plan.link = c.alternateLink || '';
+  } catch (e) {}
   return plan;
 }
 function syncClassroom() {
@@ -994,14 +1003,19 @@ function syncClassroom() {
     if (!people.length) return '<p class="note">' + none + '</p>';
     return '<ul>' + people.map(function (p) { return '<li>' + (p.name ? p.name + ' <span class="note">' + p.email + '</span>' : p.email) + '</li>'; }).join('') + '</ul>';
   };
-  var body =
-    '<p class="eyebrow">' + (plan.name || 'the class') + '</p>' +
-    '<p><b>To invite</b> — on the register, not in the class</p>' + list(plan.invite, 'Nobody. Everyone on the register is in the class already.') +
+  var where = '<p class="eyebrow">This class</p><p style="font:600 15px/1.3 Georgia,serif;color:#EDF4F8;margin:0 0 4px">' +
+    (plan.name || 'the class in Settings B3') + '</p>' +
+    (plan.link ? '<p class="note"><a href="' + plan.link + '" target="_blank" style="color:#F5A623">open it in Google Classroom \u2197</a> — check it is the right one before you press anything.</p>'
+               : '<p class="note">id ' + plan.course + '</p>');
+  var body = where +
+    '<p style="margin-top:12px"><b>To invite</b> — on the register, not in the class</p>' + list(plan.invite, 'Nobody. Everyone on the register is in the class already.') +
     '<p style="margin-top:12px"><b>To take out</b> — in the class, not on the register</p>' + list(plan.remove, 'Nobody.') +
-    '<p class="note">' + plan.already + ' already in · ' + plan.pending + ' invited and not yet accepted · teachers are left alone.</p>' +
+    (plan.pending ? '<p style="margin-top:12px"><b>Invited, not yet accepted</b> — they are in Google Classroom under <i>Invited</i> until they press Join</p>' + list(plan.pendingList, '') : '') +
+    '<p class="note">' + plan.already + ' already in · teachers are left alone.</p>' +
     '<div class="row" style="margin-top:12px">' +
     (plan.invite.length ? '<button class="btn" id="inv">Invite the ' + plan.invite.length + ' new one' + (plan.invite.length === 1 ? '' : 's') + '</button>' : '') +
     (plan.remove.length ? '<button class="btn quiet" id="both">Invite, and take out the ' + plan.remove.length + '</button>' : '') +
+    (plan.pending ? '<button class="btn quiet" id="undo">Take back the ' + plan.pending + ' invitation' + (plan.pending === 1 ? '' : 's') + '</button>' : '') +
     '</div><p class="note" id="s"></p>' +
     '<script>function go(rm){var s=document.getElementById("s");s.textContent="Working\u2026";' +
     'Array.prototype.forEach.call(document.querySelectorAll("button"),function(b){b.disabled=true});' +
@@ -1009,7 +1023,10 @@ function syncClassroom() {
     '.withFailureHandler(function(e){s.textContent=e.message})' +
     '.classroomApply(rm)}' +
     'var i=document.getElementById("inv"); if(i)i.addEventListener("click",function(){go(false)});' +
-    'var b=document.getElementById("both"); if(b)b.addEventListener("click",function(){go(true)});<\/script>';
+    'var b=document.getElementById("both"); if(b)b.addEventListener("click",function(){go(true)});' +
+    'var u=document.getElementById("undo"); if(u)u.addEventListener("click",function(){var s=document.getElementById("s");' +
+    's.textContent="Working\u2026";google.script.run.withSuccessHandler(function(t){s.textContent=t})' +
+    '.withFailureHandler(function(e){s.textContent=e.message}).classroomCancel()});<\/script>';
   _say('Who is in the class', body, 560, 'To invite: ' + plan.invite.length + '. To take out: ' + plan.remove.length + '.');
 }
 /* the plan is worked out again here: what a dialog was told a minute ago is not authority */
@@ -1027,9 +1044,25 @@ function classroomApply(alsoRemove) {
       catch (e) { failed.push(st.email + ': ' + e.message); }
     });
   }
-  var said = invited + ' invited' + (alsoRemove ? ', ' + removed + ' taken out' : '') + (failed.length ? ', ' + failed.length + ' would not' : '') + '.';
-  _log('Classroom roster: ' + said + (failed.length ? ' (' + failed.join('; ') + ')' : ''), _me());
-  return said + (failed.length ? ' See the Log tab.' : ' They have an invitation to accept.');
+  var to = plan.name ? ' to ' + plan.name : '';
+  var said = invited + ' invited' + to + (alsoRemove ? ', ' + removed + ' taken out' : '') + (failed.length ? ', ' + failed.length + ' would not' : '') + '.';
+  _log('Classroom roster: ' + said + ' [course ' + course + ']' + (failed.length ? ' (' + failed.join('; ') + ')' : ''), _me());
+  return said + (failed.length ? ' See the Log tab.' : ' They are in that class under Invited until they press Join.');
+}
+
+/* an invitation can be taken back while it is still unanswered */
+function classroomCancel() {
+  var plan = classroomPlan();
+  if (!plan) return 'No class chosen.';
+  var want = {};
+  plan.pendingList.forEach(function (p) { want[p.email] = true; });
+  var gone = 0, failed = 0;
+  (plan.invitations || []).forEach(function (iv) {
+    if (!want[iv.who]) return;                       /* only the ones this sheet sent */
+    try { Classroom.Invitations.remove(iv.id); gone++; } catch (e) { failed++; }
+  });
+  _log('Classroom roster: ' + gone + ' invitation(s) taken back [course ' + plan.course + ']', _me());
+  return gone + ' invitation' + (gone === 1 ? '' : 's') + ' taken back' + (failed ? ', ' + failed + ' would not' : '') + '.';
 }
 
 /* ---------- triggers: installed once, by the teacher ----------

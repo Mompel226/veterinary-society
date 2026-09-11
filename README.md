@@ -80,7 +80,7 @@ there when you need them.
 | ✨ **Tidy the sheet up** | Puts the colours, widths and tick boxes back. Nothing you have written is changed. Use it after pasting a list in from somewhere else. |
 | ⚙️ **Set up the tabs** | Builds the five tabs, or repairs them. Safe to run again; it fills in blanks rather than replacing anything. |
 | 🎓 **Choose the Classroom class** | Lists the classes you teach and lets you pick the one announcements go to. **A teacher only.** |
-| 🎒 **Update who is in the class** | Compares the register with the Google Classroom class and shows both lists — who to invite, who to take out — before doing anything. **A teacher only.** |
+| 🎒 **Update who is in the class** | Compares the register with the Google Classroom class and shows both lists — who to invite, who to take out — before doing anything. It names the class and links to it, so you can be sure it is the right one. **A teacher only.** |
 | 🔔 **Install the triggers** | Once, by a teacher. Makes edits reach the website at once, and lets the chair's tick in Settings B4 post the announcement under the teacher's name. |
 
 **To add a meeting:** menu **🐴 Veterinary Society ▸ 📅 Add the next meeting**, type the date and
@@ -96,10 +96,14 @@ invite* (on the register, not in the class) and *to take out* (in the class, not
 register) — before it touches anything. Then you press one of two buttons: invite the new ones,
 or invite and take the others out. Nobody is removed unless you ask for that second one.
 
-Two things Google decides, not us: a script may not simply put somebody in a class — it sends an
-**invitation**, which they accept — and only a **teacher of the class** may see or change who is
-in it, so this is one for Dr Mompel rather than the chair. Teachers on the register are left
-alone; the class's teachers are not students, and this only ever touches students.
+Two things Google decides, not us. First, **a script may not simply put somebody in a class**: it
+sends an **invitation**, and they are a member only once they press *Join*. Until then they are in
+Google Classroom under **People ▸ Students** marked *Invited* — so if you invite twenty students
+and the list still looks empty, look for that word rather than for names in the class stream. The
+dialog lists everybody in that state, and offers to take the invitations back. Second, only a
+**teacher of the class** may see or change who is in it, so this is one for Dr Mompel rather than
+the chair. Teachers on the register are left alone; the class's teachers are not students, and
+this only ever touches students.
 
 **To tell the class:** open the **Settings** tab — the last of the five along the bottom of the
 window — and tick the box in **B4**, beside *Post the next meeting to Google Classroom*. An
