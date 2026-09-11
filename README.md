@@ -82,7 +82,7 @@ there when you need them.
 | ⚙️ **Set up the tabs** | Builds the five tabs, or repairs them. Safe to run again; it fills in blanks rather than replacing anything. |
 | 🎓 **Choose the Classroom class** | Lists the classes you teach and lets you pick the one announcements go to. **A teacher only.** |
 | 🎒 **Update who is in the class** | Compares the register with the Google Classroom class and shows both lists — who to invite, who to take out — before doing anything. It names the class and links to it, so you can be sure it is the right one. **A teacher only.** |
-| 🔔 **Install the triggers** | Once, by a teacher. Makes edits reach the website at once, and lets the chair's tick in Settings B4 post the announcement under the teacher's name. |
+| 🔔 **Install the triggers** | Once, by a teacher. Makes edits reach the website at once, and lets the chair's press of *Tell the class* post the announcement under the teacher's name a few minutes later. |
 
 **To add a meeting:** menu **🐴 Veterinary Society ▸ 📅 Add the next meeting**, type the date and
 what you will do. A new column appears with a tick box on every member's row. Within a minute
