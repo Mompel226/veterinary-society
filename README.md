@@ -45,7 +45,9 @@ Everything the page shows about members and meetings lives in one Google Sheet, 
 own. It has nothing to do with the school's marks. The chair keeps the sheet; the website reads
 it. Nothing is typed into the website itself.
 
-**The sheet has four tabs.** The one that matters is **Register**:
+**The sheet has five tabs**, along the bottom of the window: *Start here* (what to do each
+week), **Register**, *Votes*, *Log*, and *Settings*. The one that matters day to day is
+**Register**:
 
 | A | B | C | D | E | F | G | H | I, J, K … |
 |---|---|---|---|---|---|---|---|---|
@@ -60,9 +62,10 @@ the website says *Next meeting — Thursday 17 September, 15:40*, and what it is
 
 **After the meeting:** tick the box for everyone who came. The website shows the ticks.
 
-**To tell the class:** in the **Settings** tab, tick **Post the next meeting to Google
-Classroom**. An announcement is posted, and the box unticks itself, ready for next time.
-(Menu ▸ *Preview the Classroom announcement* shows you what it will say, first.)
+**To tell the class:** open the **Settings** tab — the last of the five along the bottom of the
+window — and tick the box in **B4**, beside *Post the next meeting to Google Classroom*. An
+announcement is posted, and the box unticks itself, ready for next time. (Menu ▸ *Preview the
+Classroom announcement* shows you what it will say, first.)
 
 **To start the register from a list you already have** — a CCA sign-up sheet, last year's
 members, a list the school gave you. Put it in these columns, in this order, and paste it into
@@ -132,7 +135,8 @@ Help. Then **menu ▸ Set up the tabs**, and allow the permissions Google asks f
 > click — so the editor sits on *Execution started* and looks as if it has hung. (This script no
 > longer says anything when it sets up, for that reason, but the rule is worth knowing.)
 
-Five tabs appear — *Start here*, *Register*, *Votes*, *Settings*, *Log* — built and dressed:
+Five tabs appear along the bottom — *Start here*, *Register*, *Votes*, *Log*, *Settings* —
+built and dressed:
 dark headings in the society's own colours, the four name columns frozen so they stay in view
 while you tick, a **Y7–Y13 dropdown** in the Year column, dates that read as dates, room for a
 year of meetings, and a rule that turns a ticked box green so a row of green is a row of people
@@ -144,13 +148,33 @@ never changes what is written.
 classes you teach, shows them as a numbered list, and writes the one you pick into Settings. You
 never have to find a course ID: the number in the Classroom web address is *not* it.
 
-Nothing else needs typing. The **Settings** tab — one of the five, three columns: the name of the
-setting, **the box you type in**, and a line saying what it is for — arrives with the rest filled
-in: the **Google Client ID** (the one the Biology labs use, `7490…ddf.apps.googleusercontent.com`,
-also in [`config.js`](config.js) here) is written in for you, *Post the next meeting to Google
-Classroom* is the tick box you use each week, *Last posted* is written by the script, and *The
-website* is where the page lives. If the school ever changes the Client ID, type the new one into
-that box and it wins over the one in the script.
+Nothing else needs typing.
+
+#### Where *Settings* is, and what is in it
+
+It is a **tab of this spreadsheet**, the last of the five along the bottom edge of the window,
+beside the *+*:
+
+```
+ ┌───────────┬──────────┬───────┬─────┬────────────┐
+ │ Start here│ Register │ Votes │ Log │ ⚙ Settings │      ← the tabs, bottom left
+ └───────────┴──────────┴───────┴─────┴────────────┘
+```
+
+Click it and you see three columns: **A** the name of the setting, **B** the box you type in,
+**C** a line saying what it is for. Row 1 is the heading. Nothing here needs you — it arrives
+filled in — but this is what each row is:
+
+| Cell | Setting (column A) | What is in column B |
+|---|---|---|
+| **B2** | Google Client ID | `749068441640-jgh9s0rbg8ed9hl14mtv6kdhg5jg6ddf.apps.googleusercontent.com`, **already written in**. It is not a secret — the same line is in [`config.js`](config.js) on the website — so it lives in the script and is copied here for you. **If the school ever changes it**, type the new one into **B2**: what is in the sheet wins over what is in the script. Blank it and nobody can sign in. |
+| **B3** | Classroom course ID | written by menu ▸ *Choose the Classroom class* (step 5). |
+| **B4** | Post the next meeting to Google Classroom | the **tick box you use each week**. Tick it; it posts, then unticks itself. |
+| **B5** | Last posted | written by the script — when it last posted, and for which meeting. |
+| **B6** | The website | where the page lives, for reference. |
+
+Only ever type in **column B**. Columns A and C are labels; if one gets edited by accident, menu
+▸ *Tidy the sheet up* writes them back.
 
 **6 · Deploy ▸ New deployment ▸ Web app.** Execute as **Me**, who has access **Anyone**.
 Deploy, and copy the address that ends in `/exec`.
