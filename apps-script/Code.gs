@@ -47,6 +47,10 @@
 var CLIENT_ID = '749068441640-jgh9s0rbg8ed9hl14mtv6kdhg5jg6ddf.apps.googleusercontent.com';
 
 var T_REG = 'Register', T_VOTES = 'Votes', T_SET = 'Settings', T_LOG = 'Log', T_START = 'Start here';
+/* Bumped whenever this file changes in a way the website can see. The menu always runs the code
+   you have just saved; the WEBSITE runs the code of the deployed version, which is a different
+   thing and a common way to be fooled. The check compares the two and says so. */
+var CODE_STAMP = '2026-09-11 · teachers, register, roster';
 var HEAD = ['Korean name', 'English name', 'Surname', 'Preferred name', 'Email', 'Year', 'Joined', 'Would like to do'];
 var NOTE = ['', '', '', 'shown on the site', 'never shown — the first part is enough', 'shown',
             'filled in for you', 'in their own words'];
@@ -614,6 +618,7 @@ function _list(who) {
     }),
     votes: {}, mine: [], member: false
   };
+  out.stamp = CODE_STAMP;
   if (who) {
     out.name = who.given || who.name;
     out.member = reg.members.some(function (p) { return p.email === who.email; });
@@ -687,13 +692,23 @@ function refreshWebsite() { _flush(); _toast('Done. The website reads the regist
    different one entirely. Every `Deploy ▸ New deployment` mints a new address; setting one of
    them to Anyone does nothing for the others. */
 function _ask(url) {
-  if (!url) return { code: 0, ok: false };
+  if (!url) return { code: 0, ok: false, stamp: '' };
   try {
     var r = UrlFetchApp.fetch(url + (url.indexOf('?') < 0 ? '?' : '&') + 'action=list',
                               { muteHttpExceptions: true, followRedirects: true });
-    var c = r.getResponseCode(), b = r.getContentText().slice(0, 300);
-    return { code: c, ok: c === 200 && b.indexOf('"ok"') >= 0 };
-  } catch (e) { return { code: 0, ok: false, why: String(e) }; }
+    var c = r.getResponseCode(), b = r.getContentText();
+    var m = /"stamp"\s*:\s*"([^"]*)"/.exec(b);
+    return { code: c, ok: c === 200 && b.indexOf('"ok"') >= 0, stamp: m ? m[1] : '' };
+  } catch (e) { return { code: 0, ok: false, stamp: '', why: String(e) }; }
+}
+/* the website is answered by the deployed version, not by what is saved in the editor */
+function _staleNote(stamp) {
+  if (stamp === CODE_STAMP) return '';
+  return '<p class="warn" style="margin-top:12px">It is answering with older code.</p>' +
+    '<p>Saving the editor does not change what the website is given: that comes from the deployed version.</p>' +
+    '<ol><li><b>Deploy ▸ Manage deployments</b></li><li>the ✏️ pencil</li>' +
+    '<li>Version: <b>New version</b></li><li><b>Deploy</b> — the address does not change</li></ol>' +
+    '<p class="note">Deployed: <i>' + (stamp || 'from before this was recorded') + '</i><br>Saved here: <i>' + CODE_STAMP + '</i></p>';
 }
 function _siteScriptUrl() {
   var site = String(_setting(S_SITE) || SITE);
@@ -717,12 +732,13 @@ function checkWebApp() {
   if (theirs) {
     var a = _ask(theirs);
     if (a.ok) {
-      _say('Working',
+      _say(a.stamp === CODE_STAMP ? 'Working' : 'Working, but a version behind',
         '<p><span class="ok">The website is reading the register.</span></p>' +
         '<p class="note">It calls <code style="display:inline;padding:2px 6px">' + _shortId(theirs) + '</code>, and that answers a visitor who has not signed in — which is what matters.</p>' +
+        _staleNote(a.stamp) +
         (mine && _idOf(mine) !== _idOf(theirs)
           ? '<p class="note">(This script\u2019s newest deployment is a different one, <code style="display:inline;padding:2px 6px">' + _shortId(mine) + '</code>. Leave it be, or archive it: Deploy ▸ Manage deployments ▸ ⋮ ▸ Archive.)</p>' : ''),
-        340, 'Working: the website can read the register.');
+        a.stamp === CODE_STAMP ? 340 : 520, 'Working: the website can read the register.');
       return;
     }
     /* the website's address does not answer — does this script's own? */
@@ -753,6 +769,7 @@ function checkWebApp() {
   if (c.ok) {
     _say('Working',
       '<p><span class="ok">This deployment answers a visitor who has not signed in.</span></p>' +
+      _staleNote(c.stamp) +
       '<p>Put the address in <b>config.js</b> in the veterinary-society repository, after <code style="display:inline;padding:2px 5px">scriptUrl</code>:</p>' +
       _urlBox(mine) +
       '<p class="note">I could not read <code style="display:inline;padding:2px 5px">' + site + 'config.js</code> to check what the website is calling — that is all right, it may simply not be published yet.</p>',
