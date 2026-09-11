@@ -661,7 +661,9 @@ function web(G, opts) {
     if (url.indexOf('script.google.com') === 0 || url.indexOf('script.google.com') > 0) {
       var id = (/\/s\/([^\/]+)\//.exec(url) || [])[1];
       var good = opts.open && opts.open.indexOf(id) >= 0;
-      return { getResponseCode: () => (good ? 200 : 404), getContentText: () => (good ? '{"ok":true,"members":[]}' : '<!DOCTYPE html>') };
+      var stamp = opts.stamp === undefined ? G.CODE_STAMP : opts.stamp;
+      return { getResponseCode: () => (good ? 200 : 404),
+               getContentText: () => (good ? '{"ok":true,"stamp":"' + stamp + '","members":[]}' : '<!DOCTYPE html>') };
     }
     const m = /id_token=([^&]+)/.exec(url); const t = G.__tokens[decodeURIComponent(m ? m[1] : '')];
     return { getResponseCode: () => (t ? 200 : 400), getContentText: () => JSON.stringify(t || {}) };
@@ -683,6 +685,19 @@ const SHUT = 'https://script.google.com/macros/s/AKfySHUT000000/exec';
   const said = G.__dialogs.map(d => d.html).join(' ');
   ok('it says the website is reading it', said.includes('reading the register'), said.slice(0, 200));
   ok('and it asked the site for its own config.js', G.__fetches.some(u => u.indexOf('config.js') > 0));
+  ok('with the code it is running being the code that is saved, it says nothing about versions', !said.includes('older code'));
+}
+{
+  /* the deployment is public, but it is running the code as it was before the last paste */
+  const { G, api } = seeded();
+  G.__webAppUrl = OPEN;
+  web(G, { configJs: OPEN, open: ['AKfyOPEN000000'], stamp: 'an older stamp' });
+  api.checkWebApp();
+  const said = G.__dialogs.map(d => d.html).join(' ');
+  ok('it says the site is working', said.includes('reading the register'));
+  ok('but that the code behind it is old', said.includes('older code'), said.slice(0, 300));
+  ok('and how to push the new code out', said.includes('New version') && said.includes('the address does not change'));
+  ok('showing both stamps', said.includes('an older stamp') && said.includes(G.CODE_STAMP));
 }
 {
   /* Daniel's case: config.js points at one deployment, the script's newest is another */

@@ -225,6 +225,20 @@ account**: an installed trigger runs as whoever installed it, and only a teacher
 may post an announcement. That is what lets the chair tick one box in the sheet and have the
 announcement go out properly.
 
+#### After you change the script
+
+Paste the new [`Code.gs`](apps-script/Code.gs) over the old one and **Save**. That is enough for
+everything you do **from the sheet** — the menu and the panel always run what is saved.
+
+The **website** is a different matter: it is answered by the **deployed version**, not by what is
+in the editor. So whenever the change touches what the page sees — the register, the meetings,
+the teachers, the votes — also do:
+
+> **Deploy ▸ Manage deployments ▸ ✏️ pencil ▸ Version: New version ▸ Deploy**
+
+The address does not change. Menu ▸ 🩺 *Check the website can read this* compares the two and
+says *Working, but a version behind* when the deployment is running older code.
+
 #### If something does not work
 
 | What you see | What it is |
