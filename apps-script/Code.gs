@@ -636,12 +636,23 @@ function checkWebApp() {
       '<p class="note">Then run this check again.</p>', 320);
     return;
   }
-  url = _plainUrl(url);
-  var res, code = 0, body = '';
-  try {
-    res = UrlFetchApp.fetch(url + '?action=list', { muteHttpExceptions: true, followRedirects: false });
-    code = res.getResponseCode(); body = res.getContentText().slice(0, 200);
-  } catch (e) { body = String(e); }
+  var given = url; url = _plainUrl(url);
+  /* ask both shapes of the address: the plain one a stranger must be able to use, and the
+     school-shaped one the editor shows. Which of them answers says what is wrong. */
+  var tries = [url], code = 0, body = '';
+  if (given !== url) tries.push(given);
+  var said = [];
+  for (var i = 0; i < tries.length; i++) {
+    var c = 0, b = '';
+    try {
+      var r = UrlFetchApp.fetch(tries[i] + '?action=list', { muteHttpExceptions: true, followRedirects: false });
+      c = r.getResponseCode(); b = r.getContentText().slice(0, 200);
+    } catch (e) { b = String(e); }
+    said.push(c);
+    if (i === 0) { code = c; body = b; }
+    if (c === 200 && b.indexOf('"ok"') >= 0) { code = c; body = b; url = tries[i]; break; }
+  }
+  var id = (/\/s\/([^\/]+)\//.exec(url) || [])[1] || '';
   if (code === 200 && body.indexOf('"ok"') >= 0) {
     _say('Working',
       '<p><span class="ok">The website can read the register.</span></p>' +
@@ -651,14 +662,14 @@ function checkWebApp() {
     return;
   }
   _say('The website cannot read this yet',
-    '<p><span class="warn">Google answered ' + (code || '—') + '.</span> Almost always one thing: the deployment is not open to everyone.</p>' +
-    '<ol><li><b>Deploy ▸ Manage deployments</b></li><li>the ✏️ pencil</li>' +
-    '<li>Who has access: <b>Anyone</b> — not <i>Anyone with a Google Account</i>, not the school</li>' +
-    '<li><b>Deploy</b></li></ol>' +
-    '<p>The page asks for the register before anybody has signed in, so that first request arrives as a stranger and has to be let in.</p>' +
-    '<p class="note">If <b>Anyone</b> is missing from the list, the school has switched anonymous web apps off — tell Dr Mompel, and the page can be made to sign people in first instead.</p>' +
-    _urlBox(url), 520,
-    'The website cannot read this yet (Google answered ' + code + '). Deploy > Manage deployments > pencil > Who has access: Anyone > Deploy.');
+    '<p><span class="warn">Google answered ' + said.join(' and ') + '</span> to a request carrying no sign-in — which is how the page asks.</p>' +
+    '<p>This is the deployment being asked. <b>Deploy ▸ Manage deployments</b>: is this the one you set to <b>Anyone</b>?</p>' +
+    '<div class="url">…/s/<b>' + id.slice(0, 12) + '</b>…' + id.slice(-6) + '</div>' +
+    '<ul><li>If it is a <b>different</b> deployment, delete the old ones (⋮ ▸ Archive) and run this again — the script asks the one Google calls current.</li>' +
+    '<li>If it is the <b>same</b> one and it still says Anyone, then the school is refusing anonymous access. That is a Workspace setting, not yours: Admin console ▸ Apps ▸ Google Workspace ▸ Drive and Docs ▸ Sharing settings, and Apps Script web apps published to <i>Anyone</i>.</li></ul>' +
+    '<p class="note">Tell Dr Mompel either way. If the school will not allow it, the page can be changed to sign people in before it asks for anything, which works inside the school.</p>' +
+    _urlBox(url), 560,
+    'The website cannot read this yet (Google answered ' + said.join(' and ') + ') for deployment ' + id.slice(0, 12) + '.');
 }
 /* The editor shows a school account one of two school-shaped addresses —
      script.google.com/a/macros/<school>/s/…      and

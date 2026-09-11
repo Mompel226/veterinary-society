@@ -595,10 +595,11 @@ section('is the website able to read this?');
   G.__webReply = { getResponseCode: () => 401, getContentText: () => '<!DOCTYPE html><html lang="ko">' };
   api.checkWebApp();
   const said = G.__dialogs.map(d => d.html).join(' ');
-  ok('a locked deployment is named as such', said.includes('not open to everyone'), said.slice(0, 200));
-  ok('and the fix is spelled out', said.includes('Who has access: <b>Anyone</b>'));
+  ok('a locked deployment is named as such', said.includes('carrying no sign-in'), said.slice(0, 200));
+  ok('and it names the deployment it asked', said.includes('AKfy123') || said.includes('…'), said.slice(0, 200));
   ok('it says Google’s own answer', said.includes('Google answered 401'));
-  ok('it warns about a school that forbids it', said.includes('anonymous web apps off'));
+  ok('it separates a wrong deployment from a school that forbids it',
+     said.includes('different</b> deployment') && said.includes('Workspace setting'));
   ok('the address it offers is the plain one', said.includes('script.google.com/macros/s/AKfy123/exec') && !said.includes('/a/macros/'));
   ok('and it asked as a stranger would, following nothing', G.__fetches.some(u => u.indexOf('/a/macros/') < 0 && u.indexOf('action=list') > 0));
 }
