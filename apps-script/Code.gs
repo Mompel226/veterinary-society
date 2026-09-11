@@ -63,6 +63,8 @@ var S_CLIENT = 'Google Client ID', S_COURSE = 'Classroom course ID', S_POST = 'P
     S_LAST = 'Last posted', S_SITE = 'The website';
 var CACHE_KEY = 'list-v2', CACHE_SECONDS = 600;
 var YEARS = ['Y7', 'Y8', 'Y9', 'Y10', 'Y11', 'Y12', 'Y13', 'Teacher'];
+/* a teacher is known by a title and a surname, not by a first name: Dr Mompel Riera, not Daniel */
+var TITLES = ['Dr', 'Prof', 'Mr', 'Mrs', 'Ms', 'Miss', 'Mx'];
 var STAFF_DOMAIN = 'nlcsjeju.kr';       /* a teacher's address has no pupils. in it */
 /* the society's own colours, so the sheet looks like the site it feeds */
 var INK = '#12262B', CREAM = '#F3E7C9', MOSS = '#7F94A2', AMBER = '#F5A623',
@@ -495,6 +497,11 @@ function _year(v) {
   var m = /(\d{1,2})/.exec(s);
   return m ? 'Y' + m[1] : s;
 }
+function _title(v) {
+  var s = String(v || '').trim().replace(/\.$/, '');
+  for (var i = 0; i < TITLES.length; i++) if (TITLES[i].toLowerCase() === s.toLowerCase()) return TITLES[i];
+  return '';
+}
 /* Who is a teacher is not a matter of what anybody typed: the school gives teachers an address
    without `pupils.` in it, and Google has already proved the address. A pupil cannot claim it. */
 function _isStaff(email) { return (String(email || '').split('@')[1] || '') === STAFF_DOMAIN; }
@@ -539,7 +546,15 @@ function _handle(d) {
         if (year) sh.getRange(row, 6).setValue(year);
         if (note) sh.getRange(row, 8).setValue(note);
       } else {
-        sh.appendRow(['', who.given || '', who.family || '', who.given || who.name || who.email.split('@')[0], who.email, year, new Date(), note]);
+        /* the name the site will show: a pupil by their first name, a teacher by title and surname */
+        var shown;
+        if (year === 'Teacher') {
+          var t = _title(d.title);
+          shown = ((t ? t + ' ' : '') + (who.family || who.given || who.name || '')).trim() || who.email.split('@')[0];
+        } else {
+          shown = who.given || who.name || who.email.split('@')[0];
+        }
+        sh.appendRow(['', who.given || '', who.family || '', shown, who.email, year, new Date(), note]);
         _dressRow(sh, sh.getLastRow());
       }
       _flush();

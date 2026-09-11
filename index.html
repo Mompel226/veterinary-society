@@ -216,7 +216,9 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
       <div id="gsi"></div>
       <p class="who-i-am" id="whoIAm" hidden></p>
       <form class="form" id="form" hidden>
-        <label>Year group<select id="year"><option>Year 7</option><option>Year 8</option><option>Year 9</option><option>Year 10</option><option>Year 11</option><option>Year 12</option><option>Year 13</option><option>Teacher</option></select></label>
+        <label id="yearWrap">Year group<select id="year"><option>Year 7</option><option>Year 8</option><option>Year 9</option><option>Year 10</option><option>Year 11</option><option>Year 12</option><option>Year 13</option><option>Teacher</option></select></label>
+        <!-- teachers are known by a title and a surname; the page asks, because nobody else can know it -->
+        <label id="titleWrap" hidden>How you are known<select id="title"><option value="">Choose…</option><option>Dr</option><option>Prof</option><option>Mr</option><option>Mrs</option><option>Ms</option><option>Miss</option><option>Mx</option></select></label>
         <label>What would you like to do?<input id="note" maxlength="300" placeholder="e.g. learn to suture, or write for issue 2"></label>
         <button class="go" id="go" type="submit">Put me down</button>
       </form>
@@ -309,8 +311,10 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
     if (me) {
       w.hidden = false;
       w.innerHTML = 'Signed in as <b>' + esc(me.name || me.email) + '</b>' + (amStaff() ? ' \u00B7 teacher' : '');
+      if (amStaff()) $('note').placeholder = 'e.g. I can bring a vet in, or run the suturing';
       f.hidden = false; if (g) g.hidden = true;
-      if (amStaff()) { y.value = 'Teacher'; y.disabled = true; } else { y.disabled = false; if (y.value === 'Teacher') y.value = 'Year 7'; }
+      if (amStaff()) { y.value = 'Teacher'; y.disabled = true; $('yearWrap').hidden = true; $('titleWrap').hidden = false; }
+      else { y.disabled = false; if (y.value === 'Teacher') y.value = 'Year 7'; $('yearWrap').hidden = false; $('titleWrap').hidden = true; }
     }
     else { w.hidden = true; f.hidden = true; if (g) g.hidden = false; }
   }
@@ -423,8 +427,9 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
     $('form').addEventListener('submit', function (e) {
       e.preventDefault();
       if (!me) return;
+      if (amStaff() && !$('title').value) { $('msg').textContent = 'Choose how you are known \u2014 Dr, Mr, Ms \u2026 \u2014 so the page can show your surname.'; return; }
       var go = $('go'); go.disabled = true; $('msg').textContent = 'Sending\u2026';
-      api({ action: 'join', token: me.token, year: $('year').value, note: $('note').value.trim() })
+      api({ action: 'join', token: me.token, year: $('year').value, title: $('title').value, note: $('note').value.trim() })
         .then(function (j) { go.disabled = false; if (take(j)) $('msg').textContent = 'You are on the list. Now vote for the ideas you want.'; else $('msg').textContent = ''; })
         .catch(function () { go.disabled = false; $('msg').textContent = ''; toast('Could not reach the society\u2019s list just now.'); });
     });
