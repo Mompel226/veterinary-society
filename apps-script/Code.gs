@@ -13,7 +13,9 @@
                 the meeting is: "Suturing on practice pads · B12". Members start on row 3.
                 Tick the box under a meeting for everyone who came.
                 The Email column takes the whole address or just the first part of it: ghong31
-                and ghong31@pupils.nlcsjeju.kr are the same person.
+                and ghong31@pupils.nlcsjeju.kr are the same person. A bare name is a pupil's;
+                write a teacher's address out in full — no `pupils.` in it is what makes them
+                staff, and the website lists them apart from the members.
      Votes      when · email · idea            (a second vote on the same idea takes it back)
      Settings   three columns: the name of the setting, THE BOX YOU TYPE IN, and a line saying
                 what it is for. The Google Client ID, the Classroom course, and the "post" box.
@@ -55,7 +57,8 @@ var PUPILS = '@pupils.nlcsjeju.kr';     /* what a bare name in the Email column 
 var S_CLIENT = 'Google Client ID', S_COURSE = 'Classroom course ID', S_POST = 'Post the next meeting to Google Classroom',
     S_LAST = 'Last posted', S_SITE = 'The website';
 var CACHE_KEY = 'list-v2', CACHE_SECONDS = 600;
-var YEARS = ['Y7', 'Y8', 'Y9', 'Y10', 'Y11', 'Y12', 'Y13'];
+var YEARS = ['Y7', 'Y8', 'Y9', 'Y10', 'Y11', 'Y12', 'Y13', 'Teacher'];
+var STAFF_DOMAIN = 'nlcsjeju.kr';       /* a teacher's address has no pupils. in it */
 /* the society's own colours, so the sheet looks like the site it feeds */
 var INK = '#12262B', CREAM = '#F3E7C9', MOSS = '#7F94A2', AMBER = '#F5A623',
     PAPER = '#FFFFFF', BAND = '#F3F7F8', LINE = '#D6E0E4', CAME = '#DCF5E4', SOFT = '#FFF6E5';
@@ -302,8 +305,9 @@ function _register(now) {
       var name = String(r[3] || r[1] || r[0] || '').trim();
       var email = _email(r[4]);
       if (!name && !email) return;
+      var year = _year(r[5]), staff = _isStaff(email) || year === 'Teacher';
       out.members.push({
-        row: DATA_ROW + i, name: name, year: _year(r[5]), email: email,
+        row: DATA_ROW + i, name: name, year: staff ? 'Teacher' : year, email: email, staff: staff,
         marks: out.meetings.map(function (m) { return _present(r[m.col - 1]); })
       });
     });
@@ -331,9 +335,14 @@ function _present(v) {
   return /^(✓|✔|√|1|p|y|yes|present|o|here|came)$/i.test(String(v).trim());
 }
 function _year(v) {
-  var s = String(v || '').trim(), m = /(\d{1,2})/.exec(s);
+  var s = String(v || '').trim();
+  if (/teacher|staff/i.test(s)) return 'Teacher';
+  var m = /(\d{1,2})/.exec(s);
   return m ? 'Y' + m[1] : s;
 }
+/* Who is a teacher is not a matter of what anybody typed: the school gives teachers an address
+   without `pupils.` in it, and Google has already proved the address. A pupil cannot claim it. */
+function _isStaff(email) { return (String(email || '').split('@')[1] || '') === STAFF_DOMAIN; }
 /* the next meeting: the first whose date is today or later */
 function _next(reg) {
   var up = reg.meetings.filter(function (m) { return !m.past; });
@@ -366,7 +375,9 @@ function _handle(d) {
     var ss = SpreadsheetApp.getActive();
     if (action === 'join') {
       var sh = ss.getSheetByName(T_REG); if (!sh) return { ok: false, why: 'no register yet' };
-      var year = _year(d.year), note = String(d.note || '').slice(0, 300);
+      /* a teacher is a teacher because of their address; a pupil who picks Teacher is not one */
+      var year = _isStaff(who.email) ? 'Teacher' : (_year(d.year) === 'Teacher' ? '' : _year(d.year));
+      var note = String(d.note || '').slice(0, 300);
       var row = _rowOf(sh, 5, who.email);
       if (row) {
         /* already on the register: the year and the note are theirs to change, the names are the chair's */
@@ -439,7 +450,8 @@ function _list(who) {
       return { date: _stamp(m.date, tz), time: _hasTime(m.date), plan: m.plan, came: came };
     }),
     members: reg.members.map(function (p) {
-      return { name: p.name, year: p.year, present: past.map(function (m) { return !!p.marks[reg.meetings.indexOf(m)]; }) };
+      return { name: p.name, year: p.year, staff: !!p.staff,
+               present: past.map(function (m) { return !!p.marks[reg.meetings.indexOf(m)]; }) };
     }),
     votes: {}, mine: [], member: false
   };

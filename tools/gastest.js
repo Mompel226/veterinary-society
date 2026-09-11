@@ -190,6 +190,7 @@ function seeded(now = new Date(2026, 8, 14, 9, 0)) {
   reg.getRange(4, 9).setValue(false); reg.getRange(4, 10).setValue('y');
   G.__tokens['TOK-JIEUN'] = { aud: 'CID', exp: Math.floor(now.getTime() / 1000) + 3600, email_verified: 'true', email: 'jekim29@pupils.nlcsjeju.kr', name: 'Jieun Kim', given_name: 'Jieun', family_name: 'Kim' };
   G.__tokens['TOK-NEW'] = { aud: 'CID', exp: Math.floor(now.getTime() / 1000) + 3600, email_verified: 'true', email: 'sy4kim31@pupils.nlcsjeju.kr', name: 'Sungyoon Kim', given_name: 'Sungyoon', family_name: 'Kim' };
+  G.__tokens['TOK-TEACHER'] = { aud: 'CID', exp: Math.floor(now.getTime() / 1000) + 3600, email_verified: 'true', email: 'dmompelriera@nlcsjeju.kr', name: 'Daniel Mompel Riera', given_name: 'Daniel', family_name: 'Mompel Riera' };
   G.__tokens['TOK-OUTSIDE'] = { aud: 'CID', exp: Math.floor(now.getTime() / 1000) + 3600, email_verified: 'true', email: 'someone@gmail.com', name: 'Someone Else', given_name: 'Someone', family_name: 'Else' };
   G.__tokens['TOK-OLD'] = { aud: 'CID', exp: Math.floor(now.getTime() / 1000) - 60, email_verified: 'true', email: 'jekim29@pupils.nlcsjeju.kr', name: 'Jieun Kim' };
   G.__tokens['TOK-OTHERAPP'] = { aud: 'SOMEONE-ELSE', exp: Math.floor(now.getTime() / 1000) + 3600, email_verified: 'true', email: 'jekim29@pupils.nlcsjeju.kr', name: 'Jieun Kim' };
@@ -220,7 +221,7 @@ section('the sheet is dressed');
 
   const v = reg.validations.filter(x => x.c === 6);
   ok('the Year column carries a list', v.length > 0);
-  eq('Y7 to Y13, and nothing else', v[v.length - 1].rule.values, ['Y7', 'Y8', 'Y9', 'Y10', 'Y11', 'Y12', 'Y13']);
+  eq('Y7 to Y13, and Teacher', v[v.length - 1].rule.values, ['Y7', 'Y8', 'Y9', 'Y10', 'Y11', 'Y12', 'Y13', 'Teacher']);
   eq('typed nonsense is refused', v[v.length - 1].rule.allowInvalid, false);
   ok('it is a dropdown, and it reaches the empty rows below', v[v.length - 1].rule.dropdown === true && v[v.length - 1].nr > 100);
   ok('it starts at the first member, not over the headings', v[v.length - 1].r === 3);
@@ -322,7 +323,8 @@ section('what the website is told — and what it is not');
   ok('no email address anywhere in the answer', !/@/.test(text), text.slice(0, 400));
   ok('no surname', !/Kim|Yang/.test(text.replace(/"name":"[^"]*"/g, '')) && !/"name":"[^"]*Kim"/.test(text), text.slice(0, 400));
   ok('no Korean name', !/[가-힣]/.test(text));
-  eq('members are first name and year only', Object.keys(out.members[0]).sort(), ['name', 'present', 'year']);
+  eq('members are a first name, a year, whether they are staff, and ticks',
+     Object.keys(out.members[0]).sort(), ['name', 'present', 'staff', 'year']);
   eq('the first member', [out.members[0].name, out.members[0].year], ['Jieun', 'Y11']);
   eq('the next meeting is the one to come', out.next.date, '2026-09-17T15:40');
   eq('its plan travels with it', out.next.plan, 'Taking blood from the mould · B12');
@@ -387,6 +389,42 @@ section('an address written as just its first part');
   eq('what they wrote reached their row', reg.getRange(5, 8).getValue(), 'suturing');
   eq('and the page counts them as a member', out.member, true);
   ok('still no address on the way out', !/@/.test(JSON.stringify(out)));
+}
+
+section('teachers');
+{
+  const { G, api, reg } = seeded();
+  const out = api._handle({ action: 'join', token: 'TOK-TEACHER', year: 'Year 9', note: 'I run it' });
+  const row = reg.getLastRow();
+  eq('a teacher is put down as a teacher, whatever the form said', reg.getRange(row, 6).getValue(), 'Teacher');
+  eq('their address is the school one, not a pupil one', reg.getRange(row, 5).getValue(), 'dmompelriera@nlcsjeju.kr');
+  const me = out.members[out.members.length - 1];
+  eq('the page is told they are staff', [me.name, me.year, me.staff], ['Daniel', 'Teacher', true]);
+  ok('and the students are not', out.members.slice(0, 2).every(p => p.staff === false));
+  ok('still no address leaves the script', !/@/.test(JSON.stringify(out)));
+}
+{
+  const { G, api, reg } = seeded();
+  api._handle({ action: 'join', token: 'TOK-NEW', year: 'Teacher', note: '' });
+  const row = reg.getLastRow();
+  eq('a pupil who picks Teacher is not made one', reg.getRange(row, 6).getValue(), '');
+  eq('and the page does not show them as staff', api._list(null).members[api._list(null).members.length - 1].staff, false);
+}
+{
+  /* the chair may type a teacher in by hand — the address is what counts, not the column */
+  const { G, api, reg } = seeded();
+  reg.appendRow(['', 'Anna', 'Wise', 'Ms Wise', 'awise@nlcsjeju.kr', 'Y12', new Date(2026, 8, 1), '']);
+  api.onRegisterEdit({ range: reg.getRange(5, 5) });
+  const p = api._list(null).members.filter(x => x.name === 'Ms Wise')[0];
+  eq('typed in by hand, still a teacher', [p.staff, p.year], [true, 'Teacher']);
+}
+{
+  /* and a row with Teacher written in the Year column but no address is taken at its word */
+  const { G, api, reg } = seeded();
+  reg.appendRow(['', 'Sam', 'Park', 'Mr Park', '', 'Teacher', new Date(2026, 8, 1), '']);
+  api.onRegisterEdit({ range: reg.getRange(5, 6) });
+  const p = api._list(null).members.filter(x => x.name === 'Mr Park')[0];
+  eq('the Year column can say it too', [p.staff, p.year], [true, 'Teacher']);
 }
 
 section('who may write');

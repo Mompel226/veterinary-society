@@ -126,6 +126,8 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .reg .tick{color:var(--green);font-size:15px} .reg .no{color:rgba(169,190,203,.3)}
 .reg .tally{margin-left:auto;font-family:var(--mono);font-size:10.5px;color:var(--dim)}
 .reg--empty{display:none}
+.reg-head{margin-top:16px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--moss);font-weight:500}
+.reg .staff{color:var(--amber)}
 .list .none{margin-top:10px;color:var(--mute);font-size:13.5px}
 /* the next meeting, read from the register: the first column whose date is today or later */
 .next{margin-top:26px;display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px;
@@ -214,7 +216,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
       <div id="gsi"></div>
       <p class="who-i-am" id="whoIAm" hidden></p>
       <form class="form" id="form" hidden>
-        <label>Year group<select id="year"><option>Year 7</option><option>Year 8</option><option>Year 9</option><option>Year 10</option><option>Year 11</option><option>Year 12</option><option>Year 13</option></select></label>
+        <label>Year group<select id="year"><option>Year 7</option><option>Year 8</option><option>Year 9</option><option>Year 10</option><option>Year 11</option><option>Year 12</option><option>Year 13</option><option>Teacher</option></select></label>
         <label>What would you like to do?<input id="note" maxlength="300" placeholder="e.g. learn to suture, or write for issue 2"></label>
         <button class="go" id="go" type="submit">Put me down</button>
       </form>
@@ -225,6 +227,8 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
       <h3>Who comes <small id="listNote"></small></h3>
       <div class="reg-wrap"><table class="reg" id="reg"></table></div>
       <p class="none" id="regNone">Nobody yet. Be the first.</p>
+      <h4 class="reg-head" id="staffHead" hidden>Teachers</h4>
+      <div class="reg-wrap" id="staffWrap" hidden><table class="reg" id="regStaff"></table></div>
     </div>
   </div>
 
@@ -297,9 +301,17 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
     } catch (e) { toast('That sign-in could not be read. Try again.'); return; }
     paintMe(); refresh();
   }
+  /* a teacher's address has no `pupils.` in it. The page uses that to fill the form in for them;
+     the script checks it again on the way in, so a pupil cannot put themselves down as staff. */
+  function amStaff() { return !!me && /@nlcsjeju\.kr$/i.test(String(me.email || '')) && !/@pupils\./i.test(String(me.email || '')); }
   function paintMe() {
-    var w = $('whoIAm'), f = $('form'), g = $('gsi');
-    if (me) { w.hidden = false; w.innerHTML = 'Signed in as <b>' + esc(me.name || me.email) + '</b>'; f.hidden = false; if (g) g.hidden = true; }
+    var w = $('whoIAm'), f = $('form'), g = $('gsi'), y = $('year');
+    if (me) {
+      w.hidden = false;
+      w.innerHTML = 'Signed in as <b>' + esc(me.name || me.email) + '</b>' + (amStaff() ? ' \u00B7 teacher' : '');
+      f.hidden = false; if (g) g.hidden = true;
+      if (amStaff()) { y.value = 'Teacher'; y.disabled = true; } else { y.disabled = false; if (y.value === 'Teacher') y.value = 'Year 7'; }
+    }
     else { w.hidden = true; f.hidden = true; if (g) g.hidden = false; }
   }
 
@@ -332,30 +344,44 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
     soon.textContent = away <= 0 ? 'today' : away === 1 ? 'tomorrow' : 'in ' + away + ' days';
   }
 
-  function paintRegister() {
-    var t = $('reg'), ms = state.meetings || [], ps = state.members || [];
-    $('regNone').hidden = ps.length > 0;
-    if (!ps.length) { t.innerHTML = ''; return; }
-    var head = '<thead><tr><th>Member</th>' + ms.map(function (m) {
+  /* one table per group — the members, then the teachers who come with them — sharing the
+     same meeting columns, so a date stands over the same day in both */
+  function regTable(who, people, ms) {
+    var head = '<thead><tr><th>' + who + '</th>' + ms.map(function (m) {
       var d = when(m.date); return '<th title="' + esc(m.plan || '') + '">' + esc(d ? shortDate(d) : '') + '</th>';
     }).join('') + '</tr></thead>';
-    var body = '<tbody>' + ps.map(function (p) {
+    var body = '<tbody>' + people.map(function (p) {
       var came = 0; (p.present || []).forEach(function (x) { if (x) came++; });
-      return '<tr><th scope="row">' + esc(p.name) + (p.year ? '<span class="yr">' + esc(p.year) + '</span>' : '') +
+      return '<tr><th scope="row">' + esc(p.name) +
+        (p.year ? '<span class="yr' + (p.staff ? ' staff' : '') + '">' + esc(p.year) + '</span>' : '') +
         (ms.length ? '<span class="tally" title="meetings come to">' + came + '/' + ms.length + '</span>' : '') + '</th>' +
         ms.map(function (m, i) {
           var yes = (p.present || [])[i];
           return '<td class="' + (yes ? 'tick' : 'no') + '" aria-label="' + (yes ? 'came' : 'did not come') + '">' + (yes ? '\u2713' : '\u00B7') + '</td>';
         }).join('') + '</tr>';
     }).join('') + '</tbody>';
-    t.innerHTML = head + body;
+    return head + body;
+  }
+  function paintRegister() {
+    var ms = state.meetings || [], all = state.members || [];
+    var pupils = all.filter(function (p) { return !p.staff; });
+    var staff = all.filter(function (p) { return p.staff; });
+    $('regNone').hidden = all.length > 0;
+    $('reg').innerHTML = pupils.length ? regTable('Member', pupils, ms) : '';
+    $('staffHead').hidden = $('staffWrap').hidden = !staff.length;
+    $('regStaff').innerHTML = staff.length ? regTable('Teacher', staff, ms) : '';
   }
 
   function paint() {
     paintNext(); paintRegister();
-    var n = (state.members || []).length, mt = (state.meetings || []).length;
-    $('listCount').textContent = n ? n + ' member' + (n === 1 ? '' : 's') + (mt ? ' \u00B7 ' + mt + ' meeting' + (mt === 1 ? '' : 's') + ' so far' : '') : '';
-    $('listNote').textContent = n ? 'first names and years only' : '';
+    var all = state.members || [], mt = (state.meetings || []).length;
+    var n = all.filter(function (p) { return !p.staff; }).length, t = all.length - n;
+    var bits = [];
+    if (n) bits.push(n + ' member' + (n === 1 ? '' : 's'));
+    if (t) bits.push(t + ' teacher' + (t === 1 ? '' : 's'));
+    if (mt) bits.push(mt + ' meeting' + (mt === 1 ? '' : 's') + ' so far');
+    $('listCount').textContent = bits.join(' \u00B7 ');
+    $('listNote').textContent = all.length ? 'first names and years only' : '';
     document.querySelectorAll('#ideas .card').forEach(function (card) {
       var id = card.dataset.idea, b = card.querySelector('.vote');
       if (!b) { b = document.createElement('button'); b.type = 'button'; b.className = 'vote'; card.appendChild(b); b.addEventListener('click', function () { vote(id, b); }); }
