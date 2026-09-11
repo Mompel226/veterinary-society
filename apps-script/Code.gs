@@ -48,7 +48,8 @@ var CLIENT_ID = '749068441640-jgh9s0rbg8ed9hl14mtv6kdhg5jg6ddf.apps.googleuserco
 
 var T_REG = 'Register', T_VOTES = 'Votes', T_SET = 'Settings', T_LOG = 'Log', T_START = 'Start here';
 var HEAD = ['Korean name', 'English name', 'Surname', 'Preferred name', 'Email', 'Year', 'Joined', 'Would like to do'];
-var NOTE = ['', '', '', 'shown on the site', 'never shown — the first part is enough', 'shown', '', ''];
+var NOTE = ['', '', '', 'shown on the site', 'never shown — the first part is enough', 'shown',
+            'filled in for you', 'in their own words'];
 var MEET_COL = HEAD.length + 1;       /* I: the first meeting column */
 var DATA_ROW = 3;                     /* row 1 headings and dates, row 2 notes and plans */
 var SITE = 'https://nlcsbiology.com/veterinary-society/';
@@ -144,6 +145,7 @@ function setup() {
     if (kv[0] === S_CLIENT && !String(st.getRange(row, 2).getValue()).trim()) st.getRange(row, 2).setValue(CLIENT_ID);
   });
   _startHere(ss);
+  _stampJoined(reg);
   dress();
   _flush();
   /* No alert here on purpose. A dialog raised by a script started from the editor waits for a
@@ -191,6 +193,23 @@ function _startHere(ss) {
   return sh;
 }
 
+/* Whoever was put on the register before this ran has no joining date; today is the day the
+   sheet learned about them, which is the honest answer and the useful one. */
+function _stampJoined(sh) {
+  if (!sh) return;
+  var last = _lastMember(sh); if (last < DATA_ROW) return;
+  var rows = last - DATA_ROW + 1;
+  var names = sh.getRange(DATA_ROW, 1, rows, HEAD.length).getValues();
+  var joined = sh.getRange(DATA_ROW, 7, rows, 1).getValues();
+  var now = new Date(), any = false;
+  for (var i = 0; i < rows; i++) {
+    var somebody = false;
+    for (var c = 0; c < HEAD.length; c++) if (String(names[i][c]).trim()) { somebody = true; break; }
+    if (somebody && !String(joined[i][0]).trim()) { joined[i][0] = now; any = true; }
+  }
+  if (any) sh.getRange(DATA_ROW, 7, rows, 1).setValues(joined);
+}
+
 /* ---------- how the sheet looks ----------
    Run whenever: it only ever sets the look, never the contents, so it is safe after pasting a
    list in from somewhere else (a paste brings its own colours and fonts with it). */
@@ -232,37 +251,64 @@ function _dressRegister(sh) {
     sh.getRange(DATA_ROW, MEET_COL, Math.max(1, lastRow - DATA_ROW + 1), n).setHorizontalAlignment('center');
     for (var c = MEET_COL; c <= lastCol; c++) sh.setColumnWidth(c, 110);
   }
-  /* the member rows: a year to choose from a list, a date that reads as a date, room to write */
-  if (lastRow >= DATA_ROW) {
-    var rows = lastRow - DATA_ROW + 1;
+  /* The member rows — and only those. An empty sheet painted to row 1000 looks like a form
+     nobody filled in; a row is dressed when somebody is in it, and a row added by hand dresses
+     itself the moment it is touched (onRegisterEdit below). */
+  var last = _lastMember(sh);
+  if (last >= DATA_ROW) {
+    var rows = last - DATA_ROW + 1, wide = Math.max(HEAD.length, lastCol);
     sh.getRange(DATA_ROW, 1, rows, HEAD.length).setFontColor('#1B2226').setWrap(false);
     sh.getRange(DATA_ROW, 4, rows, 1).setFontWeight('bold');
     sh.getRange(DATA_ROW, 5, rows, 1).setFontColor('#5C6C77').setFontSize(9.5);
     sh.getRange(DATA_ROW, 6, rows, 1).setHorizontalAlignment('center');
     sh.getRange(DATA_ROW, 7, rows, 1).setNumberFormat('d mmm yyyy').setHorizontalAlignment('center');
     sh.getRange(DATA_ROW, 8, rows, 1).setWrap(true);
-    sh.getRange(DATA_ROW, 1, rows, Math.max(HEAD.length, lastCol)).applyRowBanding(SpreadsheetApp.BandingTheme.LIGHT_GREY, false, false);
+    /* banded by hand rather than with a banding: a banding is a thing on the sheet that would
+       have to be found and replaced every time a row is added */
+    var bands = [];
+    for (var i = 0; i < rows; i++) { var b = (i % 2) ? BAND : PAPER, line = []; for (var c = 0; c < wide; c++) line.push(b); bands.push(line); }
+    sh.getRange(DATA_ROW, 1, rows, wide).setBackgrounds(bands);
     sh.setRowHeights(DATA_ROW, rows, 26);
   }
-  _years(sh);
+  _years(sh, last);
   /* room for a year of meetings, so a new column rarely has to widen the sheet */
   var want = MEET_COL + 39;
   if (sh.getMaxColumns() < want) sh.insertColumnsAfter(sh.getMaxColumns(), want - sh.getMaxColumns());
   /* a ticked box turns its cell green, so a row of green is a row of people who came */
   var span = sh.getMaxColumns() - MEET_COL + 1;
-  var marks = sh.getRange(DATA_ROW, MEET_COL, Math.max(sh.getMaxRows() - DATA_ROW + 1, 1), span);
+  var deep = Math.max(last, DATA_ROW) - DATA_ROW + 1;
+  var marks = sh.getRange(DATA_ROW, MEET_COL, deep, span);
   sh.setConditionalFormatRules([
     SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied('=' + marks.getA1Notation().split(':')[0] + '=TRUE')
       .setBackground(CAME).setRanges([marks]).build()
   ]);
 }
-/* the Year column is a list, Y7 to Y13, so nobody types "year 7 " and wonders why */
-function _years(sh) {
+/* the Year column is a list, Y7 to Y13 and Teacher, so nobody types "year 7 " and wonders why.
+   It reaches the rows that hold somebody, and one more, ready for the next. */
+function _years(sh, last) {
   if (!sh) return;
-  var rows = Math.max(sh.getMaxRows() - DATA_ROW + 1, 1);
+  if (last == null) last = _lastMember(sh);
+  var rows = Math.min(Math.max(last, DATA_ROW - 1) + 1, sh.getMaxRows()) - DATA_ROW + 1;
+  if (rows < 1) rows = 1;
   var rule = SpreadsheetApp.newDataValidation().requireValueInList(YEARS, true)
-    .setAllowInvalid(false).setHelpText('Y7 to Y13').build();
+    .setAllowInvalid(false).setHelpText('Y7 to Y13, or Teacher').build();
   sh.getRange(DATA_ROW, 6, rows, 1).setDataValidation(rule);
+}
+/* the last row with a person on it — not the last row Sheets happens to have touched */
+function _lastMember(sh) {
+  var last = sh.getLastRow();
+  if (last < DATA_ROW) return DATA_ROW - 1;
+  var v = sh.getRange(DATA_ROW, 1, last - DATA_ROW + 1, HEAD.length).getValues();
+  for (var i = v.length - 1; i >= 0; i--) {
+    for (var c = 0; c < HEAD.length; c++) if (String(v[i][c]).trim()) return DATA_ROW + i;
+  }
+  return DATA_ROW - 1;
+}
+function _hasSomebody(sh, row) {
+  if (row < DATA_ROW) return false;
+  var v = sh.getRange(row, 1, 1, HEAD.length).getValues()[0];
+  for (var c = 0; c < HEAD.length; c++) if (String(v[c]).trim()) return true;
+  return false;
 }
 function _dressLedger(sh, widths) {
   if (!sh) return;
@@ -513,17 +559,25 @@ function _handle(d) {
     return { ok: false, why: 'unknown action' };
   } finally { lock.releaseLock(); }
 }
-/* a row a student made for themselves should look like the rows the chair typed */
+/* One row, dressed like the rest: a student who signed up, or a row somebody typed in by hand.
+   Also the moment to fill in what the sheet can know for itself — when they arrived. */
 function _dressRow(sh, row) {
   try {
+    if (!_hasSomebody(sh, row)) return;
+    var lastCol = sh.getLastColumn(), wide = Math.max(HEAD.length, lastCol);
+    var band = ((row - DATA_ROW) % 2) ? BAND : PAPER, line = [];
+    for (var c = 0; c < wide; c++) line.push(band);
+    sh.getRange(row, 1, 1, wide).setBackgrounds([line]);
+    sh.getRange(row, 1, 1, HEAD.length).setFontColor('#1B2226');
     sh.getRange(row, 4).setFontWeight('bold');
     sh.getRange(row, 5).setFontColor('#5C6C77').setFontSize(9.5);
     sh.getRange(row, 6).setHorizontalAlignment('center');
     sh.getRange(row, 7).setNumberFormat('d mmm yyyy').setHorizontalAlignment('center');
     sh.getRange(row, 8).setWrap(true);
     sh.setRowHeight(row, 26);
-    var lastCol = sh.getLastColumn();
     if (lastCol >= MEET_COL) sh.getRange(row, MEET_COL, 1, lastCol - MEET_COL + 1).insertCheckboxes().setHorizontalAlignment('center');
+    if (!String(sh.getRange(row, 7).getValue()).trim()) sh.getRange(row, 7).setValue(new Date());
+    _years(sh);
   } catch (e) {}
 }
 function _schoolAccount(email) {
@@ -980,7 +1034,13 @@ function onRegisterEdit(e) {
   _flush();
   try {
     var r = e && e.range; if (!r) return;
-    var sh = r.getSheet(); if (sh.getName() !== T_SET || r.getColumn() !== 2) return;
+    var sh = r.getSheet();
+    /* a row somebody has just written in dresses itself, and is stamped with the day it arrived */
+    if (sh.getName() === T_REG && r.getRow() >= DATA_ROW && r.getColumn() <= HEAD.length) {
+      for (var i = 0; i < r.getNumRows(); i++) _dressRow(sh, r.getRow() + i);
+      return;
+    }
+    if (sh.getName() !== T_SET || r.getColumn() !== 2) return;
     var key = String(sh.getRange(r.getRow(), 1).getValue()).trim();
     if (key !== S_POST || r.getValue() !== true) return;
     var by = (e.user && e.user.getEmail && e.user.getEmail()) || '';

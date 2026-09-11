@@ -25,6 +25,8 @@ class Range {
   insertCheckboxes() { for (let i = 0; i < this.nr; i++) for (let j = 0; j < this.nc; j++) { const v = this.sh._get(this.r + i, this.c + j); if (v === '' || v == null) this.sh._set(this.r + i, this.c + j, false); } this.sh.boxes++; return this; }
   getSheet() { return this.sh; }
   getRow() { return this.r; }
+  getNumRows() { return this.nr; }
+  getNumColumns() { return this.nc; }
   getColumn() { return this.c; }
   getA1Notation() {
     const col = n => { let s = ''; while (n > 0) { s = String.fromCharCode(65 + (n - 1) % 26) + s; n = Math.floor((n - 1) / 26); } return s; };
@@ -38,6 +40,8 @@ class Range {
   setFontColor(v) { return this._mark('colour', v); }
   setFontStyle(v) { return this._mark('style', v); }
   setBackground(v) { return this._mark('bg', v); }
+  setBackgrounds(rows) { rows.forEach((row, i) => row.forEach((v, j) => {
+    const k = this._k2(this.r + i, this.c + j); (this.sh.look[k] || (this.sh.look[k] = {})).bg = v; })); return this; }
   setFontFamily(v) { return this._mark('font', v); }
   setFontSize(v) { return this._mark('size', v); }
   setHorizontalAlignment(v) { return this._mark('align', v); }
@@ -237,13 +241,15 @@ section('the sheet is dressed');
 {
   const { G, api } = seeded();
   const reg = G.__ss.getSheetByName('Register');
+  api.dress();          /* as the chair would, after pasting a list in */
 
   const v = reg.validations.filter(x => x.c === 6);
   ok('the Year column carries a list', v.length > 0);
   eq('Y7 to Y13, and Teacher', v[v.length - 1].rule.values, ['Y7', 'Y8', 'Y9', 'Y10', 'Y11', 'Y12', 'Y13', 'Teacher']);
   eq('typed nonsense is refused', v[v.length - 1].rule.allowInvalid, false);
-  ok('it is a dropdown, and it reaches the empty rows below', v[v.length - 1].rule.dropdown === true && v[v.length - 1].nr > 100);
+  ok('it is a dropdown', v[v.length - 1].rule.dropdown === true);
   ok('it starts at the first member, not over the headings', v[v.length - 1].r === 3);
+  eq('and it covers the two members and one row more, ready for the next', v[v.length - 1].nr, 3);
 
   eq('the headings are the society’s ink', reg.look_of(1, 1).bg, '#12262B');
   eq('written in cream', reg.look_of(1, 4).colour, '#F3E7C9');
@@ -259,8 +265,11 @@ section('the sheet is dressed');
   eq('and that is the colour', reg.cf[0].bg, '#DCF5E4');
   ok('it starts at the first tick box', reg.cf[0].formula === '=I3=TRUE', reg.cf[0].formula);
   ok('and covers every meeting column', reg.cf[0].ranges[0].nc >= 40);
+  eq('but only the rows with somebody in them', reg.cf[0].ranges[0].nr, 2);
 
-  eq('the members are banded once', reg.bandings.length, 1);
+  eq('no banding object is left on the sheet to keep in step', reg.bandings.length, 0);
+  ok('the rows are banded by hand instead', reg.look_of(3, 1).bg === '#FFFFFF' && reg.look_of(4, 1).bg === '#F3F7F8');
+  ok('and nothing below the last member is painted', !reg.look_of(5, 1).bg && !reg.look_of(20, 1).bg);
   const st = G.__ss.getSheetByName('Settings');
   ok('every setting says what it is for', String(st.getRange(api._settingRow(st, 'Classroom course ID'), 3).getValue()).includes('announcement'));
   eq('the heading row is not mistaken for a setting', st.look_of(1, 1).bg, '#12262B');
@@ -268,9 +277,9 @@ section('the sheet is dressed');
   ok('the box you tick is picked out', st.look_of(api._settingRow(st, 'Post the next meeting to Google Classroom'), 1).bg === '#FFF6E5');
   ok('the tabs are coloured', reg.tab === '#12262B' && st.tab === '#F5A623');
 
-  /* running it again must not stack bandings or rules up */
+  /* running it again must not stack anything up */
   api.dress(); api.dress();
-  eq('tidying twice leaves one banding', reg.bandings.length, 1);
+  eq('tidying twice leaves no bandings', reg.bandings.length, 0);
   eq('and one rule', reg.cf.length, 1);
   eq('and does not touch what is written', reg.getRange(3, 4).getValue(), 'Jieun');
 }
@@ -307,6 +316,47 @@ section('setting up does not stop and wait');
   eq('the sheet wins over the script', api._clientId(), 'SCHOOL-CHANGED-IT');
   api.setup();
   eq('and setup does not overwrite it', st.getRange(api._settingRow(st, 'Google Client ID'), 2).getValue(), 'SCHOOL-CHANGED-IT');
+}
+
+section('a row written by hand, and the day somebody joined');
+{
+  const { G, api } = seeded();
+  const reg = G.__ss.getSheetByName('Register');
+  const row = reg.getLastRow() + 1;
+  reg.getRange(row, 4).setValue('Minho');           /* somebody types a name into a fresh row */
+  api.onRegisterEdit({ range: reg.getRange(row, 4) });
+  eq('the row dresses itself', reg.look_of(row, 4).weight, 'bold');
+  ok('it is banded like its neighbours', !!reg.look_of(row, 1).bg);
+  ok('the day they arrived is filled in', reg.getRange(row, 7).getValue() instanceof Date);
+  eq('and reads as a date', reg.formats[row + ',7'], 'd mmm yyyy');
+  eq('it gets a tick box for every meeting', reg.getRange(row, 9).getValue(), false);
+  const v = reg.validations.filter(x => x.c === 6);
+  eq('and the year list now reaches it', v[v.length - 1].r + v[v.length - 1].nr - 1 >= row, true);
+
+  const stamped = reg.getRange(row, 7).getValue();
+  reg.getRange(row, 8).setValue('suturing');
+  api.onRegisterEdit({ range: reg.getRange(row, 8) });
+  eq('editing it again does not move the date', reg.getRange(row, 7).getValue(), stamped);
+}
+{
+  const { G, api } = seeded();
+  const reg = G.__ss.getSheetByName('Register');
+  reg.getRange(6, 4).setValue('   ');                /* spaces are not somebody */
+  api.onRegisterEdit({ range: reg.getRange(6, 4) });
+  ok('a row of nothing is left alone', !reg.look_of(6, 4).weight && !String(reg.getRange(6, 7).getValue()).trim());
+}
+{
+  /* the seventeen pasted in from a list have no joining date until setup fills them in */
+  const { G, api } = load();
+  api.setup();
+  const reg = G.__ss.getSheetByName('Register');
+  reg.appendRow(['', 'Sarah', 'Jiang', 'Sarah', 'mjiang30@pupils.nlcsjeju.kr', 'Y10', '', '']);
+  reg.appendRow(['', 'Anna', 'Wise', 'Anna', 'anwise28@pupils.nlcsjeju.kr', 'Y12', '', '']);
+  api.setup();
+  ok('setup fills in the blanks', reg.getRange(3, 7).getValue() instanceof Date && reg.getRange(4, 7).getValue() instanceof Date);
+  const was = reg.getRange(3, 7).getValue();
+  api.setup();
+  eq('and does not move a date it has already written', reg.getRange(3, 7).getValue(), was);
 }
 
 section('dates, however the chair types them');
