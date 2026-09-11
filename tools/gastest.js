@@ -115,11 +115,14 @@ function makeGlobals(now) {
                     build: () => r }; return b; },
       getActive: () => ss,
       getUi: () => ({
-        alert: m => G.__alerts.push(m),
-        showModalDialog: (out, title) => { G.__dialogs.push({ html: out.html, title }); },
+        alert: function (a, b, c) {
+          if (c) { G.__asked.push(String(a) + ' | ' + String(b)); return (G.__answerYesNo.length ? G.__answerYesNo.shift() : 'no') === 'yes' ? 'YES' : 'NO'; }
+          G.__alerts.push(a); return 'OK';
+        },
+        ButtonSet: { OK_CANCEL: 'okc', YES_NO: 'yn' }, Button: { OK: 'ok', YES: 'YES', NO: 'NO' },
+        showModalDialog: (out, title) => { if (G.__noDialogs) throw new Error('Cannot show a dialog here'); G.__dialogs.push({ html: out.html, title }); },
         showSidebar: (out) => { G.__sidebars.push(out.html); },
         prompt: () => ({ getSelectedButton: () => 'ok', getResponseText: () => G.__answer.shift() }),
-        ButtonSet: { OK_CANCEL: 'okc' }, Button: { OK: 'ok' },
         createMenu: () => { const m = { addItem: () => m, addSeparator: () => m, addToUi: () => m }; return m; }
       })
     },
@@ -159,7 +162,8 @@ function makeGlobals(now) {
     HtmlService: { createHtmlOutput: (html) => { const o = { html, setWidth: () => o, setHeight: () => o, setTitle: () => o }; return o; } },
     Logger: { log: () => {} },
     __answer: [], __webAppUrl: '', __webReply: null, __dialogs: [], __sidebars: [],
-    __roster: [], __invites: [], __removed: [], __cancelled: [], __inviteFails: {}
+    __roster: [], __invites: [], __removed: [], __cancelled: [], __inviteFails: {},
+    __noDialogs: false, __asked: [], __answerYesNo: []
   };
   /* a Date that answers "now" with the test's now, while every real date still passes
      `instanceof Date` inside the script — a subclass would not */
@@ -941,6 +945,33 @@ section('when Google says the permissions are not enough');
   const said = G.__dialogs.map(d => d.html).join(' ');
   ok('a plain refusal is still explained as a refusal', said.includes('Only a teacher of the class'), said.slice(0, 200));
   ok('and does not send him to the manifest for nothing', !said.includes('Project Settings'));
+}
+
+section('when the drawn window will not open');
+{
+  const { G, api, reg } = seeded();
+  G.__noDialogs = true;
+  G.__roster = [{ id: '22', email: 'gone30@pupils.nlcsjeju.kr', name: 'Someone Who Left' }];
+  G.__answerYesNo = ['yes', 'yes'];
+  api.syncClassroom();
+  const asked = G.__asked.join(' || ');
+  ok('it asks plainly instead', asked.includes('Invite 2'), asked.slice(0, 200));
+  ok('naming the class', asked.includes('BioGuardians'));
+  ok('and the people', asked.includes('Jieun') && asked.includes('Someone Who Left'));
+  eq('a yes invites', G.__invites.length, 2);
+  ok('a second yes takes the leaver out', G.__removed.length === 1);
+  ok('and the Log records why the window would not open', 
+     String(G.__ss.getSheetByName('Log').getRange(2, 2).getValue() + G.__ss.getSheetByName('Log').getRange(3, 2).getValue()).includes('pop-up would not open'));
+  ok('the grey box says so too', G.__alerts.join(' ').includes('would not open here'));
+}
+{
+  const { G, api } = seeded();
+  G.__noDialogs = true;
+  G.__roster = [{ id: '22', email: 'gone30@pupils.nlcsjeju.kr', name: 'Someone Who Left' }];
+  G.__answerYesNo = ['no', 'no'];
+  api.syncClassroom();
+  eq('a no invites nobody', G.__invites.length, 0);
+  eq('and takes nobody out', G.__removed.length, 0);
 }
 
 section('the triggers');

@@ -398,14 +398,28 @@ function _page(title, bodyHtml) {
     '<div class="head">' + MARK_SVG + '<div><div class="eyebrow">Veterinary Society</div><h1>' + title + '</h1></div></div>' +
     bodyHtml + '</div></body></html>';
 }
-/* say something, prettily if the sheet will let us */
+/* Say something, prettily if the sheet will let us. Returns true if the drawn page appeared;
+   false if it fell back to Google's grey box — and then it says why, because a job that can only
+   be done by pressing a button inside a page that never opened is no job at all. */
 function _say(title, bodyHtml, height, plain) {
   try {
     var out = HtmlService.createHtmlOutput(_page(title, bodyHtml)).setWidth(520).setHeight(height || 320);
     SpreadsheetApp.getUi().showModalDialog(out, 'Veterinary Society');
+    return true;
   } catch (e) {
-    _ui(plain || String(bodyHtml).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim());
+    var why = String(e && e.message || e);
+    try { _log('A pop-up would not open (' + title + '): ' + why, _me()); } catch (e2) {}
+    _ui((plain || String(bodyHtml).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()) +
+        '\n\n(The proper window would not open here: ' + why + ')');
+    return false;
   }
+}
+/* a question Google's own box can ask, for when the drawn page cannot be shown */
+function _askYesNo(title, text) {
+  try {
+    var ui = SpreadsheetApp.getUi();
+    return ui.alert(title, text, ui.ButtonSet.YES_NO) === ui.Button.YES;
+  } catch (e) { return false; }
 }
 /* a copyable box with the address in it */
 function _urlBox(url) {
@@ -1042,7 +1056,33 @@ function syncClassroom() {
     'var u=document.getElementById("undo"); if(u)u.addEventListener("click",function(){var s=document.getElementById("s");' +
     's.textContent="Working\u2026";google.script.run.withSuccessHandler(function(t){s.textContent=t})' +
     '.withFailureHandler(function(e){s.textContent=e.message}).classroomCancel()});<\/script>';
-  _say('Who is in the class', body, 560, 'To invite: ' + plan.invite.length + '. To take out: ' + plan.remove.length + '.');
+  if (_say('Who is in the class', body, 560)) return;
+
+  /* No drawn page here, so ask it plainly — and be able to do the work either way. */
+  var names = function (people) { return people.map(function (p) { return '  \u2022 ' + (p.name ? p.name + '  ' + p.email : p.email); }).join('\n'); };
+  var head = 'Class: ' + (plan.name || plan.course) + '\n' + (plan.link ? plan.link + '\n' : '');
+  if (plan.invite.length) {
+    if (_askYesNo('Invite ' + plan.invite.length + ' to ' + (plan.name || 'the class') + '?',
+        head + '\nThey are on the register and not in the class:\n' + names(plan.invite) +
+        '\n\nGoogle sends each an invitation; they are in the class once they press Join.')) {
+      _ui(classroomApply(false));
+    }
+  } else {
+    _ui(head + '\nNobody to invite: everyone on the register is in the class already' +
+        (plan.pending ? ', or has an invitation waiting (' + plan.pending + ').' : '.'));
+  }
+  if (plan.remove.length) {
+    if (_askYesNo('Take ' + plan.remove.length + ' out of ' + (plan.name || 'the class') + '?',
+        head + '\nThey are in the class and not on the register:\n' + names(plan.remove) +
+        '\n\nThis removes them straight away. It cannot be undone from here.')) {
+      _ui(classroomApply(true));
+    }
+  }
+  if (plan.pending && _askYesNo('Take back ' + plan.pending + ' invitation(s)?',
+      head + '\nInvited, not yet accepted:\n' + names(plan.pendingList) +
+      '\n\nTake those invitations back?')) {
+    _ui(classroomCancel());
+  }
 }
 /* the plan is worked out again here: what a dialog was told a minute ago is not authority */
 function classroomApply(alsoRemove) {
