@@ -6,5 +6,5 @@
                    sign-in, the list and the votes, and says so. */
 window.VETSOC_CONFIG = {
   googleClientId: '749068441640-jgh9s0rbg8ed9hl14mtv6kdhg5jg6ddf.apps.googleusercontent.com',
-  scriptUrl: ''
+  scriptUrl: 'https://script.google.com/a/macros/nlcsjeju.kr/s/AKfycbylCNbrlJT73aR2C9AhkTGTCwHmyjOwert5n81XiegKGQBa67lPRFj9YHeLszBSA8VlVA/exec'
 };
