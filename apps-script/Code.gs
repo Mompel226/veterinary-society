@@ -412,8 +412,14 @@ function _say(title, bodyHtml, height, plain) {
   } catch (e) {
     var why = String(e && e.message || e);
     try { _log('A pop-up would not open (' + title + '): ' + why, _me()); } catch (e2) {}
+    var fix = _isScopeTrouble(why)
+      ? '\n\nThe drawn windows need one more permission than this script has been given.' +
+        '\n  1. Script editor \u25B8 Project Settings \u25B8 tick "Show appsscript.json manifest file in editor"' +
+        '\n  2. Editor \u25B8 appsscript.json \u25B8 replace it with the one in the veterinary-society repository \u25B8 Save' +
+        '\n  3. Run this again and press Allow.'
+      : '';
     _ui((plain || String(bodyHtml).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()) +
-        '\n\n(The proper window would not open here: ' + why + ')');
+        '\n\n(The proper window would not open here: ' + why + ')' + fix);
     return false;
   }
 }
@@ -942,6 +948,7 @@ var MANIFEST = [
   "  },",
   "  \"oauthScopes\": [",
   "    \"https://www.googleapis.com/auth/spreadsheets.currentonly\",",
+  "    \"https://www.googleapis.com/auth/script.container.ui\",",
   "    \"https://www.googleapis.com/auth/script.external_request\",",
   "    \"https://www.googleapis.com/auth/userinfo.email\",",
   "    \"https://www.googleapis.com/auth/script.scriptapp\",",

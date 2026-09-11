@@ -120,7 +120,7 @@ function makeGlobals(now) {
           G.__alerts.push(a); return 'OK';
         },
         ButtonSet: { OK_CANCEL: 'okc', YES_NO: 'yn' }, Button: { OK: 'ok', YES: 'YES', NO: 'NO' },
-        showModalDialog: (out, title) => { if (G.__noDialogs) throw new Error('Cannot show a dialog here'); G.__dialogs.push({ html: out.html, title }); },
+        showModalDialog: (out, title) => { if (G.__noDialogs) throw new Error(typeof G.__noDialogs === 'string' ? G.__noDialogs : 'Cannot show a dialog here'); G.__dialogs.push({ html: out.html, title }); },
         showSidebar: (out) => { G.__sidebars.push(out.html); },
         prompt: () => ({ getSelectedButton: () => 'ok', getResponseText: () => G.__answer.shift() }),
         createMenu: () => { const m = { addItem: () => m, addSeparator: () => m, addToUi: () => m }; return m; }
@@ -975,6 +975,19 @@ section('when the drawn window will not open');
 }
 
 section('why a drawn window would not open');
+{
+  const { G, api } = seeded();
+  G.__noDialogs = 'Specified permissions are not sufficient to call Ui.showModalDialog. Required permissions: https://www.googleapis.com/auth/script.container.ui';
+  api.syncClassroom();
+  const said = G.__alerts.join(' ');
+  ok('a missing permission is named as one', said.includes('one more permission'), said.slice(0, 240));
+  ok('and the way to give it is spelled out', said.includes('appsscript.json') && said.includes('Allow'));
+}
+{
+  const fs = require('fs');
+  ok('the manifest asks for what the windows need',
+     fs.readFileSync(__dirname + '/../apps-script/appsscript.json', 'utf8').includes('script.container.ui'));
+}
 {
   const { G, api } = seeded();
   api.testPopup();
