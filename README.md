@@ -211,7 +211,8 @@ announcement go out properly.
 | What you see | What it is |
 |---|---|
 | The page shows *"Sign-in and voting are not switched on yet"* | `config.js` has no address in `scriptUrl` yet (step 8), or the commit has not reached GitHub Pages — give it a minute. |
-| The page shows nothing where the register should be, and `scriptUrl` **is** filled in | The deployment is not open to **Anyone** (step 6). Menu ▸ *Check the website can read this* will say so. |
+| The page shows nothing where the register should be, and `scriptUrl` **is** filled in | The deployment is not open to **Anyone** (step 6). Menu ▸ 🩺 *Check the website can read this* will say so — Google answers **401** or **404** to a request that carries no sign-in. If **Anyone** is not offered in the deployment settings at all, the school has turned anonymous web apps off; say so and the page can be changed to sign people in before it asks for anything. |
+| You redeployed and got a new address | Each **New deployment** makes a new `/exec`. Use *Check the website can read this* to get the current one, and put that in `config.js`. **Manage deployments ▸ pencil ▸ Deploy** updates the existing one and keeps its address. |
 | *Exception: Specified permissions are not sufficient to call Session.getEffectiveUser* | An old authorisation. Paste the current `Code.gs` again, run the menu item again, and allow the permissions Google asks for. Nothing is lost. |
 | The editor sits on *Execution started* and nothing happens | A script run from the editor is waiting for a click in the **spreadsheet** window. Switch to it. Better: run these from the menu. |
 | Members appear, but a name is wrong | It is the *Preferred name* column, D, in the Register tab. Change it there; the page follows within a minute. |

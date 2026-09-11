@@ -112,6 +112,8 @@ function makeGlobals(now) {
       getActive: () => ss,
       getUi: () => ({
         alert: m => G.__alerts.push(m),
+        showModalDialog: (out, title) => { G.__dialogs.push({ html: out.html, title }); },
+        showSidebar: (out) => { G.__sidebars.push(out.html); },
         prompt: () => ({ getSelectedButton: () => 'ok', getResponseText: () => G.__answer.shift() }),
         ButtonSet: { OK_CANCEL: 'okc' }, Button: { OK: 'ok' },
         createMenu: () => { const m = { addItem: () => m, addSeparator: () => m, addToUi: () => m }; return m; }
@@ -132,8 +134,9 @@ function makeGlobals(now) {
       deleteTrigger: t => { G.__triggers = G.__triggers.filter(x => x !== t); }
     },
     Classroom: { Courses: { Announcements: { create: (res, course) => { G.__classroom.push({ res, course }); return { id: 'a' + G.__classroom.length }; } } } },
+    HtmlService: { createHtmlOutput: (html) => { const o = { html, setWidth: () => o, setHeight: () => o, setTitle: () => o }; return o; } },
     Logger: { log: () => {} },
-    __answer: [], __webAppUrl: '', __webReply: null
+    __answer: [], __webAppUrl: '', __webReply: null, __dialogs: [], __sidebars: []
   };
   /* a Date that answers "now" with the test's now, while every real date still passes
      `instanceof Date` inside the script — a subclass would not */
@@ -577,24 +580,25 @@ section('choosing the Classroom class');
   const { G, api } = seeded();
   delete G.Classroom;
   api.chooseCourse();
-  ok('without the Classroom service it says where to switch it on', G.__alerts.join(' ').includes('Services'));
+  ok('without the Classroom service it says where to switch it on', G.__dialogs.map(d => d.html).join(' ').includes('Services'));
 }
 
 section('is the website able to read this?');
 {
   const { G, api } = seeded();
   api.checkWebApp();
-  ok('undeployed: it says how to deploy', G.__alerts.join(' ').includes('New deployment'), G.__alerts.join(' '));
+  ok('undeployed: it says how to deploy', G.__dialogs.map(d => d.html).join(' ').includes('New deployment'));
 }
 {
   const { G, api } = seeded();
   G.__webAppUrl = 'https://script.google.com/a/macros/nlcsjeju.kr/s/AKfy123/exec';
   G.__webReply = { getResponseCode: () => 401, getContentText: () => '<!DOCTYPE html><html lang="ko">' };
   api.checkWebApp();
-  const said = G.__alerts.join(' ');
-  ok('a locked deployment is named as such', said.includes('not open to everyone'), said.slice(0, 120));
-  ok('and the fix is spelled out', said.includes('Who has access:  Anyone'));
-  ok('it says Google’s own answer', said.includes('401'));
+  const said = G.__dialogs.map(d => d.html).join(' ');
+  ok('a locked deployment is named as such', said.includes('not open to everyone'), said.slice(0, 200));
+  ok('and the fix is spelled out', said.includes('Who has access: <b>Anyone</b>'));
+  ok('it says Google’s own answer', said.includes('Google answered 401'));
+  ok('it warns about a school that forbids it', said.includes('anonymous web apps off'));
   ok('the address it offers is the plain one', said.includes('script.google.com/macros/s/AKfy123/exec') && !said.includes('/a/macros/'));
   ok('and it asked as a stranger would, following nothing', G.__fetches.some(u => u.indexOf('/a/macros/') < 0 && u.indexOf('action=list') > 0));
 }
@@ -603,9 +607,11 @@ section('is the website able to read this?');
   G.__webAppUrl = 'https://script.google.com/macros/s/AKfy123/exec';
   G.__webReply = { getResponseCode: () => 200, getContentText: () => '{"ok":true,"members":[]}' };
   api.checkWebApp();
-  const said = G.__alerts.join(' ');
-  ok('an open deployment is called working', said.includes('Working'), said.slice(0, 120));
+  const said = G.__dialogs.map(d => d.html).join(' ');
+  ok('an open deployment is called working', said.includes('can read the register'), said.slice(0, 200));
   ok('and hands over the address for config.js', said.includes('https://script.google.com/macros/s/AKfy123/exec'));
+  ok('with a button to copy it', said.includes('Copy the address'));
+  ok('drawn in the society’s colours, with its mark', said.includes('#12262B') && said.includes('<svg'));
 }
 
 section('when Google will not say who you are');
@@ -614,11 +620,52 @@ section('when Google will not say who you are');
   G.Session = { getEffectiveUser: () => { throw new Error('Specified permissions are not sufficient to call Session.getEffectiveUser'); } };
   api.installTriggers();
   eq('the trigger is still installed', G.__triggers.length, 1);
-  ok('and it says so without a name', G.__alerts.join(' ').includes('posts to Classroom as you'), G.__alerts.join(' '));
+  ok('and it says so without a name', G.__dialogs.map(d => d.html).join(' ').includes('as <b>you</b>'));
   G.Classroom.Courses.list = () => ({ courses: [{ id: '9', name: 'BioGuardians' }] });
   G.__answer = ['1'];
   api.chooseCourse();
   ok('choosing a class survives it too', G.__ss.toasts.join(' ').includes('BioGuardians'));
+}
+
+section('the school’s two web-app addresses');
+{
+  const { api } = seeded();
+  const want = 'https://script.google.com/macros/s/AKfy123/exec';
+  eq('a/macros/<school>/s/…', api._plainUrl('https://script.google.com/a/macros/nlcsjeju.kr/s/AKfy123/exec'), want);
+  eq('a/<school>/macros/s/…', api._plainUrl('https://script.google.com/a/nlcsjeju.kr/macros/s/AKfy123/exec'), want);
+  eq('the plain one is left alone', api._plainUrl(want), want);
+}
+
+section('the panel and the announcement');
+{
+  const { G, api } = seeded();
+  api.panel();
+  const html = G.__sidebars.join(' ');
+  ok('the panel opens', G.__sidebars.length === 1);
+  ok('it says when the next meeting is', html.includes('Thursday 17 September'), html.slice(0, 200));
+  ok('it counts the members', html.includes('2 members'));
+  ok('and offers the week’s three jobs', html.includes('Add a meeting') && html.includes('Tell the class') && html.includes('Tidy the sheet'));
+}
+{
+  const { G, api } = seeded();
+  api.previewAnnouncement();
+  const html = G.__dialogs.map(d => d.html).join(' ');
+  ok('the preview shows the words themselves', html.includes('Taking blood from the mould'), html.slice(0, 200));
+  ok('and says how to send them', html.includes('Settings B4'));
+}
+{
+  const { G, api } = seeded();
+  api.postNow();
+  eq('posting from the menu posts', G.__classroom.length, 1);
+  ok('and says so', G.__dialogs.map(d => d.html).join(' ').includes('in Google Classroom'));
+}
+{
+  const { G, api, st } = seeded();
+  st.getRange(api._settingRow(st, 'Classroom course ID'), 2).setValue('');
+  api.postNow();
+  const html = G.__dialogs.map(d => d.html).join(' ');
+  ok('when it cannot post it explains the other way', html.includes('Settings') && html.includes('B4'), html.slice(0, 200));
+  eq('and nothing went out', G.__classroom.length, 0);
 }
 
 section('the triggers');
@@ -626,7 +673,7 @@ section('the triggers');
   const { G, api } = seeded();
   api.installTriggers(); api.installTriggers();
   eq('installing twice leaves one', G.__triggers.length, 1);
-  ok('it is told who will post', G.__alerts.join(' ').includes('dmompelriera@nlcsjeju.kr'));
+  ok('it is told who will post', G.__dialogs.map(d => d.html).join(' ').includes('dmompelriera@nlcsjeju.kr'));
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

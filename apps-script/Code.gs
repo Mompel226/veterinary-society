@@ -65,19 +65,64 @@ var INK = '#12262B', CREAM = '#F3E7C9', MOSS = '#7F94A2', AMBER = '#F5A623',
 
 /* ---------- the menu ---------- */
 function onOpen() {
-  SpreadsheetApp.getUi().createMenu('Veterinary Society')
-    .addItem('Set up the tabs', 'setup')
-    .addItem('Choose the Classroom class', 'chooseCourse')
+  SpreadsheetApp.getUi().createMenu('🐴 Veterinary Society')
+    .addItem('🗂  Open the panel', 'panel')
     .addSeparator()
-    .addItem('Add the next meeting', 'addMeeting')
-    .addItem('Preview the Classroom announcement', 'previewAnnouncement')
-    .addItem('Refresh the website now', 'refreshWebsite')
-    .addItem('Check the website can read this', 'checkWebApp')
+    .addItem('📅  Add the next meeting', 'addMeeting')
+    .addItem('📣  Post the next meeting now', 'postNow')
+    .addItem('👀  Preview that announcement', 'previewAnnouncement')
     .addSeparator()
-    .addItem('Tidy the sheet up', 'dress')
+    .addItem('🔄  Refresh the website now', 'refreshWebsite')
+    .addItem('🩺  Check the website can read this', 'checkWebApp')
+    .addItem('✨  Tidy the sheet up', 'dress')
     .addSeparator()
-    .addItem('Install the triggers (Dr Mompel, once)', 'installTriggers')
+    .addItem('⚙️  Set up the tabs', 'setup')
+    .addItem('🎓  Choose the Classroom class', 'chooseCourse')
+    .addItem('🔔  Install the triggers (a teacher, once)', 'installTriggers')
     .addToUi();
+}
+
+/* a small panel down the side, so the week's work is three buttons rather than a menu hunt */
+function panel() {
+  var reg = _register(new Date()), next = _next(reg), tz = reg.tz;
+  var when = next ? Utilities.formatDate(next.date, tz, 'EEEE d MMMM') + (_hasTime(next.date) ? ', ' + Utilities.formatDate(next.date, tz, 'HH:mm') : '') : '';
+  var members = reg.members.filter(function (p) { return !p.staff; }).length;
+  var staff = reg.members.length - members;
+  var body =
+    '<p class="eyebrow">Next meeting</p>' +
+    (next ? '<p style="font:600 16px/1.3 Georgia,serif;color:#EDF4F8;margin:2px 0 4px">' + when + '</p>' +
+            (next.plan ? '<p class="note">' + next.plan + '</p>' : '')
+          : '<p class="note">Nothing in the diary. Add one below.</p>') +
+    '<p class="note">' + members + ' member' + (members === 1 ? '' : 's') +
+      (staff ? ' · ' + staff + ' teacher' + (staff === 1 ? '' : 's') : '') +
+      ' · ' + reg.meetings.filter(function (m) { return m.past; }).length + ' meeting(s) so far</p>' +
+    '<div class="row" style="margin-top:14px;flex-direction:column;align-items:stretch">' +
+    '<button class="btn" data-do="addMeeting">📅  Add a meeting</button>' +
+    '<button class="btn" data-do="postNow">📣  Tell the class</button>' +
+    '<button class="btn quiet" data-do="checkWebApp">🩺  Check the website</button>' +
+    '<button class="btn quiet" data-do="refreshWebsite">🔄  Refresh the website</button>' +
+    '<button class="btn quiet" data-do="dress">✨  Tidy the sheet</button>' +
+    '</div><p class="note" id="s" style="margin-top:12px"></p>' +
+    '<script>var s=document.getElementById("s");' +
+    'Array.prototype.forEach.call(document.querySelectorAll("[data-do]"),function(b){' +
+    'b.addEventListener("click",function(){s.textContent="Working…";' +
+    'google.script.run.withSuccessHandler(function(){s.textContent="Done."})' +
+    '.withFailureHandler(function(e){s.textContent=e.message})[b.dataset.do]()})});<\/script>';
+  try {
+    var out = HtmlService.createHtmlOutput(_page('This week', body)).setTitle('Veterinary Society');
+    SpreadsheetApp.getUi().showSidebar(out);
+  } catch (e) { _ui('The panel needs the spreadsheet open in front of you.'); }
+}
+
+/* posting straight away — a teacher may; the chair ticks the box in Settings and the teacher's
+   trigger does it for them */
+function postNow() {
+  try { announce(_me()); _say('Posted', '<p class="ok">The announcement is in Google Classroom.</p>' +
+    '<p class="note">Google Classroom shows it to the class straight away.</p>', 240); }
+  catch (e) {
+    _say('Not posted', '<p class="warn">' + e.message + '</p>' +
+      '<p>If it says you may not post: only a teacher of the class can announce. Tick <b>Post the next meeting to Google Classroom</b> in the <b>Settings</b> tab (cell B4) instead — the teacher who installed the triggers posts it for you.</p>', 300);
+  }
 }
 
 function setup() {
@@ -261,6 +306,63 @@ function _tab(ss, name, head) {
   return sh;
 }
 function _ui(msg) { try { SpreadsheetApp.getUi().alert(msg); } catch (e) { Logger.log(msg); } }
+
+/* ---------- how the script speaks ----------
+   A plain grey alert box is a poor way to explain anything. These are small pages in the
+   society's own colours, with the horse at the top; they fall back to the grey box wherever
+   HtmlService is not there to draw them. */
+var MARK_SVG =
+  '<svg viewBox="0 0 420 440" width="54" height="56" aria-hidden="true">' +
+  '<g transform="translate(6 26) scale(.92)" fill="none" stroke="#F3E7C9" stroke-width="11" stroke-linecap="round" stroke-linejoin="round">' +
+  '<path d="M 230 74 C 214 48 200 20 196 -8 C 214 10 234 40 244 68"/>' +
+  '<path d="M 266 70 C 276 38 290 14 304 -4 C 306 24 292 52 276 74"/>' +
+  '<path d="M 248 72 C 238 108 198 148 160 190 C 128 226 94 254 66 282 C 44 304 38 330 56 344 C 76 358 104 352 124 338 C 150 330 196 338 240 334 C 290 330 326 296 322 246 C 318 210 288 178 246 164"/>' +
+  '<path d="M 292 68 C 348 100 384 180 390 300" stroke="#9DB7AE" stroke-width="7"/>' +
+  '<path d="M 314 122 C 348 160 362 214 362 280" stroke="#9DB7AE" stroke-width="6"/>' +
+  '<path d="M 64 298 C 74 292 84 294 90 302" stroke-width="7"/>' +
+  '</g><circle cx="210" cy="170" r="14" fill="#F5A623"/></svg>';
+var PAGE_CSS =
+  'body{margin:0;background:#12262B;color:#EDF4F8;font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}' +
+  '.wrap{padding:18px 22px 22px}' +
+  'h1{margin:0 0 2px;font:600 19px/1.2 Georgia,"Times New Roman",serif;color:#F3E7C9;letter-spacing:.2px}' +
+  '.eyebrow{font:500 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.16em;text-transform:uppercase;color:#9DB7AE}' +
+  '.head{display:flex;gap:14px;align-items:center;border-bottom:1px solid rgba(255,255,255,.10);padding-bottom:14px;margin-bottom:14px}' +
+  'p{margin:0 0 10px;color:#D7E3EA} b{color:#F5A623;font-weight:600}' +
+  'ol,ul{margin:0 0 10px;padding-left:20px;color:#D7E3EA} li{margin:4px 0}' +
+  'code,.url{font:12px/1.5 ui-monospace,Menlo,monospace;background:rgba(0,0,0,.30);border:1px solid rgba(255,255,255,.12);' +
+  'border-radius:5px;padding:9px 11px;display:block;word-break:break-all;color:#EDF4F8;margin:0 0 10px}' +
+  '.ok{color:#4ADE80;font-weight:600} .warn{color:#F5A623;font-weight:600}' +
+  '.btn{display:inline-block;font:600 12px/1.3 ui-monospace,Menlo,monospace;letter-spacing:.06em;text-transform:uppercase;' +
+  'color:#1B1206;background:#F5A623;border:0;border-radius:4px;padding:10px 12px;cursor:pointer;text-align:left}' +
+  '.row>.btn{margin-bottom:7px}' +
+  '.btn:hover{background:#FFB742} .btn.quiet{background:transparent;color:#9DB7AE;border:1px solid rgba(157,183,174,.45)}' +
+  '.btn.quiet:hover{color:#EDF4F8;border-color:#EDF4F8} .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}' +
+  '.note{font-size:12.5px;color:#9DB7AE}';
+function _page(title, bodyHtml) {
+  return '<!DOCTYPE html><html><head><base target="_top"><meta charset="utf-8"><style>' + PAGE_CSS + '</style></head><body><div class="wrap">' +
+    '<div class="head">' + MARK_SVG + '<div><div class="eyebrow">Veterinary Society</div><h1>' + title + '</h1></div></div>' +
+    bodyHtml + '</div></body></html>';
+}
+/* say something, prettily if the sheet will let us */
+function _say(title, bodyHtml, height, plain) {
+  try {
+    var out = HtmlService.createHtmlOutput(_page(title, bodyHtml)).setWidth(520).setHeight(height || 320);
+    SpreadsheetApp.getUi().showModalDialog(out, 'Veterinary Society');
+  } catch (e) {
+    _ui(plain || String(bodyHtml).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim());
+  }
+}
+/* a copyable box with the address in it */
+function _urlBox(url) {
+  return '<div class="url" id="u">' + url + '</div>' +
+    '<div class="row"><button class="btn" id="c">Copy the address</button></div>' +
+    '<script>document.getElementById("c").addEventListener("click",function(){' +
+    'var t=document.getElementById("u").textContent;' +
+    'navigator.clipboard.writeText(t).then(function(){var b=document.getElementById("c");b.textContent="Copied";' +
+    'setTimeout(function(){b.textContent="Copy the address"},1600)},function(){' +
+    'var r=document.createRange();r.selectNode(document.getElementById("u"));' +
+    'window.getSelection().removeAllRanges();window.getSelection().addRange(r)})});<\/script>';
+}
 /* Google will not always say who is running this — an old authorisation may not carry the
    permission — and no real work here depends on knowing, so never let the asking stop it. */
 function _me() { try { return Session.getEffectiveUser().getEmail() || ''; } catch (e) { return ''; } }
@@ -527,7 +629,11 @@ function checkWebApp() {
   var url;
   try { url = ScriptApp.getService().getUrl(); } catch (e) { url = ''; }
   if (!url) {
-    _ui('This script has not been deployed yet.\n\nScript editor ▸ Deploy ▸ New deployment ▸ Web app.\n  Execute as:  Me\n  Who has access:  Anyone\n\nThen run this check again.');
+    _say('Not deployed yet',
+      '<p>The website has nothing to read yet. In the script editor:</p>' +
+      '<ol><li><b>Deploy ▸ New deployment ▸ Web app</b></li>' +
+      '<li>Execute as: <b>Me</b></li><li>Who has access: <b>Anyone</b></li></ol>' +
+      '<p class="note">Then run this check again.</p>', 320);
     return;
   }
   url = _plainUrl(url);
@@ -537,19 +643,31 @@ function checkWebApp() {
     code = res.getResponseCode(); body = res.getContentText().slice(0, 200);
   } catch (e) { body = String(e); }
   if (code === 200 && body.indexOf('"ok"') >= 0) {
-    _ui('Working. The website can read the register.\n\nPaste this address into config.js, after scriptUrl:\n\n' + url);
+    _say('Working',
+      '<p><span class="ok">The website can read the register.</span></p>' +
+      '<p>Put this address in <b>config.js</b> in the veterinary-society repository, after <code style="display:inline;padding:2px 5px">scriptUrl</code>:</p>' +
+      _urlBox(url) +
+      '<p class="note">Already there? Nothing to do.</p>', 400, 'Working. Paste this into config.js: ' + url);
     return;
   }
-  _ui('The website cannot read this yet' + (code ? ' (Google answered ' + code + ')' : '') + '.\n\n' +
-      'Almost always this one thing: the deployment is not open to everyone.\n\n' +
-      'Script editor ▸ Deploy ▸ Manage deployments ▸ the pencil ▸\n' +
-      '  Who has access:  Anyone      (not "Anyone with a Google Account", not the school)\n' +
-      '▸ Deploy.\n\nThe page asks for the register before anyone has signed in, so that request ' +
-      'arrives as a stranger and has to be let in.\n\nThen run this check again.\n\n' + url);
+  _say('The website cannot read this yet',
+    '<p><span class="warn">Google answered ' + (code || '—') + '.</span> Almost always one thing: the deployment is not open to everyone.</p>' +
+    '<ol><li><b>Deploy ▸ Manage deployments</b></li><li>the ✏️ pencil</li>' +
+    '<li>Who has access: <b>Anyone</b> — not <i>Anyone with a Google Account</i>, not the school</li>' +
+    '<li><b>Deploy</b></li></ol>' +
+    '<p>The page asks for the register before anybody has signed in, so that first request arrives as a stranger and has to be let in.</p>' +
+    '<p class="note">If <b>Anyone</b> is missing from the list, the school has switched anonymous web apps off — tell Dr Mompel, and the page can be made to sign people in first instead.</p>' +
+    _urlBox(url), 520,
+    'The website cannot read this yet (Google answered ' + code + '). Deploy > Manage deployments > pencil > Who has access: Anyone > Deploy.');
 }
-/* script.google.com/a/macros/<school>/s/…  is the same deployment as  script.google.com/macros/s/… ,
-   but the first makes a visitor sign in to the school first, and the page asks before anyone has. */
-function _plainUrl(url) { return String(url).replace(/^https:\/\/script\.google\.com\/a\/macros\/[^\/]+\/s\//, 'https://script.google.com/macros/s/'); }
+/* The editor shows a school account one of two school-shaped addresses —
+     script.google.com/a/macros/<school>/s/…      and
+     script.google.com/a/<school>/macros/s/…
+   both the same deployment as the plain script.google.com/macros/s/… , but both make a visitor
+   sign in to the school first, and this page asks for the register before anybody has. */
+function _plainUrl(url) {
+  return String(url).replace(/^https:\/\/script\.google\.com\/a\/(?:macros\/)?[^\/]+\/(?:macros\/)?s\//, 'https://script.google.com/macros/s/');
+}
 
 /* ---------- Google Classroom ---------- */
 function _announcement(reg) {
@@ -563,11 +681,19 @@ function _announcement(reg) {
 /* The course ID is not the number in the Classroom web address, so nobody should have to find
    it: this asks Google which classes you teach and writes the one you pick into Settings. */
 function chooseCourse() {
-  if (typeof Classroom === 'undefined') { _ui('The Classroom service is not switched on in this script yet:\n\nScript editor ▸ Services ▸ + ▸ Google Classroom API ▸ Add.'); return; }
+  if (typeof Classroom === 'undefined') {
+    _say('One thing is missing', '<p>The Classroom service is not switched on in this script yet.</p>' +
+      '<ol><li>Script editor ▸ <b>Services</b></li><li>press <b>+</b></li><li><b>Google Classroom API</b> ▸ Add</li></ol>', 300);
+    return;
+  }
   var cs;
   try { cs = (Classroom.Courses.list({ teacherId: 'me', courseStates: ['ACTIVE'], pageSize: 50 }) || {}).courses || []; }
   catch (e) { _ui('Google would not list your classes: ' + e.message); return; }
-  if (!cs.length) { _ui('Google says you teach no active class in Classroom. The announcement is posted by whoever installs the triggers, so that person must be a teacher of the class the announcement is for.'); return; }
+  if (!cs.length) {
+    _say('No classes', '<p>Google says you teach no active class in Classroom.</p>' +
+      '<p class="note">The announcement is posted by whoever installs the triggers, so that person has to be a teacher of the class it is for.</p>', 260);
+    return;
+  }
   var ui = SpreadsheetApp.getUi();
   var list = cs.map(function (c, i) { return (i + 1) + '.  ' + c.name; }).join('\n');
   var a = ui.prompt('Which class gets the announcements?', list + '\n\nType its number:', ui.ButtonSet.OK_CANCEL);
@@ -580,7 +706,10 @@ function chooseCourse() {
 }
 function previewAnnouncement() {
   var a = _announcement(_register(new Date()));
-  _ui(a ? a.text : 'There is no meeting in the diary that is today or later. Add one first (Veterinary Society ▸ Add the next meeting).');
+  if (!a) { _say('Nothing to announce', '<p>There is no meeting in the diary that is today or later.</p><p class="note">Add one first: 📅 Add the next meeting.</p>', 240); return; }
+  _say('This is what the class will see',
+    '<div class="url" style="white-space:pre-wrap;word-break:normal">' + a.text.replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }) + '</div>' +
+    '<p class="note">Post it with 📣 Tell the class, or by ticking the box in Settings B4.</p>', 420, a.text);
 }
 /* posts the next meeting to the class; runs as whoever installed the triggers, so that is the teacher */
 function announce(by) {
@@ -609,7 +738,11 @@ function installTriggers() {
   ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'onRegisterEdit') ScriptApp.deleteTrigger(t); });
   ScriptApp.newTrigger('onRegisterEdit').forSpreadsheet(ss).onEdit().create();
   var who = _me();
-  _ui('Installed. Edits reach the website at once, and the "post" box in Settings posts to Classroom as ' + (who || 'you') + '.');
+  _say('Installed',
+    '<p><span class="ok">Done.</span> Two things now work:</p>' +
+    '<ul><li>every edit reaches the website at once</li>' +
+    '<li>the tick box in <b>Settings B4</b> posts to Google Classroom as <b>' + (who || 'you') + '</b></li></ul>' +
+    '<p class="note">That is what lets the chair announce a meeting without being a teacher.</p>', 320);
 }
 function onRegisterEdit(e) {
   _flush();
