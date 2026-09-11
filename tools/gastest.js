@@ -133,10 +133,26 @@ function makeGlobals(now) {
       newTrigger: (fn) => ({ forSpreadsheet: () => ({ onEdit: () => ({ create: () => { G.__triggers.push({ getHandlerFunction: () => fn }); } }) }) }),
       deleteTrigger: t => { G.__triggers = G.__triggers.filter(x => x !== t); }
     },
-    Classroom: { Courses: { Announcements: { create: (res, course) => { G.__classroom.push({ res, course }); return { id: 'a' + G.__classroom.length }; } } } },
+    Classroom: {
+      Courses: {
+        get: (id) => ({ id, name: 'BioGuardians' }),
+        Announcements: { create: (res, course) => { G.__classroom.push({ res, course }); return { id: 'a' + G.__classroom.length }; } },
+        Students: {
+          list: (course, opts) => ({ students: G.__roster.map(r => ({ userId: r.id, profile: { emailAddress: r.email, name: { fullName: r.name } } })) }),
+          remove: (course, userId) => { const i = G.__roster.findIndex(r => r.id === userId || r.email === userId);
+            if (i < 0) throw new Error('not in the class'); G.__removed.push(G.__roster[i]); G.__roster.splice(i, 1); }
+        }
+      },
+      Invitations: {
+        list: (opts) => ({ invitations: G.__invites.map(e => ({ userId: e, role: 'STUDENT' })) }),
+        create: (res) => { if (G.__inviteFails[res.userId]) throw new Error(G.__inviteFails[res.userId]);
+          G.__invites.push(res.userId); return { id: 'i' + G.__invites.length }; }
+      }
+    },
     HtmlService: { createHtmlOutput: (html) => { const o = { html, setWidth: () => o, setHeight: () => o, setTitle: () => o }; return o; } },
     Logger: { log: () => {} },
-    __answer: [], __webAppUrl: '', __webReply: null, __dialogs: [], __sidebars: []
+    __answer: [], __webAppUrl: '', __webReply: null, __dialogs: [], __sidebars: [],
+    __roster: [], __invites: [], __removed: [], __inviteFails: {}
   };
   /* a Date that answers "now" with the test's now, while every real date still passes
      `instanceof Date` inside the script — a subclass would not */
@@ -713,6 +729,67 @@ section('the panel and the announcement');
   const html = G.__dialogs.map(d => d.html).join(' ');
   ok('when it cannot post it explains the other way', html.includes('Settings') && html.includes('B4'), html.slice(0, 200));
   eq('and nothing went out', G.__classroom.length, 0);
+}
+
+section('keeping the Classroom class in step with the register');
+{
+  const { G, api, reg } = seeded();
+  /* the register: Jieun and Hyunwoo, plus a teacher; the class: Hyunwoo and someone who left */
+  reg.appendRow(['', 'Daniel', 'Mompel Riera', 'Dr Mompel', 'dmompelriera@nlcsjeju.kr', 'Teacher', new Date(2026, 8, 1), '']);
+  api.onRegisterEdit({ range: reg.getRange(5, 5) });
+  G.__roster = [
+    { id: '11', email: 'hwyang29@pupils.nlcsjeju.kr', name: 'Hyunwoo Yang' },
+    { id: '22', email: 'gone30@pupils.nlcsjeju.kr', name: 'Someone Who Left' }
+  ];
+  const plan = api.classroomPlan();
+  eq('the one missing from the class is to be invited', plan.invite.map(p => p.email), ['jekim29@pupils.nlcsjeju.kr']);
+  eq('the one no longer on the register is to be taken out', plan.remove.map(p => p.email), ['gone30@pupils.nlcsjeju.kr']);
+  eq('the one in both is left alone', plan.already, 1);
+  ok('the teacher is not made a student', !plan.invite.some(p => /dmompel/.test(p.email)));
+  ok('it knows the class by name', plan.name === 'BioGuardians');
+
+  api.syncClassroom();
+  const said = G.__dialogs.map(d => d.html).join(' ');
+  ok('it shows the names before doing anything', said.includes('Jieun') && said.includes('Someone Who Left'), said.slice(0, 300));
+  ok('and does nothing until a button is pressed', G.__invites.length === 0 && G.__removed.length === 0);
+
+  eq('inviting only invites', api.classroomApply(false), '1 invited. They have an invitation to accept.');
+  eq('one invitation went out', G.__invites, ['jekim29@pupils.nlcsjeju.kr']);
+  eq('and nobody was taken out', G.__removed.length, 0);
+  ok('the Log says what happened', String(G.__ss.getSheetByName('Log').getRange(2, 2).getValue()).includes('1 invited'));
+
+  /* running it again must not invite the same person twice */
+  const plan2 = api.classroomPlan();
+  eq('an invitation already sent is not sent again', plan2.invite.length, 0);
+  eq('and it is counted as pending', plan2.pending, 1);
+}
+{
+  const { G, api, reg } = seeded();
+  G.__roster = [{ id: '22', email: 'gone30@pupils.nlcsjeju.kr', name: 'Someone Who Left' }];
+  const out = api.classroomApply(true);
+  ok('asked to, it takes the leaver out', out.indexOf('1 taken out') > 0, out);
+  eq('and Google was told so', G.__removed.map(r => r.email), ['gone30@pupils.nlcsjeju.kr']);
+  eq('the class is left with the register’s people', G.__roster.length, 0);
+}
+{
+  const { G, api, st } = seeded();
+  st.getRange(api._settingRow(st, 'Classroom course ID'), 2).setValue('');
+  api.syncClassroom();
+  ok('with no class chosen it says which menu item to use', G.__dialogs.map(d => d.html).join(' ').includes('Choose the Classroom class'));
+  eq('and nothing is touched', G.__invites.length + G.__removed.length, 0);
+}
+{
+  const { G, api } = seeded();
+  G.Classroom.Courses.Students.list = () => { throw new Error('The caller does not have permission'); };
+  api.syncClassroom();
+  ok('a chair who may not see the class is told why', G.__dialogs.map(d => d.html).join(' ').includes('Only a teacher of the class'));
+}
+{
+  const { G, api, reg } = seeded();
+  G.__inviteFails['jekim29@pupils.nlcsjeju.kr'] = 'Requested entity already exists';
+  const out = api.classroomApply(false);
+  ok('one that will not go through is counted and logged', out.indexOf('1 would not') > 0, out);
+  ok('and the reason is in the Log', String(G.__ss.getSheetByName('Log').getRange(2, 2).getValue()).includes('already exists'));
 }
 
 section('the triggers');
