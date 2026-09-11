@@ -86,12 +86,11 @@ function onOpen() {
     .addItem('🎒  Update who is in the class', 'syncClassroom')
     .addSeparator()
     .addSubMenu(ui.createMenu('⚙️  Setting up, and checks')
-      .addItem('Set up the tabs', 'setup')
+      .addItem('Set the sheet up, or tidy it', 'setup')
       .addItem('Choose the Classroom class', 'chooseCourse')
       .addItem('Install the triggers (a teacher, once)', 'installTriggers')
       .addSeparator()
       .addItem('Check the website can read this', 'checkWebApp')
-      .addItem('Tidy the sheet up', 'dress')
       .addItem('Refresh the website now', 'refreshWebsite')
       .addItem('Test the pop-up window', 'testPopup'))
     .addToUi();
@@ -122,7 +121,7 @@ function panel(quiet) {
     '<button class="btn quiet" data-do="checkWebApp">🩺  Check the website</button>' +
     '<button class="btn quiet" data-do="refreshWebsite">🔄  Refresh the website</button>' +
     '<button class="btn quiet" data-do="syncClassroom">🎒  Update the class</button>' +
-    '<button class="btn quiet" data-do="dress">✨  Tidy the sheet</button>' +
+    '<button class="btn quiet" data-do="setup">✨  Tidy the sheet</button>' +
     '</div><p class="note" id="s" style="margin-top:12px"></p>' +
     '<p class="note" style="margin-top:10px;border-top:1px solid rgba(255,255,255,.10);padding-top:10px">' +
     (lastPost ? 'Last told the class: ' + lastPost + '<br>' : '') +
@@ -180,6 +179,9 @@ function postPending() {
   catch (e) { _log('Could not post the announcement ' + who + ' asked for: ' + e.message, _me()); }
 }
 
+/* Setting up and tidying up are the same job: make sure every tab is there and every heading is
+   right, fill in what the sheet can know for itself, and put the look back. It changes nothing
+   anybody has written, so it is safe to run whenever something looks wrong. */
 function setup() {
   var ss = SpreadsheetApp.getActive();
   var reg = ss.getSheetByName(T_REG) || ss.insertSheet(T_REG, 0);
@@ -199,11 +201,11 @@ function setup() {
   if (oldBox) st.deleteRow(oldBox);
   _startHere(ss);
   _stampJoined(reg);
-  dress();
+  dress(true);
   _flush();
   /* No alert here on purpose. A dialog raised by a script started from the editor waits for a
      click in the spreadsheet window, and the editor simply says "Execution started" for ever. */
-  _toast('Ready. The Start here tab says what is left to do.');
+  _toast('Tidied. Everything is where it should be.');
 }
 
 /* the sheet explains itself: whoever opens it next can follow this without the README */
@@ -277,13 +279,13 @@ function _stampJoined(sh) {
 /* ---------- how the sheet looks ----------
    Run whenever: it only ever sets the look, never the contents, so it is safe after pasting a
    list in from somewhere else (a paste brings its own colours and fonts with it). */
-function dress() {
+function dress(quiet) {
   var ss = SpreadsheetApp.getActive();
   _dressRegister(ss.getSheetByName(T_REG));
   _dressLedger(ss.getSheetByName(T_VOTES), [150, 260, 170, 230], T_VOTES);
   _dressLedger(ss.getSheetByName(T_LOG), [150, 560, 240]);
   _dressSettings(ss.getSheetByName(T_SET));
-  _toast('Tidied.');
+  if (!quiet) _toast('Tidied.');
 }
 function _plain(sh, tab) {
   if (!sh) return;
@@ -335,6 +337,14 @@ function _dressRegister(sh) {
     sh.setRowHeights(DATA_ROW, rows, 26);
   }
   _years(sh, last);
+  /* Below the last member there is nobody, so there should be nothing: no year lists left over
+     from a longer register, no tick boxes, no banding. This is the part that was missing. */
+  var firstFree = Math.max(last, DATA_ROW - 1) + 2;
+  if (firstFree <= sh.getMaxRows()) {
+    var below = sh.getRange(firstFree, 1, sh.getMaxRows() - firstFree + 1, sh.getMaxColumns());
+    below.clearDataValidations();
+    below.clearFormat();
+  }
   /* room for a year of meetings, so a new column rarely has to widen the sheet */
   var want = MEET_COL + 39;
   if (sh.getMaxColumns() < want) sh.insertColumnsAfter(sh.getMaxColumns(), want - sh.getMaxColumns());
