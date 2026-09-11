@@ -119,18 +119,21 @@ function makeGlobals(now) {
     },
     CacheService: { getScriptCache: () => ({ get: k => G.__cache.get(k) || null, put: (k, v) => G.__cache.set(k, v), remove: k => G.__cache.delete(k) }) },
     LockService: { getScriptLock: () => ({ waitLock: () => true, releaseLock: () => true }) },
-    UrlFetchApp: { fetch: (url) => { G.__fetches.push(url); const m = /id_token=([^&]+)/.exec(url); const t = G.__tokens[decodeURIComponent(m ? m[1] : '')];
+    UrlFetchApp: { fetch: (url) => { G.__fetches.push(url);
+      if (G.__webReply && url.indexOf('script.google.com') >= 0) return G.__webReply;
+      const m = /id_token=([^&]+)/.exec(url); const t = G.__tokens[decodeURIComponent(m ? m[1] : '')];
       return { getResponseCode: () => (t ? 200 : 400), getContentText: () => JSON.stringify(t || {}) }; } },
     Utilities: { formatDate: (d, tz, fmt) => fmtDate(d, fmt) },
     Session: { getEffectiveUser: () => ({ getEmail: () => 'dmompelriera@nlcsjeju.kr' }) },
     ScriptApp: {
+      getService: () => ({ getUrl: () => G.__webAppUrl }),
       getProjectTriggers: () => G.__triggers,
       newTrigger: (fn) => ({ forSpreadsheet: () => ({ onEdit: () => ({ create: () => { G.__triggers.push({ getHandlerFunction: () => fn }); } }) }) }),
       deleteTrigger: t => { G.__triggers = G.__triggers.filter(x => x !== t); }
     },
     Classroom: { Courses: { Announcements: { create: (res, course) => { G.__classroom.push({ res, course }); return { id: 'a' + G.__classroom.length }; } } } },
     Logger: { log: () => {} },
-    __answer: []
+    __answer: [], __webAppUrl: '', __webReply: null
   };
   /* a Date that answers "now" with the test's now, while every real date still passes
      `instanceof Date` inside the script — a subclass would not */
@@ -537,6 +540,47 @@ section('choosing the Classroom class');
   delete G.Classroom;
   api.chooseCourse();
   ok('without the Classroom service it says where to switch it on', G.__alerts.join(' ').includes('Services'));
+}
+
+section('is the website able to read this?');
+{
+  const { G, api } = seeded();
+  api.checkWebApp();
+  ok('undeployed: it says how to deploy', G.__alerts.join(' ').includes('New deployment'), G.__alerts.join(' '));
+}
+{
+  const { G, api } = seeded();
+  G.__webAppUrl = 'https://script.google.com/a/macros/nlcsjeju.kr/s/AKfy123/exec';
+  G.__webReply = { getResponseCode: () => 401, getContentText: () => '<!DOCTYPE html><html lang="ko">' };
+  api.checkWebApp();
+  const said = G.__alerts.join(' ');
+  ok('a locked deployment is named as such', said.includes('not open to everyone'), said.slice(0, 120));
+  ok('and the fix is spelled out', said.includes('Who has access:  Anyone'));
+  ok('it says Google’s own answer', said.includes('401'));
+  ok('the address it offers is the plain one', said.includes('script.google.com/macros/s/AKfy123/exec') && !said.includes('/a/macros/'));
+  ok('and it asked as a stranger would, following nothing', G.__fetches.some(u => u.indexOf('/a/macros/') < 0 && u.indexOf('action=list') > 0));
+}
+{
+  const { G, api } = seeded();
+  G.__webAppUrl = 'https://script.google.com/macros/s/AKfy123/exec';
+  G.__webReply = { getResponseCode: () => 200, getContentText: () => '{"ok":true,"members":[]}' };
+  api.checkWebApp();
+  const said = G.__alerts.join(' ');
+  ok('an open deployment is called working', said.includes('Working'), said.slice(0, 120));
+  ok('and hands over the address for config.js', said.includes('https://script.google.com/macros/s/AKfy123/exec'));
+}
+
+section('when Google will not say who you are');
+{
+  const { G, api } = seeded();
+  G.Session = { getEffectiveUser: () => { throw new Error('Specified permissions are not sufficient to call Session.getEffectiveUser'); } };
+  api.installTriggers();
+  eq('the trigger is still installed', G.__triggers.length, 1);
+  ok('and it says so without a name', G.__alerts.join(' ').includes('posts to Classroom as you'), G.__alerts.join(' '));
+  G.Classroom.Courses.list = () => ({ courses: [{ id: '9', name: 'BioGuardians' }] });
+  G.__answer = ['1'];
+  api.chooseCourse();
+  ok('choosing a class survives it too', G.__ss.toasts.join(' ').includes('BioGuardians'));
 }
 
 section('the triggers');
