@@ -80,10 +80,13 @@ address if you prefer, both work, and a student signing in is matched either way
 what you would call out in a room. Leave *Joined* and *Would like to do* empty — a student
 signing in fills their own in.
 
-A spreadsheet is a spreadsheet, so the quickest way is usually: open your existing list, copy
-the columns you need into this order (a few `=` formulas will do it), then paste into the
-Register tab. Nothing else needs to match: extra columns of your own may sit to the right of the
-meetings, and the script ignores them.
+The **Year** column is a dropdown, Y7 to Y13 — pick, don't type, and nothing arrives as
+`year 7 ` with a stray space. A spreadsheet is a spreadsheet, so the quickest way in is usually:
+open your existing list, copy the columns you need into this order (a few `=` formulas will do
+it), then paste into the Register tab from row 3. A paste brings its own colours and fonts with
+it, so finish with menu ▸ **Tidy the sheet up**, which puts the look back without touching a
+single thing you wrote. Extra columns of your own may sit to the right of the meetings; the
+script ignores them.
 
 🔒 **What the website is shown, and what it is never shown.** The page is sent **preferred
 names, year groups and ticks** — nothing else. Email addresses, surnames and Korean names stay
@@ -109,8 +112,12 @@ choose **Google Classroom API**, Add. (The manifest this project expects is
 [`apps-script/appsscript.json`](apps-script/appsscript.json), if you would rather paste it:
 Project Settings ▸ *Show appsscript.json*.)
 
-**4 · Run ▸ setup**, once, and allow the permissions it asks for. Four tabs appear: *Register*,
-*Votes*, *Settings*, *Log*.
+**4 · Run ▸ setup**, once, and allow the permissions it asks for. Four tabs appear — *Register*,
+*Votes*, *Settings*, *Log* — built and dressed: dark headings in the society's own colours, the
+four name columns frozen so they stay in view while you tick, a **Y7–Y13 dropdown** in the Year
+column, dates that read as dates, room for a year of meetings, and a rule that turns a ticked
+box green so a row of green is a row of people who came. Menu ▸ **Tidy the sheet up** puts that
+look back any time — after a paste, say. It never changes what is written.
 
 **5 · Fill in Settings.**
 

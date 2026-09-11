@@ -26,12 +26,38 @@ class Range {
   getSheet() { return this.sh; }
   getRow() { return this.r; }
   getColumn() { return this.c; }
-  getA1Notation() { let c = this.c, s = ''; while (c > 0) { s = String.fromCharCode(65 + (c - 1) % 26) + s; c = Math.floor((c - 1) / 26); } return s + this.r; }
-  setNote() { return this; } setFontWeight() { return this; } setFontColor() { return this; } setFontStyle() { return this; }
+  getA1Notation() {
+    const col = n => { let s = ''; while (n > 0) { s = String.fromCharCode(65 + (n - 1) % 26) + s; n = Math.floor((n - 1) / 26); } return s; };
+    const one = col(this.c) + this.r;
+    return (this.nr === 1 && this.nc === 1) ? one : one + ':' + col(this.c + this.nc - 1) + (this.r + this.nr - 1);
+  }
+  setNote() { return this; }
+  _mark(key, v) { for (let i = 0; i < this.nr; i++) for (let j = 0; j < this.nc; j++) { const k = this._k2(this.r + i, this.c + j); (this.sh.look[k] || (this.sh.look[k] = {}))[key] = v; } return this; }
+  _k2(r, c) { return r + ',' + c; }
+  setFontWeight(v) { return this._mark('weight', v); }
+  setFontColor(v) { return this._mark('colour', v); }
+  setFontStyle(v) { return this._mark('style', v); }
+  setBackground(v) { return this._mark('bg', v); }
+  setFontFamily(v) { return this._mark('font', v); }
+  setFontSize(v) { return this._mark('size', v); }
+  setHorizontalAlignment(v) { return this._mark('align', v); }
+  setVerticalAlignment(v) { return this._mark('valign', v); }
+  setBorder() { return this; }
+  setDataValidation(rule) { this.sh.validations.push({ a1: this.getA1Notation(), r: this.r, c: this.c, nr: this.nr, nc: this.nc, rule }); return this._mark('rule', rule); }
+  applyRowBanding(theme) { const b = { theme, a1: this.getA1Notation(), remove: () => { this.sh.bandings = this.sh.bandings.filter(x => x !== b); } }; this.sh.bandings.push(b); return b; }
   setNumberFormat(f) { this.sh.formats[this.r + ',' + this.c] = f; return this; } setWrap() { return this; }
 }
 class Sheet {
-  constructor(name) { this.name = name; this.cells = new Map(); this.maxRows = 1000; this.maxCols = 26; this.boxes = 0; this.formats = {}; this.widths = {}; this.frozen = [0, 0]; }
+  constructor(name) { this.name = name; this.cells = new Map(); this.maxRows = 1000; this.maxCols = 26; this.boxes = 0; this.formats = {}; this.widths = {}; this.frozen = [0, 0];
+    this.look = {}; this.validations = []; this.bandings = []; this.cf = []; this.heights = {}; this.tab = ''; }
+  look_of(r, c) { return this.look[r + ',' + c] || {}; }
+  getBandings() { return this.bandings; }
+  setConditionalFormatRules(rules) { this.cf = rules; return this; }
+  getConditionalFormatRules() { return this.cf; }
+  setTabColor(v) { this.tab = v; return this; }
+  setRowHeight(r, h) { this.heights[r] = h; return this; }
+  setRowHeights(r, n, h) { for (let i = 0; i < n; i++) this.heights[r + i] = h; return this; }
+  setHiddenGridlines() { return this; }
   _k(r, c) { return r + ',' + c; }
   _get(r, c) { const v = this.cells.get(this._k(r, c)); return v === undefined ? '' : v; }
   _set(r, c, v) { this.cells.set(this._k(r, c), v); }
@@ -70,6 +96,17 @@ function makeGlobals(now) {
   const G = {
     __ss: ss, __alerts: [], __cache: new Map(), __classroom: [], __triggers: [], __fetches: [], __tokens: {},
     SpreadsheetApp: {
+      BandingTheme: { LIGHT_GREY: 'LIGHT_GREY' },
+      newDataValidation: () => { const r = { type: '', values: [], allowInvalid: null, help: '' };
+        const b = { requireValueInList: (v, drop) => { r.type = 'list'; r.values = v; r.dropdown = drop; return b; },
+                    setAllowInvalid: x => { r.allowInvalid = x; return b; },
+                    setHelpText: t => { r.help = t; return b; },
+                    build: () => r }; return b; },
+      newConditionalFormatRule: () => { const r = { formula: '', bg: '', ranges: [] };
+        const b = { whenFormulaSatisfied: f => { r.formula = f; return b; },
+                    setBackground: c => { r.bg = c; return b; },
+                    setRanges: rs => { r.ranges = rs; return b; },
+                    build: () => r }; return b; },
       getActive: () => ss,
       getUi: () => ({
         alert: m => G.__alerts.push(m),
@@ -166,6 +203,55 @@ section('the sheet is set up');
   api.setup();      /* twice must not double anything */
   eq('setup run twice leaves one heading row', reg.getRange(1, 1).getValue(), 'Korean name');
   eq('setup run twice leaves one settings row per key', G.__ss.getSheetByName('Settings').getLastRow(), 5);
+}
+
+section('the sheet is dressed');
+{
+  const { G, api } = seeded();
+  const reg = G.__ss.getSheetByName('Register');
+
+  const v = reg.validations.filter(x => x.c === 6);
+  ok('the Year column carries a list', v.length > 0);
+  eq('Y7 to Y13, and nothing else', v[v.length - 1].rule.values, ['Y7', 'Y8', 'Y9', 'Y10', 'Y11', 'Y12', 'Y13']);
+  eq('typed nonsense is refused', v[v.length - 1].rule.allowInvalid, false);
+  ok('it is a dropdown, and it reaches the empty rows below', v[v.length - 1].rule.dropdown === true && v[v.length - 1].nr > 100);
+  ok('it starts at the first member, not over the headings', v[v.length - 1].r === 3);
+
+  eq('the headings are the society’s ink', reg.look_of(1, 1).bg, '#12262B');
+  eq('written in cream', reg.look_of(1, 4).colour, '#F3E7C9');
+  eq('the note under them is quiet', reg.look_of(2, 5).style, 'italic');
+  eq('a meeting date is centred over its ticks', reg.look_of(1, 9).align, 'center');
+  eq('the preferred name is the one that stands out', reg.look_of(3, 4).weight, 'bold');
+  eq('the address is written small and grey', reg.look_of(3, 5).size, 9.5);
+  eq('the joining date reads as a date', reg.formats['3,7'], 'd mmm yyyy');
+  ok('the name columns stay in view while you tick', reg.frozen[0] === 2 && reg.frozen[1] === 4);
+  ok('there is room for a year of meetings', reg.getMaxColumns() >= 48);
+
+  eq('one rule paints the ticks green', reg.cf.length, 1);
+  eq('and that is the colour', reg.cf[0].bg, '#DCF5E4');
+  ok('it starts at the first tick box', reg.cf[0].formula === '=I3=TRUE', reg.cf[0].formula);
+  ok('and covers every meeting column', reg.cf[0].ranges[0].nc >= 40);
+
+  eq('the members are banded once', reg.bandings.length, 1);
+  const st = G.__ss.getSheetByName('Settings');
+  ok('every setting says what it is for', String(st.getRange(api._settingRow(st, 'Classroom course ID'), 3).getValue()).includes('announcement'));
+  ok('the box you tick is picked out', st.look_of(api._settingRow(st, 'Post the next meeting to Google Classroom'), 1).bg === '#FFF6E5');
+  ok('the tabs are coloured', reg.tab === '#12262B' && st.tab === '#F5A623');
+
+  /* running it again must not stack bandings or rules up */
+  api.dress(); api.dress();
+  eq('tidying twice leaves one banding', reg.bandings.length, 1);
+  eq('and one rule', reg.cf.length, 1);
+  eq('and does not touch what is written', reg.getRange(3, 4).getValue(), 'Jieun');
+}
+{
+  const { G, api } = seeded();
+  const reg = G.__ss.getSheetByName('Register');
+  api._handle({ action: 'join', token: 'TOK-NEW', year: 'Year 9', note: 'suturing' });
+  const row = reg.getLastRow();
+  eq('a student who signs up gets the same look', reg.look_of(row, 4).weight, 'bold');
+  eq('and a tick box in every meeting', [reg.getRange(row, 9).getValue(), reg.getRange(row, 10).getValue(), reg.getRange(row, 11).getValue()], [false, false, false]);
+  eq('with the date they joined formatted', reg.formats[row + ',7'], 'd mmm yyyy');
 }
 
 section('dates, however the chair types them');

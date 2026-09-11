@@ -45,6 +45,10 @@ var PUPILS = '@pupils.nlcsjeju.kr';     /* what a bare name in the Email column 
 var S_CLIENT = 'Google Client ID', S_COURSE = 'Classroom course ID', S_POST = 'Post the next meeting to Google Classroom',
     S_LAST = 'Last posted', S_SITE = 'The website';
 var CACHE_KEY = 'list-v2', CACHE_SECONDS = 600;
+var YEARS = ['Y7', 'Y8', 'Y9', 'Y10', 'Y11', 'Y12', 'Y13'];
+/* the society's own colours, so the sheet looks like the site it feeds */
+var INK = '#12262B', CREAM = '#F3E7C9', MOSS = '#7F94A2', AMBER = '#F5A623',
+    PAPER = '#FFFFFF', BAND = '#F3F7F8', LINE = '#D6E0E4', CAME = '#DCF5E4', SOFT = '#FFF6E5';
 
 /* ---------- the menu ---------- */
 function onOpen() {
@@ -53,6 +57,8 @@ function onOpen() {
     .addItem('Preview the Classroom announcement', 'previewAnnouncement')
     .addItem('Find my Classroom course ID', 'listCourses')
     .addItem('Refresh the website now', 'refreshWebsite')
+    .addSeparator()
+    .addItem('Tidy the sheet up', 'dress')
     .addSeparator()
     .addItem('Install the triggers (Dr Mompel, once)', 'installTriggers')
     .addItem('Set up the tabs', 'setup')
@@ -63,22 +69,126 @@ function setup() {
   var ss = SpreadsheetApp.getActive();
   var reg = ss.getSheetByName(T_REG) || ss.insertSheet(T_REG, 0);
   if (reg.getLastRow() < 1) { reg.appendRow(HEAD); reg.appendRow(NOTE); }
-  reg.setFrozenRows(2); reg.setFrozenColumns(4);
-  reg.getRange(1, 1, 1, HEAD.length).setFontWeight('bold');
-  reg.getRange(2, 1, 1, HEAD.length).setFontColor('#7F94A2').setFontStyle('italic');
-  reg.getRange(1, MEET_COL, 2, Math.max(1, reg.getMaxColumns() - MEET_COL + 1)).setNote(null);
   _tab(ss, T_VOTES, ['When', 'Email', 'Idea']);
   _tab(ss, T_LOG, ['When', 'What', 'By']);
   var st = ss.getSheetByName(T_SET) || ss.insertSheet(T_SET);
   var want = [[S_CLIENT, ''], [S_COURSE, ''], [S_POST, false], [S_LAST, ''], [S_SITE, SITE]];
-  want.forEach(function (kv, i) {
+  want.forEach(function (kv) {
     var row = _settingRow(st, kv[0]);
     if (!row) { st.appendRow(kv); row = st.getLastRow(); }
     if (kv[0] === S_POST) st.getRange(row, 2).insertCheckboxes();
   });
-  st.getRange(1, 1, st.getLastRow(), 1).setFontWeight('bold'); st.setColumnWidth(1, 320); st.setColumnWidth(2, 420);
+  dress();
   _flush();
   _ui('Ready. Paste the Client ID and the Classroom course ID into Settings, then Deploy ▸ New deployment ▸ Web app.');
+}
+
+/* ---------- how the sheet looks ----------
+   Run whenever: it only ever sets the look, never the contents, so it is safe after pasting a
+   list in from somewhere else (a paste brings its own colours and fonts with it). */
+function dress() {
+  var ss = SpreadsheetApp.getActive();
+  _dressRegister(ss.getSheetByName(T_REG));
+  _dressLedger(ss.getSheetByName(T_VOTES), [150, 260, 180]);
+  _dressLedger(ss.getSheetByName(T_LOG), [150, 560, 240]);
+  _dressSettings(ss.getSheetByName(T_SET));
+  _toast('Tidied.');
+}
+function _plain(sh, tab) {
+  if (!sh) return;
+  sh.setTabColor(tab);
+  var rows = sh.getMaxRows(), cols = sh.getMaxColumns();
+  sh.getRange(1, 1, rows, cols).setFontFamily('Arial').setFontSize(10).setVerticalAlignment('middle').setBorder(false, false, false, false, false, false);
+  (sh.getBandings() || []).forEach(function (b) { b.remove(); });
+}
+function _heads(sh, row, n, align) {
+  sh.getRange(row, 1, 1, n).setBackground(INK).setFontColor(CREAM).setFontWeight('bold').setFontSize(10)
+    .setHorizontalAlignment(align || 'left').setVerticalAlignment('middle');
+  sh.setRowHeight(row, 34);
+}
+function _dressRegister(sh) {
+  if (!sh) return;
+  _plain(sh, INK);
+  var lastRow = Math.max(sh.getLastRow(), DATA_ROW), lastCol = Math.max(sh.getLastColumn(), HEAD.length);
+  _heads(sh, 1, HEAD.length);
+  sh.getRange(2, 1, 1, HEAD.length).setBackground('#F7FAFB').setFontColor(MOSS).setFontStyle('italic').setFontSize(9).setWrap(true);
+  sh.setRowHeight(2, 26);
+  [130, 130, 130, 150, 240, 70, 110, 320].forEach(function (w, i) { sh.setColumnWidth(i + 1, w); });
+  sh.setFrozenRows(2); sh.setFrozenColumns(4);
+
+  /* the meeting columns: the date above, what the meeting is below, a tick per member */
+  if (lastCol >= MEET_COL) {
+    var n = lastCol - MEET_COL + 1;
+    sh.getRange(1, MEET_COL, 1, n).setBackground(INK).setFontColor(CREAM).setFontWeight('bold').setHorizontalAlignment('center').setVerticalAlignment('middle');
+    sh.getRange(2, MEET_COL, 1, n).setBackground('#F7FAFB').setFontColor(MOSS).setFontStyle('italic').setFontSize(9).setWrap(true).setHorizontalAlignment('center');
+    sh.getRange(DATA_ROW, MEET_COL, Math.max(1, lastRow - DATA_ROW + 1), n).setHorizontalAlignment('center');
+    for (var c = MEET_COL; c <= lastCol; c++) sh.setColumnWidth(c, 110);
+  }
+  /* the member rows: a year to choose from a list, a date that reads as a date, room to write */
+  if (lastRow >= DATA_ROW) {
+    var rows = lastRow - DATA_ROW + 1;
+    sh.getRange(DATA_ROW, 1, rows, HEAD.length).setFontColor('#1B2226').setWrap(false);
+    sh.getRange(DATA_ROW, 4, rows, 1).setFontWeight('bold');
+    sh.getRange(DATA_ROW, 5, rows, 1).setFontColor('#5C6C77').setFontSize(9.5);
+    sh.getRange(DATA_ROW, 6, rows, 1).setHorizontalAlignment('center');
+    sh.getRange(DATA_ROW, 7, rows, 1).setNumberFormat('d mmm yyyy').setHorizontalAlignment('center');
+    sh.getRange(DATA_ROW, 8, rows, 1).setWrap(true);
+    sh.getRange(DATA_ROW, 1, rows, Math.max(HEAD.length, lastCol)).applyRowBanding(SpreadsheetApp.BandingTheme.LIGHT_GREY, false, false);
+    sh.setRowHeights(DATA_ROW, rows, 26);
+  }
+  _years(sh);
+  /* room for a year of meetings, so a new column rarely has to widen the sheet */
+  var want = MEET_COL + 39;
+  if (sh.getMaxColumns() < want) sh.insertColumnsAfter(sh.getMaxColumns(), want - sh.getMaxColumns());
+  /* a ticked box turns its cell green, so a row of green is a row of people who came */
+  var span = sh.getMaxColumns() - MEET_COL + 1;
+  var marks = sh.getRange(DATA_ROW, MEET_COL, Math.max(sh.getMaxRows() - DATA_ROW + 1, 1), span);
+  sh.setConditionalFormatRules([
+    SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied('=' + marks.getA1Notation().split(':')[0] + '=TRUE')
+      .setBackground(CAME).setRanges([marks]).build()
+  ]);
+}
+/* the Year column is a list, Y7 to Y13, so nobody types "year 7 " and wonders why */
+function _years(sh) {
+  if (!sh) return;
+  var rows = Math.max(sh.getMaxRows() - DATA_ROW + 1, 1);
+  var rule = SpreadsheetApp.newDataValidation().requireValueInList(YEARS, true)
+    .setAllowInvalid(false).setHelpText('Y7 to Y13').build();
+  sh.getRange(DATA_ROW, 6, rows, 1).setDataValidation(rule);
+}
+function _dressLedger(sh, widths) {
+  if (!sh) return;
+  _plain(sh, MOSS);
+  _heads(sh, 1, widths.length);
+  widths.forEach(function (w, i) { sh.setColumnWidth(i + 1, w); });
+  sh.setFrozenRows(1);
+  var last = sh.getLastRow();
+  if (last > 1) {
+    sh.getRange(2, 1, last - 1, 1).setNumberFormat('d mmm yyyy  HH:mm');
+    sh.getRange(2, 1, last - 1, widths.length).applyRowBanding(SpreadsheetApp.BandingTheme.LIGHT_GREY, false, false);
+  }
+}
+function _dressSettings(sh) {
+  if (!sh) return;
+  _plain(sh, AMBER);
+  var help = {};
+  help[S_CLIENT] = 'The Google Client ID the Biology labs use. Dr Mompel has it. Without it nobody can sign in.';
+  help[S_COURSE] = 'Which class gets the announcement. Menu ▸ Find my Classroom course ID — it is not the number in the Classroom web address.';
+  help[S_POST]   = 'Tick this to announce the next meeting in Google Classroom. It unticks itself once it has posted.';
+  help[S_LAST]   = 'Filled in by the script.';
+  help[S_SITE]   = 'Where the page lives.';
+  var last = sh.getLastRow();
+  for (var r = 1; r <= last; r++) {
+    var key = String(sh.getRange(r, 1).getValue()).trim();
+    if (help[key] !== undefined) sh.getRange(r, 3).setValue(help[key]);
+  }
+  sh.getRange(1, 1, last, 1).setFontWeight('bold').setFontColor('#1B2226').setBackground('#FFF9EF');
+  sh.getRange(1, 2, last, 1).setBackground(PAPER).setFontColor('#1B2226');
+  sh.getRange(1, 3, last, 1).setFontColor(MOSS).setFontSize(9).setWrap(true).setFontStyle('italic');
+  sh.setColumnWidth(1, 300); sh.setColumnWidth(2, 380); sh.setColumnWidth(3, 460);
+  sh.setRowHeights(1, last, 40);
+  var post = _settingRow(sh, S_POST);
+  if (post) sh.getRange(post, 1, 1, 3).setBackground(SOFT);
 }
 function _tab(ss, name, head) {
   var sh = ss.getSheetByName(name) || ss.insertSheet(name);
@@ -200,6 +310,7 @@ function _handle(d) {
         if (note) sh.getRange(row, 8).setValue(note);
       } else {
         sh.appendRow(['', who.given || '', who.family || '', who.given || who.name || who.email.split('@')[0], who.email, year, new Date(), note]);
+        _dressRow(sh, sh.getLastRow());
       }
       _flush();
       return _list(who);
@@ -221,6 +332,19 @@ function _handle(d) {
     }
     return { ok: false, why: 'unknown action' };
   } finally { lock.releaseLock(); }
+}
+/* a row a student made for themselves should look like the rows the chair typed */
+function _dressRow(sh, row) {
+  try {
+    sh.getRange(row, 4).setFontWeight('bold');
+    sh.getRange(row, 5).setFontColor('#5C6C77').setFontSize(9.5);
+    sh.getRange(row, 6).setHorizontalAlignment('center');
+    sh.getRange(row, 7).setNumberFormat('d mmm yyyy').setHorizontalAlignment('center');
+    sh.getRange(row, 8).setWrap(true);
+    sh.setRowHeight(row, 26);
+    var lastCol = sh.getLastColumn();
+    if (lastCol >= MEET_COL) sh.getRange(row, MEET_COL, 1, lastCol - MEET_COL + 1).insertCheckboxes().setHorizontalAlignment('center');
+  } catch (e) {}
 }
 function _schoolAccount(email) {
   var at = String(email || '').split('@')[1] || '';
@@ -309,10 +433,12 @@ function _newMeeting(date, plan) {
   var sh = SpreadsheetApp.getActive().getSheetByName(T_REG);
   var col = Math.max(MEET_COL, sh.getLastColumn() + 1);
   if (col > sh.getMaxColumns()) sh.insertColumnsAfter(sh.getMaxColumns(), col - sh.getMaxColumns());
-  sh.getRange(1, col).setValue(date).setNumberFormat(_hasTime(date) ? 'ddd d mmm HH:mm' : 'ddd d mmm').setFontWeight('bold');
-  sh.getRange(2, col).setValue(String(plan || '').trim()).setFontColor('#7F94A2').setFontStyle('italic').setWrap(true);
+  sh.getRange(1, col).setValue(date).setNumberFormat(_hasTime(date) ? 'ddd d mmm HH:mm' : 'ddd d mmm')
+    .setBackground(INK).setFontColor(CREAM).setFontWeight('bold').setHorizontalAlignment('center').setVerticalAlignment('middle');
+  sh.getRange(2, col).setValue(String(plan || '').trim())
+    .setBackground('#F7FAFB').setFontColor(MOSS).setFontStyle('italic').setFontSize(9).setWrap(true).setHorizontalAlignment('center');
   var last = sh.getLastRow();
-  if (last >= DATA_ROW) sh.getRange(DATA_ROW, col, last - DATA_ROW + 1, 1).insertCheckboxes();
+  if (last >= DATA_ROW) sh.getRange(DATA_ROW, col, last - DATA_ROW + 1, 1).insertCheckboxes().setHorizontalAlignment('center');
   sh.setColumnWidth(col, 110);
   _flush();
   return sh.getRange(1, col).getA1Notation().replace(/\d+$/, '');
