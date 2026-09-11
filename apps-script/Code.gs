@@ -70,32 +70,39 @@ var STAFF_DOMAIN = 'nlcsjeju.kr';       /* a teacher's address has no pupils. in
 /* the society's own colours, so the sheet looks like the site it feeds */
 var INK = '#12262B', CREAM = '#F3E7C9', MOSS = '#7F94A2', AMBER = '#F5A623',
     PAPER = '#FFFFFF', BAND = '#F3F7F8', LINE = '#D6E0E4', CAME = '#DCF5E4', SOFT = '#FFF6E5';
+/* MOSS is for tabs and for words on the dark ground. On paper it is too faint to read, so
+   anything secondary written on white uses this instead. */
+var MUTED = '#54636E', TEXT = '#1B2226';
 
 /* ---------- the menu ---------- */
 function onOpen() {
-  SpreadsheetApp.getUi().createMenu('🐴 Veterinary Society')
+  var ui = SpreadsheetApp.getUi();
+  ui.createMenu('🐴 Veterinary Society')
     .addItem('🗂  Open the panel', 'panel')
     .addSeparator()
-    .addItem('📅  Add the next meeting', 'addMeeting')
-    .addItem('📣  Post the next meeting now', 'postNow')
+    .addItem('📅  Add a meeting', 'addMeeting')
+    .addItem('📣  Tell the class', 'postNow')
     .addItem('👀  Preview that announcement', 'previewAnnouncement')
-    .addSeparator()
-    .addItem('🔄  Refresh the website now', 'refreshWebsite')
-    .addItem('🩺  Check the website can read this', 'checkWebApp')
-    .addItem('🧪  Test the pop-up window', 'testPopup')
-    .addItem('✨  Tidy the sheet up', 'dress')
-    .addSeparator()
-    .addItem('⚙️  Set up the tabs', 'setup')
-    .addItem('🎓  Choose the Classroom class', 'chooseCourse')
     .addItem('🎒  Update who is in the class', 'syncClassroom')
-    .addItem('🔔  Install the triggers (a teacher, once)', 'installTriggers')
+    .addSeparator()
+    .addSubMenu(ui.createMenu('⚙️  Setting up, and checks')
+      .addItem('Set up the tabs', 'setup')
+      .addItem('Choose the Classroom class', 'chooseCourse')
+      .addItem('Install the triggers (a teacher, once)', 'installTriggers')
+      .addSeparator()
+      .addItem('Check the website can read this', 'checkWebApp')
+      .addItem('Tidy the sheet up', 'dress')
+      .addItem('Refresh the website now', 'refreshWebsite')
+      .addItem('Test the pop-up window', 'testPopup'))
     .addToUi();
-  /* and the panel opens with the sheet, so nobody has to know the menu is there */
-  try { panel(); } catch (e) {}
+  /* The panel should open with the sheet, but a simple onOpen runs with barely any authority and
+     may not open one. Where it is allowed, this does it; everywhere else the trigger installed by
+     a teacher (openPanel, below) does, and neither says anything if it cannot. */
+  try { panel(true); } catch (e) {}
 }
 
 /* a small panel down the side, so the week's work is three buttons rather than a menu hunt */
-function panel() {
+function panel(quiet) {
   var reg = _register(new Date()), next = _next(reg), tz = reg.tz;
   var when = next ? Utilities.formatDate(next.date, tz, 'EEEE d MMMM') + (_hasTime(next.date) ? ', ' + Utilities.formatDate(next.date, tz, 'HH:mm') : '') : '';
   var members = reg.members.filter(function (p) { return !p.staff; }).length;
@@ -128,7 +135,11 @@ function panel() {
   try {
     var out = HtmlService.createHtmlOutput(_page('This week', body)).setTitle('Veterinary Society');
     SpreadsheetApp.getUi().showSidebar(out);
-  } catch (e) { _ui('The panel needs the spreadsheet open in front of you.'); }
+  } catch (e) {
+    if (quiet) return;          /* opening the sheet must never scold anybody */
+    _say('The panel would not open', '<p class="warn">' + (e && e.message || e) + '</p>' +
+      '<p>If it says the permissions are not sufficient, the manifest needs replacing — menu ▸ ⚙️ Setting up, and checks ▸ <b>Test the pop-up window</b> says so plainly.</p>', 280);
+  }
 }
 
 /* Posting straight away: a teacher may. A chair may not — Google only lets a teacher of the
@@ -154,6 +165,10 @@ function postNow() {
     return 'Not posted: ' + e.message;
   }
 }
+/* Opening the sheet opens the panel. This is the installable version of that: it runs with the
+   authority of whoever installed it, which a simple onOpen does not have. */
+function openPanel() { try { panel(true); } catch (e) {} }
+
 /* the teacher's timer: has anybody asked for an announcement since it last looked? */
 function postPending() {
   var cache;
@@ -287,7 +302,7 @@ function _dressRegister(sh) {
   _plain(sh, INK);
   var lastRow = Math.max(sh.getLastRow(), DATA_ROW), lastCol = Math.max(sh.getLastColumn(), HEAD.length);
   _heads(sh, 1, HEAD.length);
-  sh.getRange(2, 1, 1, HEAD.length).setBackground('#F7FAFB').setFontColor(MOSS).setFontStyle('italic').setFontSize(9).setWrap(true);
+  sh.getRange(2, 1, 1, HEAD.length).setBackground('#EDF3F5').setFontColor(MUTED).setFontStyle('italic').setFontSize(9.5).setWrap(true);
   sh.setRowHeight(2, 26);
   [130, 130, 130, 150, 240, 70, 110, 320].forEach(function (w, i) { sh.setColumnWidth(i + 1, w); });
   sh.setFrozenRows(2); sh.setFrozenColumns(4);
@@ -296,7 +311,7 @@ function _dressRegister(sh) {
   if (lastCol >= MEET_COL) {
     var n = lastCol - MEET_COL + 1;
     sh.getRange(1, MEET_COL, 1, n).setBackground(INK).setFontColor(CREAM).setFontWeight('bold').setHorizontalAlignment('center').setVerticalAlignment('middle');
-    sh.getRange(2, MEET_COL, 1, n).setBackground('#F7FAFB').setFontColor(MOSS).setFontStyle('italic').setFontSize(9).setWrap(true).setHorizontalAlignment('center');
+    sh.getRange(2, MEET_COL, 1, n).setBackground('#EDF3F5').setFontColor(MUTED).setFontStyle('italic').setFontSize(9.5).setWrap(true).setHorizontalAlignment('center');
     sh.getRange(DATA_ROW, MEET_COL, Math.max(1, lastRow - DATA_ROW + 1), n).setHorizontalAlignment('center');
     for (var c = MEET_COL; c <= lastCol; c++) sh.setColumnWidth(c, 110);
   }
@@ -308,7 +323,7 @@ function _dressRegister(sh) {
     var rows = last - DATA_ROW + 1, wide = Math.max(HEAD.length, lastCol);
     sh.getRange(DATA_ROW, 1, rows, HEAD.length).setFontColor('#1B2226').setWrap(false);
     sh.getRange(DATA_ROW, 4, rows, 1).setFontWeight('bold');
-    sh.getRange(DATA_ROW, 5, rows, 1).setFontColor('#5C6C77').setFontSize(9.5);
+    sh.getRange(DATA_ROW, 5, rows, 1).setFontColor(MUTED).setFontSize(9.5);
     sh.getRange(DATA_ROW, 6, rows, 1).setHorizontalAlignment('center');
     sh.getRange(DATA_ROW, 7, rows, 1).setNumberFormat('d mmm yyyy').setHorizontalAlignment('center');
     sh.getRange(DATA_ROW, 8, rows, 1).setWrap(true);
@@ -374,7 +389,7 @@ function _dressLedger(sh, widths, which) {
     sh.getRange(2, 1, rows, widths.length).setBackgrounds(bands);
     if (which === T_VOTES) {
       /* keep the name the page files a vote under, and say it in words beside */
-      sh.getRange(2, 3, rows, 1).setFontColor('#5C6C77').setFontSize(9.5);
+      sh.getRange(2, 3, rows, 1).setFontColor(MUTED).setFontSize(9.5);
       sh.getRange(2, 4, rows, 1).setFontWeight('bold').setFontColor('#1B2226');
       var slugs = sh.getRange(2, 3, rows, 1).getValues(), words = sh.getRange(2, 4, rows, 1).getValues(), any = false;
       for (var r = 0; r < rows; r++) {
@@ -387,7 +402,10 @@ function _dressLedger(sh, widths, which) {
 function _dressSettings(sh) {
   if (!sh) return;
   _plain(sh, AMBER);
-  _heads(sh, 1, 3);
+  /* a quiet header, not a black band: these are only column names */
+  sh.getRange(1, 1, 1, 3).setBackground('#EDF3F5').setFontColor(TEXT).setFontWeight('bold').setFontSize(10)
+    .setVerticalAlignment('middle').setBorder(null, null, true, null, null, null, '#9FB3BC', SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
+  sh.setRowHeight(1, 30);
   sh.setFrozenRows(1);
   var help = {};
   help[S_CLIENT] = 'The Google Client ID the Biology labs use. Dr Mompel has it. Without it nobody can sign in.';
@@ -401,14 +419,18 @@ function _dressSettings(sh) {
     if (help[key] !== undefined) sh.getRange(r, 3).setValue(help[key]);
   }
   if (last > 1) {
-    sh.getRange(2, 1, last - 1, 1).setFontWeight('bold').setFontColor('#1B2226').setBackground('#FFF9EF');
-    sh.getRange(2, 2, last - 1, 1).setBackground(PAPER).setFontColor('#1B2226').setBorder(true, true, true, true, false, false);
-    sh.getRange(2, 3, last - 1, 1).setFontColor(MOSS).setFontSize(9).setWrap(true).setFontStyle('italic');
-    sh.setRowHeights(2, last - 1, 44);
+    sh.getRange(2, 1, last - 1, 1).setFontWeight('bold').setFontColor(TEXT).setBackground('#FFF4E0');
+    sh.getRange(2, 2, last - 1, 1).setBackground(PAPER).setFontColor(TEXT).setFontSize(10.5)
+      .setBorder(true, true, true, true, true, null, '#C8D4DA', SpreadsheetApp.BorderStyle.SOLID);
+    sh.getRange(2, 3, last - 1, 1).setBackground('#FAFCFD').setFontColor(MUTED).setFontSize(10).setWrap(true);
+    sh.setRowHeights(2, last - 1, 46);
   }
   sh.setColumnWidth(1, 300); sh.setColumnWidth(2, 380); sh.setColumnWidth(3, 460);
-  var client = _settingRow(sh, S_CLIENT);
-  if (client) sh.getRange(client, 1, 1, 3).setBackground(SOFT);
+  /* the two that a person fills in are lit; the two the script writes are quieter */
+  [S_LAST, S_READ, S_SITE].forEach(function (k) {
+    var r = _settingRow(sh, k);
+    if (r) { sh.getRange(r, 1).setBackground('#F3F7F8').setFontColor(MUTED); sh.getRange(r, 2).setFontColor(MUTED).setFontSize(10); }
+  });
 }
 function _tab(ss, name, head) {
   var sh = ss.getSheetByName(name) || ss.insertSheet(name);
@@ -699,7 +721,7 @@ function _dressRow(sh, row) {
     sh.getRange(row, 1, 1, wide).setBackgrounds([line]);
     sh.getRange(row, 1, 1, HEAD.length).setFontColor('#1B2226');
     sh.getRange(row, 4).setFontWeight('bold');
-    sh.getRange(row, 5).setFontColor('#5C6C77').setFontSize(9.5);
+    sh.getRange(row, 5).setFontColor(MUTED).setFontSize(9.5);
     sh.getRange(row, 6).setHorizontalAlignment('center');
     sh.getRange(row, 7).setNumberFormat('d mmm yyyy').setHorizontalAlignment('center');
     sh.getRange(row, 8).setWrap(true);
@@ -832,7 +854,7 @@ function _newMeeting(date, plan) {
   sh.getRange(1, col).setValue(date).setNumberFormat(_hasTime(date) ? 'ddd d mmm HH:mm' : 'ddd d mmm')
     .setBackground(INK).setFontColor(CREAM).setFontWeight('bold').setHorizontalAlignment('center').setVerticalAlignment('middle');
   sh.getRange(2, col).setValue(String(plan || '').trim())
-    .setBackground('#F7FAFB').setFontColor(MOSS).setFontStyle('italic').setFontSize(9).setWrap(true).setHorizontalAlignment('center');
+    .setBackground('#EDF3F5').setFontColor(MUTED).setFontStyle('italic').setFontSize(9.5).setWrap(true).setHorizontalAlignment('center');
   var last = sh.getLastRow();
   if (last >= DATA_ROW) sh.getRange(DATA_ROW, col, last - DATA_ROW + 1, 1).insertCheckboxes().setHorizontalAlignment('center');
   sh.setColumnWidth(col, 110);
@@ -1277,14 +1299,16 @@ function installTriggers() {
   var ss = SpreadsheetApp.getActive();
   ScriptApp.getProjectTriggers().forEach(function (t) {
     var f = t.getHandlerFunction();
-    if (f === 'onRegisterEdit' || f === 'postPending') ScriptApp.deleteTrigger(t);
+    if (f === 'onRegisterEdit' || f === 'postPending' || f === 'openPanel') ScriptApp.deleteTrigger(t);
   });
   ScriptApp.newTrigger('onRegisterEdit').forSpreadsheet(ss).onEdit().create();
   ScriptApp.newTrigger('postPending').timeBased().everyMinutes(5).create();
+  ScriptApp.newTrigger('openPanel').forSpreadsheet(ss).onOpen().create();
   var who = _me();
   _say('Installed',
     '<p><span class="ok">Done.</span> Two things now work:</p>' +
-    '<ul><li>every edit reaches the website at once</li>' +
+    '<ul><li>the panel opens by itself whenever the sheet is opened</li>' +
+    '<li>every edit reaches the website at once</li>' +
     '<li>when the chair presses <b>Tell the class</b>, the announcement goes out as <b>' + (who || 'you') + '</b> within five minutes</li></ul>' +
     '<p class="note">That is what lets the chair announce a meeting without being a teacher.</p>', 320);
 }

@@ -69,20 +69,16 @@ Row 2 holds **what the meeting is**: *Suturing on practice pads · B12*. Members
 It sits at the top of the spreadsheet, beside Help. You will use the first three; the rest are
 there when you need them.
 
+The four you will use are at the top; setting up and checking are folded into a submenu.
+
 | | What it does |
 |---|---|
 | 🗂 **Open the panel** | The panel down the right-hand side: when the next meeting is, how many members and teachers, and buttons for the jobs below. It opens by itself whenever the sheet is opened; this is for putting it back if you close it. |
 | 📅 **Add the next meeting** | Asks the date and what you will do, then makes a new column for it. The website shows it as *Next meeting* straight away. |
 | 📣 **Post the next meeting now** | Announces that meeting in Google Classroom. A **teacher** posts it there and then; when the **chair** presses it, the teacher's computer posts it within five minutes, under the teacher's name. Nothing to tick. |
 | 👀 **Preview that announcement** | Shows the words first, without sending anything. |
-| 🔄 **Refresh the website now** | The site keeps its answer for ten minutes. This makes it read the sheet again at once. Rarely needed — an edit does it anyway. |
-| 🩺 **Check the website can read this** | Asks the website what address it is calling, tries it, and — more to the point — reports when the page last read this sheet. Use it whenever the page looks empty. |
-| 🧪 **Test the pop-up window** | Only if the windows come up as plain grey boxes. It tries to build and show one in three steps and says which step Google refused, in Google's words. |
-| ✨ **Tidy the sheet up** | Puts the colours, widths and tick boxes back. Nothing you have written is changed. Use it after pasting a list in from somewhere else. |
-| ⚙️ **Set up the tabs** | Builds the five tabs, or repairs them. Safe to run again; it fills in blanks rather than replacing anything. |
-| 🎓 **Choose the Classroom class** | Lists the classes you teach and lets you pick the one announcements go to. **A teacher only.** |
 | 🎒 **Update who is in the class** | Compares the register with the Google Classroom class and shows both lists — who to invite, who to take out — before doing anything. It names the class and links to it, so you can be sure it is the right one. **A teacher only.** |
-| 🔔 **Install the triggers** | Once, by a teacher. Makes edits reach the website at once, and lets the chair's press of *Tell the class* post the announcement under the teacher's name a few minutes later. |
+| ⚙️ **Setting up, and checks** | A submenu, for the things done once or when something looks wrong: **Set up the tabs** (builds or repairs the five tabs), **Choose the Classroom class**, **Install the triggers**, **Check the website can read this**, **Tidy the sheet up**, **Refresh the website now**, **Test the pop-up window**. |
 
 **To add a meeting:** menu **🐴 Veterinary Society ▸ 📅 Add the next meeting**, type the date and
 what you will do. A new column appears with a tick box on every member's row. Within a minute
@@ -219,8 +215,9 @@ is in it:
 ```
 
 Click it and you see three columns: **A** the name of the setting, **B** the box you type in,
-**C** a line saying what it is for. Row 1 is the heading. Nothing here needs you — it arrives
-filled in — but this is what each row is:
+**C** a line saying what it is for. The two you might ever fill in are lit in amber; the three
+the script writes for itself are quieter. Nothing here needs you — it arrives filled in — but
+this is what each row is:
 
 | Cell | Setting (column A) | What is in column B |
 |---|---|---|

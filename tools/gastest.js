@@ -103,6 +103,7 @@ function makeGlobals(now) {
     __ss: ss, __alerts: [], __cache: new Map(), __classroom: [], __triggers: [], __fetches: [], __tokens: {},
     SpreadsheetApp: {
       BandingTheme: { LIGHT_GREY: 'LIGHT_GREY' },
+      BorderStyle: { SOLID: 'SOLID', SOLID_MEDIUM: 'SOLID_MEDIUM', SOLID_THICK: 'SOLID_THICK' },
       newDataValidation: () => { const r = { type: '', values: [], allowInvalid: null, help: '' };
         const b = { requireValueInList: (v, drop) => { r.type = 'list'; r.values = v; r.dropdown = drop; return b; },
                     setAllowInvalid: x => { r.allowInvalid = x; return b; },
@@ -121,9 +122,11 @@ function makeGlobals(now) {
         },
         ButtonSet: { OK_CANCEL: 'okc', YES_NO: 'yn' }, Button: { OK: 'ok', YES: 'YES', NO: 'NO' },
         showModalDialog: (out, title) => { if (G.__noDialogs) throw new Error(typeof G.__noDialogs === 'string' ? G.__noDialogs : 'Cannot show a dialog here'); G.__dialogs.push({ html: out.html, title }); },
-        showSidebar: (out) => { G.__sidebars.push(out.html); },
+        showSidebar: (out) => { if (G.__noDialogs) throw new Error(typeof G.__noDialogs === 'string' ? G.__noDialogs : 'Cannot show a sidebar here'); G.__sidebars.push(out.html); },
         prompt: () => ({ getSelectedButton: () => 'ok', getResponseText: () => G.__answer.shift() }),
-        createMenu: () => { const m = { addItem: () => m, addSeparator: () => m, addToUi: () => m }; return m; }
+        createMenu: (name) => { const m = { name, items: [], addItem: (label, fn) => { m.items.push(label + '\u2192' + fn); return m; },
+          addSeparator: () => m, addSubMenu: (sub) => { m.items.push('SUB:' + sub.items.join(',')); return m; },
+          addToUi: () => { G.__menus.push(m); return m; } }; return m; }
       })
     },
     CacheService: { getScriptCache: () => ({ get: k => G.__cache.get(k) || null, put: (k, v) => G.__cache.set(k, v), remove: k => G.__cache.delete(k) }) },
@@ -138,7 +141,10 @@ function makeGlobals(now) {
       getService: () => ({ getUrl: () => G.__webAppUrl }),
       getProjectTriggers: () => G.__triggers,
       newTrigger: (fn) => ({
-        forSpreadsheet: () => ({ onEdit: () => ({ create: () => { G.__triggers.push({ getHandlerFunction: () => fn }); } }) }),
+        forSpreadsheet: () => ({
+          onEdit: () => ({ create: () => { G.__triggers.push({ getHandlerFunction: () => fn }); } }),
+          onOpen: () => ({ create: () => { G.__triggers.push({ getHandlerFunction: () => fn }); } })
+        }),
         timeBased: () => ({ everyMinutes: () => ({ create: () => { G.__triggers.push({ getHandlerFunction: () => fn }); } }) })
       }),
       deleteTrigger: t => { G.__triggers = G.__triggers.filter(x => x !== t); }
@@ -166,7 +172,7 @@ function makeGlobals(now) {
     Logger: { log: () => {} },
     __answer: [], __webAppUrl: '', __webReply: null, __dialogs: [], __sidebars: [],
     __roster: [], __invites: [], __removed: [], __cancelled: [], __inviteFails: {},
-    __noDialogs: false, __asked: [], __answerYesNo: []
+    __noDialogs: false, __asked: [], __answerYesNo: [], __menus: []
   };
   /* a Date that answers "now" with the test's now, while every real date still passes
      `instanceof Date` inside the script — a subclass would not */
@@ -296,9 +302,13 @@ section('the sheet is dressed');
   ok('and nothing below the last member is painted', !reg.look_of(5, 1).bg && !reg.look_of(20, 1).bg);
   const st = G.__ss.getSheetByName('Settings');
   ok('every setting says what it is for', String(st.getRange(api._settingRow(st, 'Classroom course ID'), 3).getValue()).includes('announcement'));
-  eq('the heading row is not mistaken for a setting', st.look_of(1, 1).bg, '#12262B');
-  ok('the box you type in is boxed off', st.look_of(2, 2).bg === '#FFF6E5' || st.look_of(2, 2).bg === '#FFFFFF');
-  ok('the one setting that must be right is picked out', st.look_of(api._settingRow(st, 'Google Client ID'), 1).bg === '#FFF6E5');
+  eq('the heading row is a quiet header, not a black band', st.look_of(1, 1).bg, '#EDF3F5');
+  eq('and it is written in ink, so it can be read', st.look_of(1, 1).colour, '#1B2226');
+  eq('the box you type in is white', st.look_of(2, 2).bg, '#FFFFFF');
+  eq('the settings you fill in are lit', st.look_of(api._settingRow(st, 'Google Client ID'), 1).bg, '#FFF4E0');
+  eq('the ones the script writes are quieter', st.look_of(api._settingRow(st, 'Last posted'), 1).bg, '#F3F7F8');
+  ok('nothing secondary is written in the pale colour meant for dark grounds',
+     st.look_of(2, 3).colour === '#54636E' && st.look_of(2, 3).colour !== '#7F94A2');
   ok('and the tick box is gone from Settings', api._settingRow(st, 'Post the next meeting to Google Classroom') === 0);
   ok('the tabs are coloured', reg.tab === '#12262B' && st.tab === '#F5A623');
 
@@ -810,7 +820,7 @@ section('when Google will not say who you are');
   const { G, api } = seeded();
   G.Session = { getEffectiveUser: () => { throw new Error('Specified permissions are not sufficient to call Session.getEffectiveUser'); } };
   api.installTriggers();
-  eq('the triggers are still installed', G.__triggers.length, 2);
+  eq('the triggers are still installed', G.__triggers.length, 3);
   ok('and it says so without a name', G.__dialogs.map(d => d.html).join(' ').includes('as <b>you</b>'));
   G.Classroom.Courses.list = () => ({ courses: [{ id: '9', name: 'BioGuardians' }] });
   G.__answer = ['1'];
@@ -1060,13 +1070,36 @@ section('why a drawn window would not open');
   ok('a page Google will not accept is named as that', said.includes('1. a plain page — FAILED') && said.includes('Malformed'), said.slice(0, 200));
 }
 
+section('opening the sheet');
+{
+  const { G, api } = seeded();
+  api.onOpen({ authMode: 'LIMITED' });
+  eq('the menu is built', G.__menus.length, 1);
+  const flat = G.__menus[0].items.join(' | ');
+  ok('the week\u2019s work is at the top', flat.indexOf('Add a meeting') < flat.indexOf('SUB:'), flat);
+  ok('and the setting up is folded away', flat.includes('SUB:') && flat.includes('Install the triggers'));
+  ok('the panel is opened too', G.__sidebars.length === 1);
+}
+{
+  const { G, api } = seeded();
+  G.__noDialogs = 'Specified permissions are not sufficient to call Ui.showSidebar';
+  api.onOpen({});
+  eq('when it may not open a panel, opening the sheet says nothing at all', G.__alerts.length + G.__dialogs.length, 0);
+  eq('but the menu is there', G.__menus.length, 1);
+  api.openPanel();
+  eq('and the trigger is just as quiet', G.__alerts.length + G.__dialogs.length, 0);
+  api.panel();
+  ok('though asking for it by hand explains itself', G.__dialogs.length + G.__alerts.length > 0);
+}
+
 section('the triggers');
 {
   const { G, api } = seeded();
   api.installTriggers(); api.installTriggers();
-  eq('installing twice leaves one of each', G.__triggers.length, 2);
-  ok('an eye on the sheet and a timer for the chair’s requests',
-     G.__triggers.map(t => t.getHandlerFunction()).sort().join(',') === 'onRegisterEdit,postPending');
+  eq('installing twice leaves one of each', G.__triggers.length, 3);
+  ok('an eye on the sheet, a timer for the chair’s requests, and the panel on opening',
+     G.__triggers.map(t => t.getHandlerFunction()).sort().join(',') === 'onRegisterEdit,openPanel,postPending',
+     G.__triggers.map(t => t.getHandlerFunction()).join(','));
   ok('it is told who will post', G.__dialogs.map(d => d.html).join(' ').includes('dmompelriera@nlcsjeju.kr'));
 }
 
