@@ -58,6 +58,8 @@ class Sheet {
   setRowHeight(r, h) { this.heights[r] = h; return this; }
   setRowHeights(r, n, h) { for (let i = 0; i < n; i++) this.heights[r + i] = h; return this; }
   setHiddenGridlines() { return this; }
+  clear() { this.cells.clear(); this.look = {}; this.validations = []; this.bandings = []; this.cf = []; return this; }
+  activate() { this.active = true; return this; }
   _k(r, c) { return r + ',' + c; }
   _get(r, c) { const v = this.cells.get(this._k(r, c)); return v === undefined ? '' : v; }
   _set(r, c, v) { this.cells.set(this._k(r, c), v); }
@@ -259,6 +261,29 @@ section('the sheet is dressed');
   eq('with the date they joined formatted', reg.formats[row + ',7'], 'd mmm yyyy');
 }
 
+section('setting up does not stop and wait');
+{
+  const { G, api } = load();
+  api.setup();
+  eq('no dialog is raised, so the editor cannot appear to hang', G.__alerts.length, 0);
+  ok('it says it is ready, in passing', G.__ss.toasts.join(' ').includes('Ready'), G.__ss.toasts.join(' '));
+  const st = G.__ss.getSheetByName('Settings');
+  eq('the Client ID is already filled in', st.getRange(api._settingRow(st, 'Google Client ID'), 2).getValue(),
+     '749068441640-jgh9s0rbg8ed9hl14mtv6kdhg5jg6ddf.apps.googleusercontent.com');
+  const start = G.__ss.getSheetByName('Start here');
+  ok('a Start here tab explains the week', !!start);
+  const text = start.getRange(1, 1, 20, 2).getValues().flat().join(' | ');
+  ok('it says how to add a meeting', text.includes('Add the next meeting'));
+  ok('it says how to tell the class', text.includes('Post the next meeting to Google Classroom'));
+  ok('it says who installs the triggers', text.includes('Install the triggers'));
+  ok('and it is put in front of you', start.active === true);
+  /* a Client ID typed into Settings by hand beats the one in the script */
+  st.getRange(api._settingRow(st, 'Google Client ID'), 2).setValue('SCHOOL-CHANGED-IT');
+  eq('the sheet wins over the script', api._clientId(), 'SCHOOL-CHANGED-IT');
+  api.setup();
+  eq('and setup does not overwrite it', st.getRange(api._settingRow(st, 'Google Client ID'), 2).getValue(), 'SCHOOL-CHANGED-IT');
+}
+
 section('dates, however the chair types them');
 {
   const { api } = load();
@@ -371,7 +396,11 @@ section('who may write');
 {
   const { G, api } = load();
   api.setup();
-  eq('with no Client ID, nothing can be written', api._handle({ action: 'join', token: 'X' }).why, 'sign-in is not set up');
+  eq('the script knows the school’s Client ID, so a bad token is simply not signed in',
+     api._handle({ action: 'join', token: 'X' }).why, 'not signed in');
+  G.CLIENT_ID = '';
+  G.__ss.getSheetByName('Settings').getRange(api._settingRow(G.__ss.getSheetByName('Settings'), 'Google Client ID'), 2).setValue('');
+  eq('empty both and it says so plainly', api._handle({ action: 'join', token: 'X' }).why, 'sign-in is not set up');
 }
 
 section('votes');
@@ -483,13 +512,29 @@ section('the tick box that posts');
   eq('and the box is cleared anyway', cell.getValue(), false);
 }
 
-section('finding the Classroom course');
+section('choosing the Classroom class');
+{
+  const { G, api, st } = seeded();
+  G.Classroom.Courses.list = () => ({ courses: [{ id: '742100123456', name: 'Y10 Biology' }, { id: '742100999999', name: 'BioGuardians' }] });
+  G.__answer = ['2'];
+  api.chooseCourse();
+  eq('the one you picked is written into Settings', st.getRange(api._settingRow(st, 'Classroom course ID'), 2).getValue(), '742100999999');
+  ok('and it says which class that was', G.__ss.toasts.join(' ').includes('BioGuardians'), G.__ss.toasts.join(' '));
+  eq('nothing had to be typed by hand', G.__alerts.length, 0);
+}
+{
+  const { G, api, st } = seeded();
+  G.Classroom.Courses.list = () => ({ courses: [{ id: '1', name: 'Y10 Biology' }] });
+  G.__answer = ['7'];
+  api.chooseCourse();
+  ok('a number that is not on the list is refused', G.__alerts.join(' ').includes('not one of the numbers'));
+  eq('and the setting is left as it was', st.getRange(api._settingRow(st, 'Classroom course ID'), 2).getValue(), 'COURSE1');
+}
 {
   const { G, api } = seeded();
-  G.Classroom.Courses.list = () => ({ courses: [{ id: '742100123456', name: 'Y10 Biology' }, { id: '742100999999', name: 'Veterinary Society' }] });
-  api.listCourses();
-  const said = G.__alerts.join('\n');
-  ok('it lists the classes with their IDs', said.includes('Veterinary Society') && said.includes('742100999999'), said);
+  delete G.Classroom;
+  api.chooseCourse();
+  ok('without the Classroom service it says where to switch it on', G.__alerts.join(' ').includes('Services'));
 }
 
 section('the triggers');
