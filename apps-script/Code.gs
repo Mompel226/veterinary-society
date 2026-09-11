@@ -15,7 +15,8 @@
                 The Email column takes the whole address or just the first part of it: ghong31
                 and ghong31@pupils.nlcsjeju.kr are the same person.
      Votes      when · email · idea            (a second vote on the same idea takes it back)
-     Settings   the Google Client ID, the Classroom course, and the "post" box
+     Settings   three columns: the name of the setting, THE BOX YOU TYPE IN, and a line saying
+                what it is for. The Google Client ID, the Classroom course, and the "post" box.
      Log        what was posted to Classroom, and when
 
    WHAT THE PAGE IS TOLD, AND WHAT IT IS NOT. The page shows preferred names, year groups, the
@@ -72,6 +73,7 @@ function setup() {
   _tab(ss, T_VOTES, ['When', 'Email', 'Idea']);
   _tab(ss, T_LOG, ['When', 'What', 'By']);
   var st = ss.getSheetByName(T_SET) || ss.insertSheet(T_SET);
+  if (st.getLastRow() < 1) st.appendRow(['Setting', 'Type it here \u2192', 'What it is for']);
   var want = [[S_CLIENT, ''], [S_COURSE, ''], [S_POST, false], [S_LAST, ''], [S_SITE, SITE]];
   want.forEach(function (kv) {
     var row = _settingRow(st, kv[0]);
@@ -171,6 +173,8 @@ function _dressLedger(sh, widths) {
 function _dressSettings(sh) {
   if (!sh) return;
   _plain(sh, AMBER);
+  _heads(sh, 1, 3);
+  sh.setFrozenRows(1);
   var help = {};
   help[S_CLIENT] = 'The Google Client ID the Biology labs use. Dr Mompel has it. Without it nobody can sign in.';
   help[S_COURSE] = 'Which class gets the announcement. Menu ▸ Find my Classroom course ID — it is not the number in the Classroom web address.';
@@ -178,15 +182,17 @@ function _dressSettings(sh) {
   help[S_LAST]   = 'Filled in by the script.';
   help[S_SITE]   = 'Where the page lives.';
   var last = sh.getLastRow();
-  for (var r = 1; r <= last; r++) {
+  for (var r = 2; r <= last; r++) {
     var key = String(sh.getRange(r, 1).getValue()).trim();
     if (help[key] !== undefined) sh.getRange(r, 3).setValue(help[key]);
   }
-  sh.getRange(1, 1, last, 1).setFontWeight('bold').setFontColor('#1B2226').setBackground('#FFF9EF');
-  sh.getRange(1, 2, last, 1).setBackground(PAPER).setFontColor('#1B2226');
-  sh.getRange(1, 3, last, 1).setFontColor(MOSS).setFontSize(9).setWrap(true).setFontStyle('italic');
+  if (last > 1) {
+    sh.getRange(2, 1, last - 1, 1).setFontWeight('bold').setFontColor('#1B2226').setBackground('#FFF9EF');
+    sh.getRange(2, 2, last - 1, 1).setBackground(PAPER).setFontColor('#1B2226').setBorder(true, true, true, true, false, false);
+    sh.getRange(2, 3, last - 1, 1).setFontColor(MOSS).setFontSize(9).setWrap(true).setFontStyle('italic');
+    sh.setRowHeights(2, last - 1, 44);
+  }
   sh.setColumnWidth(1, 300); sh.setColumnWidth(2, 380); sh.setColumnWidth(3, 460);
-  sh.setRowHeights(1, last, 40);
   var post = _settingRow(sh, S_POST);
   if (post) sh.getRange(post, 1, 1, 3).setBackground(SOFT);
 }

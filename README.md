@@ -130,12 +130,18 @@ column, dates that read as dates, room for a year of meetings, and a rule that t
 box green so a row of green is a row of people who came. Menu ▸ **Tidy the sheet up** puts that
 look back any time — after a paste, say. It never changes what is written.
 
-**5 · Fill in Settings.**
+**5 · Fill in the Settings tab.** *Settings* is one of the four tabs the script just made, at
+the bottom of the spreadsheet. It is three columns: the name of the setting, **the box you type
+in**, and a line saying what it is for. Two of them need you:
 
-| | |
+| Setting (column A) | What to type in column B |
 |---|---|
-| **Google Client ID** | the one the Biology labs use — Dr Mompel has it. The site's address is already an authorised origin, so sign-in works here as it does there. |
-| **Classroom course ID** | menu ▸ *Find my Classroom course ID* lists your classes and their IDs. It is **not** the number in the Classroom web address. |
+| **Google Client ID** | `749068441640-jgh9s0rbg8ed9hl14mtv6kdhg5jg6ddf.apps.googleusercontent.com` — the one the Biology labs use, also written in [`config.js`](config.js) here. This site's address is already an authorised origin for it, so sign-in works here exactly as it does in the labs. Without it, nobody can sign in. |
+| **Classroom course ID** | which class gets the announcement. Menu ▸ *Find my Classroom course ID* lists your classes with their IDs — copy one. It is **not** the number in the Classroom web address. |
+
+The other three fill themselves in: *Post the next meeting to Google Classroom* is the tick box
+you use each week, *Last posted* is written by the script, and *The website* is where the page
+lives.
 
 **6 · Deploy ▸ New deployment ▸ Web app.** Execute as **Me**, who has access **Anyone**.
 Deploy, and copy the address that ends in `/exec`.

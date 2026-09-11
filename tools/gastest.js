@@ -202,7 +202,10 @@ section('the sheet is set up');
   ok('Votes, Settings and Log exist', !!G.__ss.getSheetByName('Votes') && !!G.__ss.getSheetByName('Settings') && !!G.__ss.getSheetByName('Log'));
   api.setup();      /* twice must not double anything */
   eq('setup run twice leaves one heading row', reg.getRange(1, 1).getValue(), 'Korean name');
-  eq('setup run twice leaves one settings row per key', G.__ss.getSheetByName('Settings').getLastRow(), 5);
+  const st0 = G.__ss.getSheetByName('Settings');
+  eq('setup run twice leaves one settings row per key', st0.getLastRow(), 6);
+  eq('Settings says where to type', st0.getRange(1, 1, 1, 3).getValues()[0], ['Setting', 'Type it here \u2192', 'What it is for']);
+  eq('and the first setting sits under that heading', st0.getRange(2, 1).getValue(), 'Google Client ID');
 }
 
 section('the sheet is dressed');
@@ -235,6 +238,8 @@ section('the sheet is dressed');
   eq('the members are banded once', reg.bandings.length, 1);
   const st = G.__ss.getSheetByName('Settings');
   ok('every setting says what it is for', String(st.getRange(api._settingRow(st, 'Classroom course ID'), 3).getValue()).includes('announcement'));
+  eq('the heading row is not mistaken for a setting', st.look_of(1, 1).bg, '#12262B');
+  ok('the box you type in is boxed off', st.look_of(2, 2).bg === '#FFFFFF');
   ok('the box you tick is picked out', st.look_of(api._settingRow(st, 'Post the next meeting to Google Classroom'), 1).bg === '#FFF6E5');
   ok('the tabs are coloured', reg.tab === '#12262B' && st.tab === '#F5A623');
 
