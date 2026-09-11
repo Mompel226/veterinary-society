@@ -87,7 +87,7 @@ class Sheet {
 class Spreadsheet {
   constructor() { this.sheets = []; this.toasts = []; }
   getSheetByName(n) { return this.sheets.find(s => s.name === n) || null; }
-  insertSheet(n) { const s = new Sheet(n); this.sheets.push(s); return s; }
+  insertSheet(n, at) { const s = new Sheet(n); if (typeof at === 'number') this.sheets.splice(at, 0, s); else this.sheets.push(s); return s; }
   getSpreadsheetTimeZone() { return 'Asia/Seoul'; }
   toast(m) { this.toasts.push(m); }
 }
@@ -272,6 +272,8 @@ section('setting up does not stop and wait');
      '749068441640-jgh9s0rbg8ed9hl14mtv6kdhg5jg6ddf.apps.googleusercontent.com');
   const start = G.__ss.getSheetByName('Start here');
   ok('a Start here tab explains the week', !!start);
+  eq('the tabs are in the order the README names', G.__ss.sheets.map(x => x.name),
+     ['Start here', 'Register', 'Votes', 'Log', 'Settings']);
   const text = start.getRange(1, 1, 20, 2).getValues().flat().join(' | ');
   ok('it says how to add a meeting', text.includes('Add the next meeting'));
   ok('it says how to tell the class', text.includes('Post the next meeting to Google Classroom'));
