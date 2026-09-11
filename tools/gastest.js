@@ -992,6 +992,8 @@ section('why a drawn window would not open');
   const { G, api } = seeded();
   api.testPopup();
   ok('when all is well it opens the little window', G.__dialogs.length === 1);
+  ok('and the window it opens is the society’s own, not a bare box',
+     G.__dialogs[0].html.includes('This is a drawn window') && G.__dialogs[0].html.includes('#12262B'));
   ok('and says so quietly', G.__ss.toasts.join(' ').includes('pop-up opened'));
   ok('the Log keeps the result either way', String(G.__ss.getSheetByName('Log').getRange(2, 2).getValue()).includes('Pop-up test'));
 }
