@@ -53,6 +53,14 @@ week), **Register**, *Votes*, *Log*, and *Settings*. The one that matters day to
 |---|---|---|---|---|---|---|---|---|
 | Korean name | English name | Surname | **Preferred name** | Email | Year | Joined | Would like to do | **one column per meeting** |
 
+**Joined** is the day they came on to the register — a date, filled in for you: the day they
+signed up on the website, or the day their row was typed in. You never write it. **Would like to
+do** is theirs: what they wrote when they signed up, or whatever the chair wants to note.
+
+Only the rows with somebody in them are dressed — an empty sheet ruled to row 1000 looks like a
+form nobody filled in. Type a name into the next empty row and that row dresses itself: the
+banding, the tick boxes for every meeting, the year dropdown, and the date they arrived.
+
 Row 1 of a meeting column holds **the date of that meeting** (with a time if there is one).
 Row 2 holds **what the meeting is**: *Suturing on practice pads · B12*. Members start on row 3.
 
