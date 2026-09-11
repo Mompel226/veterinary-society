@@ -81,6 +81,7 @@ function onOpen() {
     .addSeparator()
     .addItem('🔄  Refresh the website now', 'refreshWebsite')
     .addItem('🩺  Check the website can read this', 'checkWebApp')
+    .addItem('🧪  Test the pop-up window', 'testPopup')
     .addItem('✨  Tidy the sheet up', 'dress')
     .addSeparator()
     .addItem('⚙️  Set up the tabs', 'setup')
@@ -393,10 +394,12 @@ var PAGE_CSS =
   '.btn:hover{background:#FFB742} .btn.quiet{background:transparent;color:#9DB7AE;border:1px solid rgba(157,183,174,.45)}' +
   '.btn.quiet:hover{color:#EDF4F8;border-color:#EDF4F8} .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}' +
   '.note{font-size:12.5px;color:#9DB7AE}';
+/* A fragment, not a whole document: HtmlService wraps and sanitises what it is given, and the
+   fewer document-shaped parts it has to take apart, the fewer ways it can refuse. */
 function _page(title, bodyHtml) {
-  return '<!DOCTYPE html><html><head><base target="_top"><meta charset="utf-8"><style>' + PAGE_CSS + '</style></head><body><div class="wrap">' +
+  return '<base target="_top"><style>' + PAGE_CSS + '</style><div class="wrap">' +
     '<div class="head">' + MARK_SVG + '<div><div class="eyebrow">Veterinary Society</div><h1>' + title + '</h1></div></div>' +
-    bodyHtml + '</div></body></html>';
+    bodyHtml + '</div>';
 }
 /* Say something, prettily if the sheet will let us. Returns true if the drawn page appeared;
    false if it fell back to Google's grey box — and then it says why, because a job that can only
@@ -414,6 +417,32 @@ function _say(title, bodyHtml, height, plain) {
     return false;
   }
 }
+/* Why would a drawn window not open? Rather than guess, try it in pieces and say which piece
+   failed and in Google's own words. Everything here is reported through the grey box, which
+   always works, and written to the Log. */
+function testPopup() {
+  var steps = [], mini = '<p style="font:14px sans-serif">Hello from the Veterinary Society.</p>';
+  try { HtmlService.createHtmlOutput(mini); steps.push('1. a plain page — made'); }
+  catch (e) { steps.push('1. a plain page — FAILED: ' + e.message); }
+  try { HtmlService.createHtmlOutput(_page('Test', '<p>Hello.</p>')); steps.push('2. the society page — made'); }
+  catch (e) { steps.push('2. the society page — FAILED: ' + e.message); }
+  var shown = false;
+  try {
+    SpreadsheetApp.getUi().showModalDialog(HtmlService.createHtmlOutput(mini).setWidth(320).setHeight(160), 'Test');
+    steps.push('3. showing it — Google accepted it'); shown = true;
+  } catch (e) { steps.push('3. showing it — FAILED: ' + e.message); }
+  var report = steps.join('\n');
+  _log('Pop-up test: ' + steps.join(' | '), _me());
+  if (shown) {
+    /* the little window is already up; leave it, and put the report where it can be read after */
+    SpreadsheetApp.getActive().toast('The pop-up opened. The Log tab has the details.', 'Veterinary Society', 8);
+  } else {
+    _ui('Why the drawn window will not open here\n\n' + report +
+        '\n\nEverything still works without it: the grey boxes ask Yes/No and do the same jobs.\n' +
+        'Send these lines to Dr Mompel.');
+  }
+}
+
 /* a question Google's own box can ask, for when the drawn page cannot be shown */
 function _askYesNo(title, text) {
   try {
