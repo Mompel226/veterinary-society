@@ -64,6 +64,27 @@ the website says *Next meeting — Thursday 17 September, 15:40*, and what it is
 Classroom**. An announcement is posted, and the box unticks itself, ready for next time.
 (Menu ▸ *Preview the Classroom announcement* shows you what it will say, first.)
 
+**To start the register from a list you already have** — a CCA sign-up sheet, last year's
+members, a list the school gave you. Put it in these columns, in this order, and paste it into
+the *Register* tab from row 3 down:
+
+| A | B | C | D | E | F | G | H |
+|---|---|---|---|---|---|---|---|
+| Korean name | English name | Surname | **Preferred name** | **Email** | Year | Joined | Would like to do |
+| Gildong | John | Hong | John | ghong31 | Y9 | | |
+
+Two things make this easy. The **Email** column takes *just the first part* —
+`ghong31` — because the school's addresses are that plus `@pupils.nlcsjeju.kr`; write the whole
+address if you prefer, both work, and a student signing in is matched either way. The
+**Preferred name** is the only name the website ever shows, so it is the one to get right: put
+what you would call out in a room. Leave *Joined* and *Would like to do* empty — a student
+signing in fills their own in.
+
+A spreadsheet is a spreadsheet, so the quickest way is usually: open your existing list, copy
+the columns you need into this order (a few `=` formulas will do it), then paste into the
+Register tab. Nothing else needs to match: extra columns of your own may sit to the right of the
+meetings, and the script ignores them.
+
 🔒 **What the website is shown, and what it is never shown.** The page is sent **preferred
 names, year groups and ticks** — nothing else. Email addresses, surnames and Korean names stay
 in the sheet: they are school information and they never leave it. That rule is checked by a

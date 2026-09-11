@@ -12,6 +12,8 @@
                 (a date cell, with a time if there is one). Row 2 holds, under each date, what
                 the meeting is: "Suturing on practice pads · B12". Members start on row 3.
                 Tick the box under a meeting for everyone who came.
+                The Email column takes the whole address or just the first part of it: ghong31
+                and ghong31@pupils.nlcsjeju.kr are the same person.
      Votes      when · email · idea            (a second vote on the same idea takes it back)
      Settings   the Google Client ID, the Classroom course, and the "post" box
      Log        what was posted to Classroom, and when
@@ -34,11 +36,12 @@
    ============================================================ */
 var T_REG = 'Register', T_VOTES = 'Votes', T_SET = 'Settings', T_LOG = 'Log';
 var HEAD = ['Korean name', 'English name', 'Surname', 'Preferred name', 'Email', 'Year', 'Joined', 'Would like to do'];
-var NOTE = ['', '', '', 'shown on the site', 'never shown', 'shown', '', '', ];
+var NOTE = ['', '', '', 'shown on the site', 'never shown — the first part is enough', 'shown', '', ''];
 var MEET_COL = HEAD.length + 1;       /* I: the first meeting column */
 var DATA_ROW = 3;                     /* row 1 headings and dates, row 2 notes and plans */
 var SITE = 'https://mompel226.github.io/veterinary-society/';
 var DOMAINS = ['pupils.nlcsjeju.kr', 'nlcsjeju.kr'];
+var PUPILS = '@pupils.nlcsjeju.kr';     /* what a bare name in the Email column means */
 var S_CLIENT = 'Google Client ID', S_COURSE = 'Classroom course ID', S_POST = 'Post the next meeting to Google Classroom',
     S_LAST = 'Last posted', S_SITE = 'The website';
 var CACHE_KEY = 'list-v2', CACHE_SECONDS = 600;
@@ -123,7 +126,7 @@ function _register(now) {
     var rows = sh.getRange(DATA_ROW, 1, lastRow - DATA_ROW + 1, lastCol).getValues();
     rows.forEach(function (r, i) {
       var name = String(r[3] || r[1] || r[0] || '').trim();
-      var email = String(r[4] || '').trim().toLowerCase();
+      var email = _email(r[4]);
       if (!name && !email) return;
       out.members.push({
         row: DATA_ROW + i, name: name, year: _year(r[5]), email: email,
@@ -139,6 +142,13 @@ function _asDate(v) {
   var m = /^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})(?:\s+(\d{1,2}):(\d{2}))?$/.exec(s);     /* 17/9/2026 15:40 — day first */
   if (m) { var y = Number(m[3]); if (y < 100) y += 2000; return new Date(y, Number(m[2]) - 1, Number(m[1]), Number(m[4] || 0), Number(m[5] || 0)); }
   var d = new Date(s); return isNaN(d.getTime()) ? null : d;
+}
+/* the school writes its addresses as a first part plus one domain, and the chair's own list is
+   kept that way, so a bare name in the Email column is completed rather than ignored */
+function _email(v) {
+  var s = String(v == null ? '' : v).trim().toLowerCase();
+  if (!s) return '';
+  return s.indexOf('@') >= 0 ? s : s + PUPILS;
 }
 function _startOfDay(d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
 function _hasTime(d) { return d.getHours() !== 0 || d.getMinutes() !== 0; }
@@ -262,7 +272,7 @@ function _list(who) {
 function _rowOf(sh, col, email) {
   var last = sh.getLastRow(); if (last < DATA_ROW) return 0;
   var v = sh.getRange(DATA_ROW, col, last - DATA_ROW + 1, 1).getValues();
-  for (var i = 0; i < v.length; i++) if (String(v[i][0]).trim().toLowerCase() === email) return i + DATA_ROW;
+  for (var i = 0; i < v.length; i++) if (_email(v[i][0]) === email) return i + DATA_ROW;
   return 0;
 }
 

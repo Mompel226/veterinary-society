@@ -161,7 +161,7 @@ section('the sheet is set up');
   const reg = G.__ss.getSheetByName('Register');
   eq('headings', reg.getRange(1, 1, 1, 8).getValues()[0],
      ['Korean name', 'English name', 'Surname', 'Preferred name', 'Email', 'Year', 'Joined', 'Would like to do']);
-  ok('the email column is marked as never shown', reg.getRange(2, 5).getValue() === 'never shown');
+  ok('the email column is marked as never shown', String(reg.getRange(2, 5).getValue()).indexOf('never shown') === 0);
   ok('Votes, Settings and Log exist', !!G.__ss.getSheetByName('Votes') && !!G.__ss.getSheetByName('Settings') && !!G.__ss.getSheetByName('Log'));
   api.setup();      /* twice must not double anything */
   eq('setup run twice leaves one heading row', reg.getRange(1, 1).getValue(), 'Korean name');
@@ -252,6 +252,20 @@ section('a student signs in');
   eq('a member already on the register is not duplicated', reg.getLastRow(), 5);
   eq('the chair’s spelling of their name is left alone', reg.getRange(3, 4).getValue(), 'Jieun');
   ok('and their ticks are untouched', reg.getRange(3, 9).getValue() === true);
+}
+
+section('an address written as just its first part');
+{
+  const { G, api, reg } = seeded();
+  /* the chair's own list is kept the way the school writes it: ghong31, not the whole address */
+  reg.appendRow(['', 'Sungyoon', 'Kim', 'Sungyoon', 'sy4kim31', 'Y9', new Date(2026, 8, 1), '']);
+  api.onRegisterEdit({ range: reg.getRange(5, 5) });
+  const out = api._handle({ action: 'join', token: 'TOK-NEW', year: 'Year 9', note: 'suturing' });
+  eq('they are recognised, not added twice', reg.getLastRow(), 5);
+  eq('the chair’s own spelling is left in the cell', reg.getRange(5, 5).getValue(), 'sy4kim31');
+  eq('what they wrote reached their row', reg.getRange(5, 8).getValue(), 'suturing');
+  eq('and the page counts them as a member', out.member, true);
+  ok('still no address on the way out', !/@/.test(JSON.stringify(out)));
 }
 
 section('who may write');
