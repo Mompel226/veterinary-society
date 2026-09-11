@@ -792,6 +792,44 @@ section('keeping the Classroom class in step with the register');
   ok('and the reason is in the Log', String(G.__ss.getSheetByName('Log').getRange(2, 2).getValue()).includes('already exists'));
 }
 
+section('when Google says the permissions are not enough');
+{
+  const fs = require('fs');
+  const { G, api } = seeded();
+  const file = fs.readFileSync(__dirname + '/../apps-script/appsscript.json', 'utf8').replace(/\n$/, '');
+  eq('the manifest the dialog offers is the manifest in the repository', G.MANIFEST, file);
+  ok('and it carries the roster permissions', G.MANIFEST.includes('classroom.rosters') && G.MANIFEST.includes('classroom.profile.emails'));
+
+  G.Classroom.Courses.Students.list = () => { throw new Error('Specified permissions are not sufficient to call classroom.courses.students.list. Required permissions: (https://www.googleapis.com/auth/classroom.profile.emails || …)'); };
+  api.syncClassroom();
+  const said = G.__dialogs.map(d => d.html).join(' ');
+  ok('it is recognised for what it is', said.includes('One permission short') || said.includes('not in its manifest'), said.slice(0, 200));
+  ok('it says where the manifest lives', said.includes('Project Settings') && said.includes('appsscript.json'));
+  ok('it hands over the manifest itself', said.includes('classroom.rosters'));
+  ok('with a button to copy it', said.includes('Copy the manifest'));
+  ok('and says Google will ask again', said.includes('Review permissions'));
+}
+{
+  const { G, api } = seeded();
+  G.Classroom.Courses.list = () => { throw new Error('Specified permissions are not sufficient to call classroom.courses.list'); };
+  api.chooseCourse();
+  ok('choosing a class says the same when it is the same fault', G.__dialogs.map(d => d.html).join(' ').includes('Project Settings'));
+}
+{
+  const { G, api } = seeded();
+  G.Classroom.Courses.Announcements.create = () => { throw new Error('Specified permissions are not sufficient to call classroom.courses.announcements.create'); };
+  api.postNow();
+  ok('and so does posting', G.__dialogs.map(d => d.html).join(' ').includes('appsscript.json'));
+}
+{
+  const { G, api } = seeded();
+  G.Classroom.Courses.Students.list = () => { throw new Error('The caller does not have permission'); };
+  api.syncClassroom();
+  const said = G.__dialogs.map(d => d.html).join(' ');
+  ok('a plain refusal is still explained as a refusal', said.includes('Only a teacher of the class'), said.slice(0, 200));
+  ok('and does not send him to the manifest for nothing', !said.includes('Project Settings'));
+}
+
 section('the triggers');
 {
   const { G, api } = seeded();
