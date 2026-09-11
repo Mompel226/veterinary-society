@@ -83,8 +83,15 @@ address if you prefer, both work, and a student signing in is matched either way
 what you would call out in a room. Leave *Joined* and *Would like to do* empty — a student
 signing in fills their own in.
 
-The **Year** column is a dropdown, Y7 to Y13 — pick, don't type, and nothing arrives as
-`year 7 ` with a stray space.
+The **Year** column is a dropdown, Y7 to Y13 and **Teacher** — pick, don't type, and nothing
+arrives as `year 7 ` with a stray space.
+
+**Teachers.** A teacher's school address has no `pupils.` in it, and Google has already proved
+the address before the script sees it — so the script decides who is staff, not the form. Sign in
+with a teacher's address and *Put your name down* fills in **Teacher** for you and will not let
+you change it; a pupil who picks Teacher from the list is simply not made one. On the page they
+are listed under the members, under their own heading, with the same meeting columns: who comes
+along with the society, and who came to which meeting.
 
 **Bringing a list in from a file.** Save your list as a CSV with those eight columns in that
 order and **no heading row**, then, on the *Register* tab:
