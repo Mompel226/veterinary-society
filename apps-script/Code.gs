@@ -60,7 +60,7 @@ var SITE = 'https://nlcsbiology.com/veterinary-society/';
 var DOMAINS = ['pupils.nlcsjeju.kr', 'nlcsjeju.kr'];
 var PUPILS = '@pupils.nlcsjeju.kr';     /* what a bare name in the Email column means */
 var S_CLIENT = 'Google Client ID', S_COURSE = 'Classroom course ID', S_POST = 'Post the next meeting to Google Classroom',
-    S_LAST = 'Last posted', S_SITE = 'The website';
+    S_LAST = 'Last posted', S_SITE = 'The website', S_READ = 'Last read by the website';
 var CACHE_KEY = 'list-v2', CACHE_SECONDS = 600;
 var YEARS = ['Y7', 'Y8', 'Y9', 'Y10', 'Y11', 'Y12', 'Y13', 'Teacher'];
 /* a teacher is known by a title and a surname, not by a first name: Dr Mompel Riera, not Daniel */
@@ -89,6 +89,8 @@ function onOpen() {
     .addItem('🎒  Update who is in the class', 'syncClassroom')
     .addItem('🔔  Install the triggers (a teacher, once)', 'installTriggers')
     .addToUi();
+  /* and the panel opens with the sheet, so nobody has to know the menu is there */
+  try { panel(); } catch (e) {}
 }
 
 /* a small panel down the side, so the week's work is three buttons rather than a menu hunt */
@@ -144,7 +146,7 @@ function setup() {
   _tab(ss, T_LOG, ['When', 'What', 'By']);
   var st = ss.getSheetByName(T_SET) || ss.insertSheet(T_SET);
   if (st.getLastRow() < 1) st.appendRow(['Setting', 'Type it here \u2192', 'What it is for']);
-  var want = [[S_CLIENT, CLIENT_ID], [S_COURSE, ''], [S_POST, false], [S_LAST, ''], [S_SITE, SITE]];
+  var want = [[S_CLIENT, CLIENT_ID], [S_COURSE, ''], [S_POST, false], [S_LAST, ''], [S_READ, ''], [S_SITE, SITE]];
   want.forEach(function (kv) {
     var row = _settingRow(st, kv[0]);
     if (!row) { st.appendRow(kv); row = st.getLastRow(); }
@@ -339,6 +341,7 @@ function _dressSettings(sh) {
   help[S_COURSE] = 'Which class gets the announcement. Menu ▸ Find my Classroom course ID — it is not the number in the Classroom web address.';
   help[S_POST]   = 'Tick this to announce the next meeting in Google Classroom. It unticks itself once it has posted.';
   help[S_LAST]   = 'Filled in by the script.';
+  help[S_READ]   = 'Filled in by the script: the last time the website asked for the register, and which version answered. This is the proof that the page and this sheet are talking.';
   help[S_SITE]   = 'Where the page lives.';
   var last = sh.getLastRow();
   for (var r = 2; r <= last; r++) {
@@ -578,6 +581,7 @@ function doGet(e) { return _json(_handle({ action: ((e && e.parameter) || {}).ac
 
 function _handle(d) {
   var action = String(d.action || 'list');
+  _noteRead(d.from);
   if (action === 'list') return _cachedList();
   if (!_clientId()) return { ok: false, why: 'sign-in is not set up' };
   var who = _whoIs(d.token);
@@ -656,6 +660,32 @@ function _dressRow(sh, row) {
 function _schoolAccount(email) {
   var at = String(email || '').split('@')[1] || '';
   return DOMAINS.indexOf(at) >= 0;
+}
+
+/* A script cannot ask its own address the way a stranger does — Google answers its own
+   machinery 404 — so the only honest proof that the website can read this is the website having
+   read it. Every request writes the time into Settings, at most once every five minutes. */
+function _noteRead(from) {
+  try {
+    var cache = CacheService.getScriptCache();
+    if (cache.get('noted')) return;
+    cache.put('noted', '1', 300);
+    var when = Utilities.formatDate(new Date(), SpreadsheetApp.getActive().getSpreadsheetTimeZone(), 'd MMM HH:mm');
+    _putSetting(S_READ, when + '  ·  ' + (String(from || '').slice(0, 60) || 'somewhere') + '  ·  ' + CODE_STAMP);
+  } catch (e) {}
+}
+/* how long ago, in words, from what _noteRead wrote */
+function _readAge() {
+  var v = String(_setting(S_READ) || '');
+  if (!v) return null;
+  var m = /^(\d{1,2}) (\w{3}) (\d{2}):(\d{2})/.exec(v);
+  if (!m) return { text: v, minutes: -1, stamp: '' };
+  var now = new Date(), MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var d = new Date(now.getFullYear(), MON.indexOf(m[2]), Number(m[1]), Number(m[3]), Number(m[4]));
+  if (d > now) d = new Date(d.getFullYear() - 1, d.getMonth(), d.getDate(), d.getHours(), d.getMinutes());
+  var mins = Math.round((now - d) / 60000);
+  var st = /·\s*([^·]+)$/.exec(v);
+  return { text: v, minutes: mins, stamp: st ? st[1].trim() : '' };
 }
 
 /* the public answer, kept for ten minutes and thrown away the moment the sheet is edited */
@@ -797,9 +827,22 @@ function checkWebApp() {
   var theirs = _plainUrl(_siteScriptUrl());
   var site = String(_setting(S_SITE) || SITE);
 
+  /* What the website has actually done beats what this script can find out by asking. */
+  var read = _readAge();
+  var fresh = read && read.minutes >= 0 && read.minutes < 60 * 24 * 3;
+
   /* 1. what the website is calling, if it says */
   if (theirs) {
     var a = _ask(theirs);
+    if (!a.ok && fresh) {
+      _say('Working',
+        '<p><span class="ok">The website read the register ' + _ago(read.minutes) + '.</span></p>' +
+        '<p class="note">That is the proof that matters: the page asked this sheet, and this sheet answered. ' +
+        'Google will not let a script ask its own address without signing in — it answers itself 404 — so the check below cannot see it, and that is normal.</p>' +
+        '<p class="note">Settings ▸ <i>Last read by the website</i>: ' + read.text + '</p>' +
+        _staleNote(read.stamp), 440, 'Working: the website read the register ' + _ago(read.minutes) + '.');
+      return;
+    }
     if (a.ok) {
       _say(a.stamp === CODE_STAMP ? 'Working' : 'Working, but a version behind',
         '<p><span class="ok">The website is reading the register.</span></p>' +
@@ -848,10 +891,18 @@ function checkWebApp() {
   _cannotRead(c.code, '', mine);
 }
 
+function _ago(mins) {
+  if (mins < 2) return 'a moment ago';
+  if (mins < 60) return mins + ' minutes ago';
+  if (mins < 60 * 36) return Math.round(mins / 60) + ' hours ago';
+  return Math.round(mins / 1440) + ' days ago';
+}
 function _cannotRead(code, theirs, mine) {
   var url = theirs || mine;
+  var read = _readAge();
   _say('The website cannot read this yet',
     '<p><span class="warn">Google answered ' + (code || '—') + '</span> to a request carrying no sign-in — which is how the page asks.</p>' +
+    (read ? '<p class="note">The last time the website did read this sheet: ' + read.text + '. If that was recent, the page is fine and this check simply cannot see it — a script may not ask its own address without signing in.</p>' : '') +
     '<p>The deployment being asked is <code style="display:inline;padding:2px 6px">' + _shortId(url) + '</code>. In <b>Deploy ▸ Manage deployments</b>, is that the one you set to <b>Anyone</b>?</p>' +
     '<ul><li>If there is <b>more than one</b> deployment, archive the ones you are not using (⋮ ▸ Archive) — only one of them was opened, and the address in config.js may be another.</li>' +
     '<li>If it <b>is</b> the right one and it still says Anyone, the school is refusing anonymous access. That is a Workspace setting, not yours.</li></ul>' +
