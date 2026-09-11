@@ -466,12 +466,14 @@ section('an address written as just its first part');
 section('teachers');
 {
   const { G, api, reg } = seeded();
-  const out = api._handle({ action: 'join', token: 'TOK-TEACHER', year: 'Year 9', note: 'I run it' });
+  const out = api._handle({ action: 'join', token: 'TOK-TEACHER', year: 'Year 9', title: 'Dr', note: 'I run it' });
   const row = reg.getLastRow();
+  eq('a teacher is known by title and surname, not by their first name', reg.getRange(row, 4).getValue(), 'Dr Mompel Riera');
+  eq('their first name is still in the sheet, for the chair', reg.getRange(row, 2).getValue(), 'Daniel');
   eq('a teacher is put down as a teacher, whatever the form said', reg.getRange(row, 6).getValue(), 'Teacher');
   eq('their address is the school one, not a pupil one', reg.getRange(row, 5).getValue(), 'dmompelriera@nlcsjeju.kr');
   const me = out.members[out.members.length - 1];
-  eq('the page is told they are staff', [me.name, me.year, me.staff], ['Daniel', 'Teacher', true]);
+  eq('the page is told they are staff', [me.name, me.year, me.staff], ['Dr Mompel Riera', 'Teacher', true]);
   ok('and the students are not', out.members.slice(0, 2).every(p => p.staff === false));
   ok('still no address leaves the script', !/@/.test(JSON.stringify(out)));
 }
@@ -497,6 +499,33 @@ section('teachers');
   api.onRegisterEdit({ range: reg.getRange(5, 6) });
   const p = api._list(null).members.filter(x => x.name === 'Mr Park')[0];
   eq('the Year column can say it too', [p.staff, p.year], [true, 'Teacher']);
+}
+
+{
+  const { G, api, reg } = seeded();
+  api._handle({ action: 'join', token: 'TOK-TEACHER', year: 'Year 9', title: 'Sir Lord', note: '' });
+  eq('a made-up title is dropped, the surname kept', reg.getRange(reg.getLastRow(), 4).getValue(), 'Mompel Riera');
+}
+{
+  const { G, api, reg } = seeded();
+  api._handle({ action: 'join', token: 'TOK-TEACHER', year: 'Year 9', title: 'ms', note: '' });
+  eq('however it is typed, the title is spelled the one way', reg.getRange(reg.getLastRow(), 4).getValue(), 'Ms Mompel Riera');
+}
+{
+  const { G, api, reg } = seeded();
+  api._handle({ action: 'join', token: 'TOK-NEW', year: 'Year 9', title: 'Dr', note: '' });
+  eq('a pupil is still their first name, title or no title', reg.getRange(reg.getLastRow(), 4).getValue(), 'Sungyoon');
+}
+{
+  const { G, api, reg } = seeded();
+  reg.appendRow(['', 'Anna', 'Wise', 'Ms Wise', 'awise@nlcsjeju.kr', 'Teacher', new Date(2026, 8, 1), '']);
+  api.onRegisterEdit({ range: reg.getRange(5, 5) });
+  /* the clock inside the script is the test's clock, not this machine's */
+  G.__tokens['TOK-WISE'] = { aud: 'CID', exp: Math.floor(new Date(2026, 8, 20).getTime() / 1000), email_verified: 'true',
+    email: 'awise@nlcsjeju.kr', name: 'Anna Wise', given_name: 'Anna', family_name: 'Wise' };
+  api._handle({ action: 'join', token: 'TOK-WISE', year: 'Year 9', title: 'Dr', note: 'happy to help' });
+  eq('a name the chair wrote is never rewritten', reg.getRange(5, 4).getValue(), 'Ms Wise');
+  eq('but what they say they would like to do is theirs', reg.getRange(5, 8).getValue(), 'happy to help');
 }
 
 section('who may write');

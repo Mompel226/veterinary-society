@@ -136,6 +136,11 @@ you change it; a pupil who picks Teacher from the list is simply not made one. O
 are listed under the members, under their own heading, with the same meeting columns: who comes
 along with the society, and who came to which meeting.
 
+A teacher is shown by **title and surname** — *Dr Mompel Riera*, not *Daniel* — because that is
+how a student knows them. The form asks a signing-in teacher how they are known (Dr, Prof, Mr,
+Mrs, Ms, Miss, Mx) rather than guessing, and writes that into the **Preferred name** column. The
+chair can write something else in that column at any time, and it is never overwritten.
+
 **Bringing a list in from a file.** Save your list as a CSV with those eight columns in that
 order and **no heading row**, then, on the *Register* tab:
 
