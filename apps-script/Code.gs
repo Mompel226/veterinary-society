@@ -69,6 +69,7 @@ function onOpen() {
     .addItem('Add the next meeting', 'addMeeting')
     .addItem('Preview the Classroom announcement', 'previewAnnouncement')
     .addItem('Refresh the website now', 'refreshWebsite')
+    .addItem('Check the website can read this', 'checkWebApp')
     .addSeparator()
     .addItem('Tidy the sheet up', 'dress')
     .addSeparator()
@@ -257,6 +258,9 @@ function _tab(ss, name, head) {
   return sh;
 }
 function _ui(msg) { try { SpreadsheetApp.getUi().alert(msg); } catch (e) { Logger.log(msg); } }
+/* Google will not always say who is running this — an old authorisation may not carry the
+   permission — and no real work here depends on knowing, so never let the asking stop it. */
+function _me() { try { return Session.getEffectiveUser().getEmail() || ''; } catch (e) { return ''; } }
 function _toast(msg) { try { SpreadsheetApp.getActive().toast(msg, 'Veterinary Society', 6); } catch (e) { Logger.log(msg); } }
 
 /* ---------- settings, by their name in column A ---------- */
@@ -505,6 +509,36 @@ function _newMeeting(date, plan) {
 }
 function refreshWebsite() { _flush(); _toast('Done. The website reads the register afresh from now.'); }
 
+/* The website reads this script the way a stranger would: signed in to nothing. So does
+   UrlFetchApp from in here, which is what makes this a real test rather than a guess. */
+function checkWebApp() {
+  var url;
+  try { url = ScriptApp.getService().getUrl(); } catch (e) { url = ''; }
+  if (!url) {
+    _ui('This script has not been deployed yet.\n\nScript editor ▸ Deploy ▸ New deployment ▸ Web app.\n  Execute as:  Me\n  Who has access:  Anyone\n\nThen run this check again.');
+    return;
+  }
+  url = _plainUrl(url);
+  var res, code = 0, body = '';
+  try {
+    res = UrlFetchApp.fetch(url + '?action=list', { muteHttpExceptions: true, followRedirects: false });
+    code = res.getResponseCode(); body = res.getContentText().slice(0, 200);
+  } catch (e) { body = String(e); }
+  if (code === 200 && body.indexOf('"ok"') >= 0) {
+    _ui('Working. The website can read the register.\n\nPaste this address into config.js, after scriptUrl:\n\n' + url);
+    return;
+  }
+  _ui('The website cannot read this yet' + (code ? ' (Google answered ' + code + ')' : '') + '.\n\n' +
+      'Almost always this one thing: the deployment is not open to everyone.\n\n' +
+      'Script editor ▸ Deploy ▸ Manage deployments ▸ the pencil ▸\n' +
+      '  Who has access:  Anyone      (not "Anyone with a Google Account", not the school)\n' +
+      '▸ Deploy.\n\nThe page asks for the register before anyone has signed in, so that request ' +
+      'arrives as a stranger and has to be let in.\n\nThen run this check again.\n\n' + url);
+}
+/* script.google.com/a/macros/<school>/s/…  is the same deployment as  script.google.com/macros/s/… ,
+   but the first makes a visitor sign in to the school first, and the page asks before anyone has. */
+function _plainUrl(url) { return String(url).replace(/^https:\/\/script\.google\.com\/a\/macros\/[^\/]+\/s\//, 'https://script.google.com/macros/s/'); }
+
 /* ---------- Google Classroom ---------- */
 function _announcement(reg) {
   var next = _next(reg); if (!next) return null;
@@ -529,7 +563,7 @@ function chooseCourse() {
   var n = parseInt(String(a.getResponseText()).trim(), 10);
   if (!(n >= 1 && n <= cs.length)) { _ui('That was not one of the numbers on the list.'); return; }
   _putSetting(S_COURSE, cs[n - 1].id);
-  _log('Announcements will go to ' + cs[n - 1].name, Session.getEffectiveUser().getEmail());
+  _log('Announcements will go to ' + cs[n - 1].name, _me());
   _toast('Announcements will go to ' + cs[n - 1].name + '.');
 }
 function previewAnnouncement() {
@@ -562,7 +596,8 @@ function installTriggers() {
   var ss = SpreadsheetApp.getActive();
   ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'onRegisterEdit') ScriptApp.deleteTrigger(t); });
   ScriptApp.newTrigger('onRegisterEdit').forSpreadsheet(ss).onEdit().create();
-  _ui('Installed. Edits reach the website at once, and the "post" box in Settings posts to Classroom as ' + Session.getEffectiveUser().getEmail() + '.');
+  var who = _me();
+  _ui('Installed. Edits reach the website at once, and the "post" box in Settings posts to Classroom as ' + (who || 'you') + '.');
 }
 function onRegisterEdit(e) {
   _flush();

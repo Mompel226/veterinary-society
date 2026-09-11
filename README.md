@@ -176,16 +176,38 @@ filled in — but this is what each row is:
 Only ever type in **column B**. Columns A and C are labels; if one gets edited by accident, menu
 ▸ *Tidy the sheet up* writes them back.
 
-**6 · Deploy ▸ New deployment ▸ Web app.** Execute as **Me**, who has access **Anyone**.
-Deploy, and copy the address that ends in `/exec`.
+**6 · Deploy ▸ New deployment ▸ Web app.** In the script editor.
 
-**7 · Paste that address** into [`config.js`](config.js) after `scriptUrl`, and commit. Within
-a minute or two the page shows the sign-in button, the register and the votes.
+> **Execute as: Me.  Who has access: Anyone.**
+>
+> **Anyone** — not *Anyone with a Google Account*, not the school. The page asks for the register
+> before anybody has signed in, so that first request arrives as a stranger and has to be let in.
+> Choose anything narrower and the website gets a Google sign-in page instead of an answer, and
+> shows nothing at all.
 
-**8 · Install the triggers.** Menu ▸ *Install the triggers*. Do this **in the teacher's own
+**7 · Check it, from the sheet: menu ▸ Check the website can read this.** The script asks its own
+web address the way a stranger would, and tells you either *Working*, with the address to paste,
+or exactly what to change. Use the address it gives you: `script.google.com/macros/s/…`, not the
+`script.google.com/a/macros/<school>/s/…` form the editor may show, which makes a visitor sign in
+to the school first.
+
+**8 · Paste that address** into [`config.js`](config.js) after `scriptUrl`, and commit. Within a
+minute or two the page shows the sign-in button, the register and the votes.
+
+**9 · Install the triggers.** Menu ▸ *Install the triggers*. Do this **in the teacher's own
 account**: an installed trigger runs as whoever installed it, and only a teacher of the class
 may post an announcement. That is what lets the chair tick one box in the sheet and have the
 announcement go out properly.
+
+#### If something does not work
+
+| What you see | What it is |
+|---|---|
+| The page shows *"Sign-in and voting are not switched on yet"* | `config.js` has no address in `scriptUrl` yet (step 8), or the commit has not reached GitHub Pages — give it a minute. |
+| The page shows nothing where the register should be, and `scriptUrl` **is** filled in | The deployment is not open to **Anyone** (step 6). Menu ▸ *Check the website can read this* will say so. |
+| *Exception: Specified permissions are not sufficient to call Session.getEffectiveUser* | An old authorisation. Paste the current `Code.gs` again, run the menu item again, and allow the permissions Google asks for. Nothing is lost. |
+| The editor sits on *Execution started* and nothing happens | A script run from the editor is waiting for a click in the **spreadsheet** window. Switch to it. Better: run these from the menu. |
+| Members appear, but a name is wrong | It is the *Preferred name* column, D, in the Register tab. Change it there; the page follows within a minute. |
 
 **If the sheet ever has to move** to another account: open a copy there and do steps 2 to 8
 again, then paste the new `/exec` address into `config.js`. Nothing else changes.
