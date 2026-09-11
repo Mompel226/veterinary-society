@@ -239,7 +239,7 @@ section('the sheet is set up');
   api.setup();      /* twice must not double anything */
   eq('setup run twice leaves one heading row', reg.getRange(1, 1).getValue(), 'Korean name');
   const st0 = G.__ss.getSheetByName('Settings');
-  eq('setup run twice leaves one settings row per key', st0.getLastRow(), 6);
+  eq('setup run twice leaves one settings row per key', st0.getLastRow(), 7);
   eq('Settings says where to type', st0.getRange(1, 1, 1, 3).getValues()[0], ['Setting', 'Type it here \u2192', 'What it is for']);
   eq('and the first setting sits under that heading', st0.getRange(2, 1).getValue(), 'Google Client ID');
 }
@@ -593,16 +593,17 @@ section('the ten-minute cache');
 {
   const { G, api, reg } = seeded();
   api._handle({ action: 'list' });
-  ok('the public answer is kept', G.__cache.size === 1);
+  ok('the public answer is kept', G.__cache.has('list-v2'));
   reg.appendRow(['', 'Anna', 'Wise', 'Anna', 'anwise28@pupils.nlcsjeju.kr', 'Y12', new Date(), '']);
   eq('a stale answer is still served', api._handle({ action: 'list' }).members.length, 2);
   api.onRegisterEdit({ range: reg.getRange(5, 4) });
   eq('an edit throws it away', api._handle({ action: 'list' }).members.length, 3);
   api._handle({ action: 'list' });
   api.refreshWebsite();
-  eq('and so does the menu', G.__cache.size, 0);
+  ok('and so does the menu', !G.__cache.has('list-v2'));
+  api._handle({ action: 'list' });
   api._handle({ action: 'vote', token: 'TOK-JIEUN', idea: 'inside' });
-  eq('so does a vote', G.__cache.size, 0);
+  ok('so does a vote', !G.__cache.has('list-v2'));
 }
 
 section('the Classroom announcement');
@@ -972,6 +973,26 @@ section('when the drawn window will not open');
   api.syncClassroom();
   eq('a no invites nobody', G.__invites.length, 0);
   eq('and takes nobody out', G.__removed.length, 0);
+}
+
+section('the sheet knows when the website last read it');
+{
+  const { G, api, st } = seeded();
+  api._handle({ action: 'list', from: 'mompel226.github.io' });
+  const noted = String(st.getRange(api._settingRow(st, 'Last read by the website'), 2).getValue());
+  ok('the visit is written down', noted.includes('mompel226.github.io'), noted);
+  ok('with the version that answered', noted.includes(G.CODE_STAMP));
+  const first = noted;
+  api._handle({ action: 'list', from: 'mompel226.github.io' });
+  eq('and not written again for another five minutes', String(st.getRange(api._settingRow(st, 'Last read by the website'), 2).getValue()), first);
+
+  /* now the check: Google refuses the script's own address, but the page has plainly been here */
+  G.__webAppUrl = 'https://script.google.com/macros/s/AKfyOPEN000000/exec';
+  web(G, { configJs: 'https://script.google.com/macros/s/AKfyOPEN000000/exec', open: [] });
+  api.checkWebApp();
+  const said = G.__dialogs.map(d => d.html).join(' ');
+  ok('it says the website is working', said.includes('read the register'), said.slice(0, 240));
+  ok('and explains why the check itself cannot see it', said.includes('answers itself 404'));
 }
 
 section('why a drawn window would not open');

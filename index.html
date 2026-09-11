@@ -402,7 +402,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
   }
   function refresh() {
     if (!URL_) return;
-    api(me ? { action: 'me', token: me.token } : { action: 'list' }).then(function (j) {
+    api(me ? { action: 'me', token: me.token, from: location.host } : { action: 'list', from: location.host }).then(function (j) {
       if (me && (!j || !j.ok)) { me = null; try { localStorage.removeItem(KEY); } catch (e) {} paintMe(); return api({ action: 'list' }).then(function (k) { take(k, true); }); }
       take(j, true);
     }).catch(function () {});

@@ -71,12 +71,12 @@ there when you need them.
 
 | | What it does |
 |---|---|
-| 🗂 **Open the panel** | A small panel down the right-hand side: when the next meeting is, how many members and teachers, and buttons for the jobs below. Open it once and work from there. |
+| 🗂 **Open the panel** | The panel down the right-hand side: when the next meeting is, how many members and teachers, and buttons for the jobs below. It opens by itself whenever the sheet is opened; this is for putting it back if you close it. |
 | 📅 **Add the next meeting** | Asks the date and what you will do, then makes a new column for it. The website shows it as *Next meeting* straight away. |
 | 📣 **Post the next meeting now** | Announces that meeting in Google Classroom. **A teacher only** — if you are the chair, tick the box in **Settings B4** instead and the teacher's computer posts it for you. |
 | 👀 **Preview that announcement** | Shows the words first, without sending anything. |
 | 🔄 **Refresh the website now** | The site keeps its answer for ten minutes. This makes it read the sheet again at once. Rarely needed — an edit does it anyway. |
-| 🩺 **Check the website can read this** | Asks the website what address it is calling and tries it, as a stranger would. Tells you *Working*, or exactly what to change. Use this whenever the page looks empty. |
+| 🩺 **Check the website can read this** | Asks the website what address it is calling, tries it, and — more to the point — reports when the page last read this sheet. Use it whenever the page looks empty. |
 | 🧪 **Test the pop-up window** | Only if the windows come up as plain grey boxes. It tries to build and show one in three steps and says which step Google refused, in Google's words. |
 | ✨ **Tidy the sheet up** | Puts the colours, widths and tick boxes back. Nothing you have written is changed. Use it after pasting a list in from somewhere else. |
 | ⚙️ **Set up the tabs** | Builds the five tabs, or repairs them. Safe to run again; it fills in blanks rather than replacing anything. |
@@ -227,7 +227,8 @@ filled in — but this is what each row is:
 | **B3** | Classroom course ID | written by menu ▸ *Choose the Classroom class* (step 5). |
 | **B4** | Post the next meeting to Google Classroom | the **tick box you use each week**. Tick it; it posts, then unticks itself. |
 | **B5** | Last posted | written by the script — when it last posted, and for which meeting. |
-| **B6** | The website | where the page lives, for reference. |
+| **B6** | Last read by the website | written by the script — the last time the page asked this sheet for the register, and which version answered. This is the proof that the two are talking. |
+| **B7** | The website | where the page lives, for reference. |
 
 Only ever type in **column B**. Columns A and C are labels; if one gets edited by accident, menu
 ▸ *Tidy the sheet up* writes them back.
@@ -276,7 +277,7 @@ says *Working, but a version behind* when the deployment is running older code.
 | The page shows *"Sign-in and voting are not switched on yet"* | `config.js` has no address in `scriptUrl` yet (step 8), or the commit has not reached GitHub Pages — give it a minute. |
 | The page shows nothing where the register should be, and `scriptUrl` **is** filled in | The deployment is not open to **Anyone** (step 6). Menu ▸ 🩺 *Check the website can read this* will say so — Google answers **401** or **404** to a request that carries no sign-in. If **Anyone** is not offered in the deployment settings at all, the school has turned anonymous web apps off; say so and the page can be changed to sign people in before it asks for anything. |
 | You redeployed and got a new address | Each **New deployment** makes a new `/exec`, and opening one of them to *Anyone* does nothing for the others. **Manage deployments ▸ pencil ▸ Deploy** updates the existing one and keeps its address. Keep one deployment and archive the rest (⋮ ▸ Archive). |
-| *Check the website can read this* says 404, but the site plainly works | It was asking this script's **newest** deployment, which may not be the one `config.js` calls. It now asks the site for its own `config.js` first and tests **that** address — the one that actually matters — and names both when they differ. |
+| *Check the website can read this* says 404, but the site plainly works | Google will not let a script ask its own web address without signing in: it answers its own machinery **404**. So the check trusts the record instead — every time the page reads the register, the sheet writes the moment into **Settings B6** — and says *Working, the website read the register N minutes ago*. |
 | *Specified permissions are not sufficient to call …* | The script's **manifest** does not ask for that permission yet, so Google never offered it. Script editor ▸ **⚙ Project Settings** ▸ tick **Show "appsscript.json" manifest file in editor**; open **appsscript.json** in the file list; replace all of it with [`apps-script/appsscript.json`](apps-script/appsscript.json) from here; **Save**; run the same menu item again and **Review permissions ▸ Allow**. The script shows you the same steps, with the manifest to copy, whenever it hits this. Nothing is lost. |
 | The editor sits on *Execution started* and nothing happens | A script run from the editor is waiting for a click in the **spreadsheet** window. Switch to it. Better: run these from the menu. |
 | A name on the page is wrong, or you want to be *Dr Smith* rather than *John* | It is the **Preferred name** column, **D**, on the Register tab. Type what you want shown; the page follows within a minute (or menu ▸ 🔄 *Refresh the website now*). Nothing ever overwrites what is typed there. |
