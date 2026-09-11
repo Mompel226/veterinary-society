@@ -78,7 +78,7 @@ The four you will use are at the top; setting up and checking are folded into a 
 | 📣 **Post the next meeting now** | Announces that meeting in Google Classroom. A **teacher** posts it there and then; when the **chair** presses it, the teacher's computer posts it within five minutes, under the teacher's name. Nothing to tick. |
 | 👀 **Preview that announcement** | Shows the words first, without sending anything. |
 | 🎒 **Update who is in the class** | Compares the register with the Google Classroom class and shows both lists — who to invite, who to take out — before doing anything. It names the class and links to it, so you can be sure it is the right one. **A teacher only.** |
-| ⚙️ **Setting up, and checks** | A submenu, for the things done once or when something looks wrong: **Set up the tabs** (builds or repairs the five tabs), **Choose the Classroom class**, **Install the triggers**, **Check the website can read this**, **Tidy the sheet up**, **Refresh the website now**, **Test the pop-up window**. |
+| ⚙️ **Setting up, and checks** | A submenu, for the things done once or when something looks wrong: **Set the sheet up, or tidy it** (one job — see below), **Choose the Classroom class**, **Install the triggers**, **Check the website can read this**, **Refresh the website now**, **Test the pop-up window**. |
 
 **To add a meeting:** menu **🐴 Veterinary Society ▸ 📅 Add the next meeting**, type the date and
 what you will do. A new column appears with a tick box on every member's row. Within a minute
@@ -146,7 +146,7 @@ order and **no heading row**, then, on the *Register* tab:
 > address are left exactly as you wrote them.
 
 Appending drops the rows in under the two heading rows, where members belong. Then run menu ▸
-**Tidy the sheet up**: an import brings its own fonts and colours with it, and that puts the
+**Set the sheet up, or tidy it**: an import brings its own fonts and colours with it, and that puts the
 society's look back without touching a single thing you wrote.
 
 (If you would rather import *before* running **setup**, keep the heading row in the file and
@@ -180,7 +180,8 @@ choose **Google Classroom API**, Add. (The manifest this project expects is
 Project Settings ▸ *Show appsscript.json*.)
 
 **4 · Go back to the spreadsheet and reload it.** A **Veterinary Society** menu appears beside
-Help. Then **menu ▸ Set up the tabs**, and allow the permissions Google asks for.
+Help. Then **menu ▸ ⚙️ Setting up, and checks ▸ Set the sheet up, or tidy it**, and allow the
+permissions Google asks for.
 
 > ⚠️ **Run it from that menu, not from the script editor.** A script started in the editor that
 > needs to tell you something puts the message in the *spreadsheet* window and waits there for a
@@ -193,8 +194,13 @@ dark headings in the society's own colours, the four name columns frozen so they
 while you tick, a **Y7–Y13 dropdown** in the Year column, dates that read as dates, room for a
 year of meetings, and a rule that turns a ticked box green so a row of green is a row of people
 who came. **Start here** is the sheet explaining itself: what to do each week, and what is left
-to switch on. Menu ▸ **Tidy the sheet up** puts the look back any time — after a paste, say. It
-never changes what is written.
+to switch on.
+
+**Setting up and tidying up are one job.** *Set the sheet up, or tidy it* — and the panel's ✨
+**Tidy the sheet** — makes sure every tab is there and every heading is right, fills in what the
+sheet can know for itself, puts the look back, and clears whatever is left below the last member:
+no year lists, tick boxes or banding on rows that hold nobody. It never changes a word anybody
+has written, so run it whenever something looks wrong.
 
 **5 · Say where announcements go: menu ▸ Choose the Classroom class.** It asks Google which
 classes you teach, shows them as a numbered list, and writes the one you pick into Settings. You
@@ -228,7 +234,7 @@ this is what each row is:
 | **B6** | The website | where the page lives. The panel has a link to it. |
 
 Only ever type in **column B**. Columns A and C are labels; if one gets edited by accident, menu
-▸ *Tidy the sheet up* writes them back.
+▸ *Set the sheet up, or tidy it* writes them back.
 
 **6 · Deploy ▸ New deployment ▸ Web app.** In the script editor.
 
