@@ -434,7 +434,12 @@ function testPopup() {
   catch (e) { steps.push('2. the society page — FAILED: ' + e.message); }
   var shown = false;
   try {
-    SpreadsheetApp.getUi().showModalDialog(HtmlService.createHtmlOutput(mini).setWidth(320).setHeight(160), 'Test');
+    /* if it works, show the real thing rather than a bare white box: this is what every other
+       window in here looks like, and seeing it is the whole point of the test */
+    var page = _page('The windows work', '<p><span class="ok">This is a drawn window.</span> ' +
+      'Every message from here looks like this now — the panel, the class list, the checks.</p>' +
+      '<p class="note">Close it and try 🗂 Open the panel.</p>');
+    SpreadsheetApp.getUi().showModalDialog(HtmlService.createHtmlOutput(page).setWidth(460).setHeight(280), 'Veterinary Society');
     steps.push('3. showing it — Google accepted it'); shown = true;
   } catch (e) { steps.push('3. showing it — FAILED: ' + e.message); }
   var report = steps.join('\n');
