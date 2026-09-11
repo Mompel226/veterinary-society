@@ -64,11 +64,31 @@ banding, the tick boxes for every meeting, the year dropdown, and the date they 
 Row 1 of a meeting column holds **the date of that meeting** (with a time if there is one).
 Row 2 holds **what the meeting is**: *Suturing on practice pads · B12*. Members start on row 3.
 
-**To add a meeting:** menu **Veterinary Society ▸ Add the next meeting**, type the date and
+#### The 🐴 Veterinary Society menu, item by item
+
+It sits at the top of the spreadsheet, beside Help. You will use the first three; the rest are
+there when you need them.
+
+| | What it does |
+|---|---|
+| 🗂 **Open the panel** | A small panel down the right-hand side: when the next meeting is, how many members and teachers, and buttons for the jobs below. Open it once and work from there. |
+| 📅 **Add the next meeting** | Asks the date and what you will do, then makes a new column for it. The website shows it as *Next meeting* straight away. |
+| 📣 **Post the next meeting now** | Announces that meeting in Google Classroom. **A teacher only** — if you are the chair, tick the box in **Settings B4** instead and the teacher's computer posts it for you. |
+| 👀 **Preview that announcement** | Shows the words first, without sending anything. |
+| 🔄 **Refresh the website now** | The site keeps its answer for ten minutes. This makes it read the sheet again at once. Rarely needed — an edit does it anyway. |
+| 🩺 **Check the website can read this** | Asks the website what address it is calling and tries it, as a stranger would. Tells you *Working*, or exactly what to change. Use this whenever the page looks empty. |
+| ✨ **Tidy the sheet up** | Puts the colours, widths and tick boxes back. Nothing you have written is changed. Use it after pasting a list in from somewhere else. |
+| ⚙️ **Set up the tabs** | Builds the five tabs, or repairs them. Safe to run again; it fills in blanks rather than replacing anything. |
+| 🎓 **Choose the Classroom class** | Lists the classes you teach and lets you pick the one announcements go to. **A teacher only.** |
+| 🎒 **Update who is in the class** | Compares the register with the Google Classroom class and shows both lists — who to invite, who to take out — before doing anything. **A teacher only.** |
+| 🔔 **Install the triggers** | Once, by a teacher. Makes edits reach the website at once, and lets the chair's tick in Settings B4 post the announcement under the teacher's name. |
+
+**To add a meeting:** menu **🐴 Veterinary Society ▸ 📅 Add the next meeting**, type the date and
 what you will do. A new column appears with a tick box on every member's row. Within a minute
 the website says *Next meeting — Thursday 17 September, 15:40*, and what it is.
 
-**After the meeting:** tick the box for everyone who came. The website shows the ticks.
+**After the meeting:** tick the box for everyone who came. The website shows the ticks, and each
+member's tally beside their name.
 
 **To keep the Google Classroom class in step:** menu ▸ 🎒 **Update who is in the class**. It
 reads the register, asks Google who is in the class, and shows you two lists by name — *to
