@@ -139,7 +139,7 @@ function makeGlobals(now) {
     },
     Classroom: {
       Courses: {
-        get: (id) => ({ id, name: 'BioGuardians' }),
+        get: (id) => ({ id, name: 'BioGuardians', alternateLink: 'https://classroom.google.com/c/ABC123' }),
         Announcements: { create: (res, course) => { G.__classroom.push({ res, course }); return { id: 'a' + G.__classroom.length }; } },
         Students: {
           list: (course, opts) => ({ students: G.__roster.map(r => ({ userId: r.id, profile: { emailAddress: r.email, name: { fullName: r.name } } })) }),
@@ -148,15 +148,18 @@ function makeGlobals(now) {
         }
       },
       Invitations: {
-        list: (opts) => ({ invitations: G.__invites.map(e => ({ userId: e, role: 'STUDENT' })) }),
+        list: (opts) => ({ invitations: G.__invites.map((e, i) => (e ? { id: 'inv' + i, userId: e, role: 'STUDENT' } : null)).filter(Boolean) }),
         create: (res) => { if (G.__inviteFails[res.userId]) throw new Error(G.__inviteFails[res.userId]);
-          G.__invites.push(res.userId); return { id: 'i' + G.__invites.length }; }
+          G.__invites.push(res.userId); return { id: 'inv' + (G.__invites.length - 1) }; },
+        remove: (id) => { const i = Number(String(id).replace('inv', ''));
+          if (!(i >= 0) || !G.__invites[i]) throw new Error('no such invitation');
+          G.__cancelled.push(G.__invites[i]); G.__invites[i] = null; }
       }
     },
     HtmlService: { createHtmlOutput: (html) => { const o = { html, setWidth: () => o, setHeight: () => o, setTitle: () => o }; return o; } },
     Logger: { log: () => {} },
     __answer: [], __webAppUrl: '', __webReply: null, __dialogs: [], __sidebars: [],
-    __roster: [], __invites: [], __removed: [], __inviteFails: {}
+    __roster: [], __invites: [], __removed: [], __cancelled: [], __inviteFails: {}
   };
   /* a Date that answers "now" with the test's now, while every real date still passes
      `instanceof Date` inside the script — a subclass would not */
@@ -817,22 +820,38 @@ section('keeping the Classroom class in step with the register');
   const said = G.__dialogs.map(d => d.html).join(' ');
   ok('it shows the names before doing anything', said.includes('Jieun') && said.includes('Someone Who Left'), said.slice(0, 300));
   ok('and does nothing until a button is pressed', G.__invites.length === 0 && G.__removed.length === 0);
+  ok('it says which class, by name', said.includes('BioGuardians'));
+  ok('and offers to open it, to be sure', said.includes('https://classroom.google.com/c/ABC123'));
 
-  eq('inviting only invites', api.classroomApply(false), '1 invited. They have an invitation to accept.');
+  eq('inviting only invites', api.classroomApply(false),
+     '1 invited to BioGuardians. They are in that class under Invited until they press Join.');
   eq('one invitation went out', G.__invites, ['jekim29@pupils.nlcsjeju.kr']);
   eq('and nobody was taken out', G.__removed.length, 0);
-  ok('the Log says what happened', String(G.__ss.getSheetByName('Log').getRange(2, 2).getValue()).includes('1 invited'));
+  const logged = String(G.__ss.getSheetByName('Log').getRange(2, 2).getValue());
+  ok('the Log says what happened', logged.includes('1 invited'));
+  ok('and which class it happened to', logged.includes('COURSE1'), logged);
 
   /* running it again must not invite the same person twice */
   const plan2 = api.classroomPlan();
   eq('an invitation already sent is not sent again', plan2.invite.length, 0);
   eq('and it is counted as pending', plan2.pending, 1);
+  eq('by name, so he can see who has not pressed Join', plan2.pendingList.map(p => p.name), ['Jieun']);
+
+  api.syncClassroom();
+  const again = G.__dialogs[G.__dialogs.length - 1].html;
+  ok('the dialog says where an invited person is to be found', again.includes('under <i>Invited</i>'), again.slice(0, 300));
+  ok('and offers to take the invitation back', again.includes('Take back the 1 invitation'));
+
+  eq('taking it back says so', api.classroomCancel(), '1 invitation taken back.');
+  eq('and Google was told', G.__cancelled, ['jekim29@pupils.nlcsjeju.kr']);
+  eq('after which they are due an invitation again', api.classroomPlan().invite.length, 1);
 }
 {
   const { G, api, reg } = seeded();
   G.__roster = [{ id: '22', email: 'gone30@pupils.nlcsjeju.kr', name: 'Someone Who Left' }];
   const out = api.classroomApply(true);
   ok('asked to, it takes the leaver out', out.indexOf('1 taken out') > 0, out);
+  ok('and says which class it was', out.indexOf('BioGuardians') > 0, out);
   eq('and Google was told so', G.__removed.map(r => r.email), ['gone30@pupils.nlcsjeju.kr']);
   eq('the class is left with the register’s people', G.__roster.length, 0);
 }
