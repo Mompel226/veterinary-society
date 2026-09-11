@@ -116,32 +116,41 @@ not a student — a student's account is closed when they leave and the sheet go
 it with the chair as an **Editor**.
 
 **2 · Paste the script.** In the sheet: **Extensions ▸ Apps Script**. Delete what is there and
-paste the whole of [`apps-script/Code.gs`](apps-script/Code.gs). Save.
+paste the whole of [`apps-script/Code.gs`](apps-script/Code.gs). Save. Nothing in it needs
+editing — the Google Client ID is already in it.
 
 **3 · Add the Classroom service.** In the script editor, beside **Services**, press **+**,
 choose **Google Classroom API**, Add. (The manifest this project expects is
 [`apps-script/appsscript.json`](apps-script/appsscript.json), if you would rather paste it:
 Project Settings ▸ *Show appsscript.json*.)
 
-**4 · Run ▸ setup**, once, and allow the permissions it asks for. Four tabs appear — *Register*,
-*Votes*, *Settings*, *Log* — built and dressed: dark headings in the society's own colours, the
-four name columns frozen so they stay in view while you tick, a **Y7–Y13 dropdown** in the Year
-column, dates that read as dates, room for a year of meetings, and a rule that turns a ticked
-box green so a row of green is a row of people who came. Menu ▸ **Tidy the sheet up** puts that
-look back any time — after a paste, say. It never changes what is written.
+**4 · Go back to the spreadsheet and reload it.** A **Veterinary Society** menu appears beside
+Help. Then **menu ▸ Set up the tabs**, and allow the permissions Google asks for.
 
-**5 · Fill in the Settings tab.** *Settings* is one of the four tabs the script just made, at
-the bottom of the spreadsheet. It is three columns: the name of the setting, **the box you type
-in**, and a line saying what it is for. Two of them need you:
+> ⚠️ **Run it from that menu, not from the script editor.** A script started in the editor that
+> needs to tell you something puts the message in the *spreadsheet* window and waits there for a
+> click — so the editor sits on *Execution started* and looks as if it has hung. (This script no
+> longer says anything when it sets up, for that reason, but the rule is worth knowing.)
 
-| Setting (column A) | What to type in column B |
-|---|---|
-| **Google Client ID** | `749068441640-jgh9s0rbg8ed9hl14mtv6kdhg5jg6ddf.apps.googleusercontent.com` — the one the Biology labs use, also written in [`config.js`](config.js) here. This site's address is already an authorised origin for it, so sign-in works here exactly as it does in the labs. Without it, nobody can sign in. |
-| **Classroom course ID** | which class gets the announcement. Menu ▸ *Find my Classroom course ID* lists your classes with their IDs — copy one. It is **not** the number in the Classroom web address. |
+Five tabs appear — *Start here*, *Register*, *Votes*, *Settings*, *Log* — built and dressed:
+dark headings in the society's own colours, the four name columns frozen so they stay in view
+while you tick, a **Y7–Y13 dropdown** in the Year column, dates that read as dates, room for a
+year of meetings, and a rule that turns a ticked box green so a row of green is a row of people
+who came. **Start here** is the sheet explaining itself: what to do each week, and what is left
+to switch on. Menu ▸ **Tidy the sheet up** puts the look back any time — after a paste, say. It
+never changes what is written.
 
-The other three fill themselves in: *Post the next meeting to Google Classroom* is the tick box
-you use each week, *Last posted* is written by the script, and *The website* is where the page
-lives.
+**5 · Say where announcements go: menu ▸ Choose the Classroom class.** It asks Google which
+classes you teach, shows them as a numbered list, and writes the one you pick into Settings. You
+never have to find a course ID: the number in the Classroom web address is *not* it.
+
+Nothing else needs typing. The **Settings** tab — one of the five, three columns: the name of the
+setting, **the box you type in**, and a line saying what it is for — arrives with the rest filled
+in: the **Google Client ID** (the one the Biology labs use, `7490…ddf.apps.googleusercontent.com`,
+also in [`config.js`](config.js) here) is written in for you, *Post the next meeting to Google
+Classroom* is the tick box you use each week, *Last posted* is written by the script, and *The
+website* is where the page lives. If the school ever changes the Client ID, type the new one into
+that box and it wins over the one in the script.
 
 **6 · Deploy ▸ New deployment ▸ Web app.** Execute as **Me**, who has access **Anyone**.
 Deploy, and copy the address that ends in `/exec`.

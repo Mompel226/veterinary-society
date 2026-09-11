@@ -27,15 +27,24 @@
    menu does it, or type a date in row 1 of a new column) and the page shows it within a minute.
    Tick "Post the next meeting to Google Classroom" in Settings and it is announced there too.
 
-   SETTING IT UP — the README says the same in more words:
-     1. Extensions ▸ Apps Script, paste this whole file, Run ▸ setup, allow it.
-     2. In Settings, paste the Google Client ID the labs use, and the Classroom course ID.
-     3. Deploy ▸ New deployment ▸ Web app ▸ execute as Me, access Anyone ▸ copy the /exec address
+   SETTING IT UP — the Start here tab says the same, and so does the README:
+     1. Extensions ▸ Apps Script, paste this whole file, Save.
+     2. Go back to the spreadsheet and RELOAD it. A "Veterinary Society" menu appears.
+     3. Menu ▸ Set up the tabs. Allow the permissions it asks for. (Run it from the menu, not
+        from the script editor: a script run from the editor that asks you something waits for
+        an answer in the spreadsheet window, which looks like it has hung.)
+     4. Menu ▸ Choose the Classroom class, to say where announcements go.
+     5. Deploy ▸ New deployment ▸ Web app ▸ execute as Me, access Anyone ▸ copy the /exec address
         into config.js on the site.
-     4. Dr Mompel, in his own account: Veterinary Society ▸ Install the triggers (once). The
+     6. Dr Mompel, in his own account: Veterinary Society ▸ Install the triggers (once). The
         Classroom post is made by whoever installed them, so it must be a teacher of the class.
    ============================================================ */
-var T_REG = 'Register', T_VOTES = 'Votes', T_SET = 'Settings', T_LOG = 'Log';
+/* The Google Client ID the school's Biology pages sign in with. It is not a secret — it is
+   written in config.js on the website too — so it is filled in for you. If the school ever
+   changes it, change it here, or type the new one into the Settings tab, which wins. */
+var CLIENT_ID = '749068441640-jgh9s0rbg8ed9hl14mtv6kdhg5jg6ddf.apps.googleusercontent.com';
+
+var T_REG = 'Register', T_VOTES = 'Votes', T_SET = 'Settings', T_LOG = 'Log', T_START = 'Start here';
 var HEAD = ['Korean name', 'English name', 'Surname', 'Preferred name', 'Email', 'Year', 'Joined', 'Would like to do'];
 var NOTE = ['', '', '', 'shown on the site', 'never shown — the first part is enough', 'shown', '', ''];
 var MEET_COL = HEAD.length + 1;       /* I: the first meeting column */
@@ -54,15 +63,16 @@ var INK = '#12262B', CREAM = '#F3E7C9', MOSS = '#7F94A2', AMBER = '#F5A623',
 /* ---------- the menu ---------- */
 function onOpen() {
   SpreadsheetApp.getUi().createMenu('Veterinary Society')
+    .addItem('Set up the tabs', 'setup')
+    .addItem('Choose the Classroom class', 'chooseCourse')
+    .addSeparator()
     .addItem('Add the next meeting', 'addMeeting')
     .addItem('Preview the Classroom announcement', 'previewAnnouncement')
-    .addItem('Find my Classroom course ID', 'listCourses')
     .addItem('Refresh the website now', 'refreshWebsite')
     .addSeparator()
     .addItem('Tidy the sheet up', 'dress')
     .addSeparator()
     .addItem('Install the triggers (Dr Mompel, once)', 'installTriggers')
-    .addItem('Set up the tabs', 'setup')
     .addToUi();
 }
 
@@ -74,15 +84,59 @@ function setup() {
   _tab(ss, T_LOG, ['When', 'What', 'By']);
   var st = ss.getSheetByName(T_SET) || ss.insertSheet(T_SET);
   if (st.getLastRow() < 1) st.appendRow(['Setting', 'Type it here \u2192', 'What it is for']);
-  var want = [[S_CLIENT, ''], [S_COURSE, ''], [S_POST, false], [S_LAST, ''], [S_SITE, SITE]];
+  var want = [[S_CLIENT, CLIENT_ID], [S_COURSE, ''], [S_POST, false], [S_LAST, ''], [S_SITE, SITE]];
   want.forEach(function (kv) {
     var row = _settingRow(st, kv[0]);
     if (!row) { st.appendRow(kv); row = st.getLastRow(); }
     if (kv[0] === S_POST) st.getRange(row, 2).insertCheckboxes();
+    if (kv[0] === S_CLIENT && !String(st.getRange(row, 2).getValue()).trim()) st.getRange(row, 2).setValue(CLIENT_ID);
   });
+  _startHere(ss);
   dress();
   _flush();
-  _ui('Ready. Paste the Client ID and the Classroom course ID into Settings, then Deploy ▸ New deployment ▸ Web app.');
+  /* No alert here on purpose. A dialog raised by a script started from the editor waits for a
+     click in the spreadsheet window, and the editor simply says "Execution started" for ever. */
+  _toast('Ready. The Start here tab says what is left to do.');
+}
+
+/* the sheet explains itself: whoever opens it next can follow this without the README */
+function _startHere(ss) {
+  var sh = ss.getSheetByName(T_START) || ss.insertSheet(T_START, 0);
+  sh.clear();
+  var lines = [
+    ['Veterinary Society — the sheet behind the website', ''],
+    ['', ''],
+    ['What this sheet is', 'The society\u2019s own register. The website reads it: when the next meeting is, what it will be, and who came to the ones before. It shows first names and year groups only — addresses and surnames stay here.'],
+    ['', ''],
+    ['Every week', ''],
+    ['1. Add the meeting', 'Menu ▸ Veterinary Society ▸ Add the next meeting. Type the date and what you will do. A new column appears on the Register tab.'],
+    ['2. Tell the class', 'Settings tab ▸ tick "Post the next meeting to Google Classroom". It posts, then unticks itself.'],
+    ['3. After the meeting', 'Register tab ▸ tick the box for everyone who came. A ticked box turns green.'],
+    ['', ''],
+    ['Once, to switch it on', ''],
+    ['4. Say where announcements go', 'Menu ▸ Choose the Classroom class.'],
+    ['5. Put the website in touch', 'In the script editor: Deploy ▸ New deployment ▸ Web app ▸ execute as Me, access Anyone. Copy the address ending /exec into config.js in the veterinary-society repository.'],
+    ['6. Let the chair post', 'Dr Mompel, in his own Google account: Menu ▸ Install the triggers. Only a teacher may announce in Classroom, and an installed trigger runs as whoever installed it.'],
+    ['', ''],
+    ['If something looks wrong', 'Menu ▸ Tidy the sheet up puts the look back and changes nothing you wrote. Menu ▸ Refresh the website now makes the site read the sheet again at once.'],
+    ['The website', SITE]
+  ];
+  sh.getRange(1, 1, lines.length, 2).setValues(lines);
+  sh.setTabColor(AMBER);
+  sh.getRange(1, 1, lines.length, 2).setFontFamily('Arial').setFontSize(10).setVerticalAlignment('top').setWrap(true);
+  sh.getRange(1, 1).setFontSize(16).setFontWeight('bold').setFontColor(INK);
+  ['Every week', 'Once, to switch it on'].forEach(function (t) {
+    for (var r = 1; r <= lines.length; r++) if (String(sh.getRange(r, 1).getValue()) === t) {
+      sh.getRange(r, 1, 1, 2).setBackground(INK).setFontColor(CREAM).setFontWeight('bold');
+      sh.setRowHeight(r, 28);
+    }
+  });
+  sh.getRange(3, 1, lines.length - 2, 1).setFontWeight('bold').setFontColor('#1B2226');
+  sh.getRange(3, 2, lines.length - 2, 1).setFontColor('#3B4650');
+  sh.setColumnWidth(1, 300); sh.setColumnWidth(2, 700);
+  sh.setFrozenRows(1);
+  try { sh.activate(); } catch (e) {}
+  return sh;
 }
 
 /* ---------- how the sheet looks ----------
@@ -223,7 +277,7 @@ function _putSetting(key, value) {
   var row = _settingRow(st, key); if (!row) { st.appendRow([key, value]); return; }
   st.getRange(row, 2).setValue(value);
 }
-function _clientId() { return String(_setting(S_CLIENT) || ''); }
+function _clientId() { return String(_setting(S_CLIENT) || CLIENT_ID || ''); }
 
 /* ---------- the register, read once ----------
    meetings: [{ col, date, plan, past }]   members: [{ row, name, year, email, marks: [bool per meeting] }] */
@@ -460,13 +514,23 @@ function _announcement(reg) {
   lines.push('', 'Who came last time, and what is coming: ' + SITE + '#register');
   return { text: lines.join('\n'), when: when, plan: next.plan };
 }
-/* the course ID is not the number in the Classroom address; this asks Google for it */
-function listCourses() {
-  if (typeof Classroom === 'undefined') { _ui('The Classroom service is not switched on in this script yet: Services ▸ + ▸ Google Classroom API ▸ Add.'); return; }
-  var res = Classroom.Courses.list({ teacherId: 'me', courseStates: ['ACTIVE'], pageSize: 50 });
-  var cs = (res && res.courses) || [];
-  if (!cs.length) { _ui('Google says you do not teach any active class. The announcement is posted by whoever installs the triggers, so that person must be a teacher of the class.'); return; }
-  _ui('Your classes, and the ID to paste into Settings:\n\n' + cs.map(function (c) { return c.name + '\n    ' + c.id; }).join('\n\n'));
+/* The course ID is not the number in the Classroom web address, so nobody should have to find
+   it: this asks Google which classes you teach and writes the one you pick into Settings. */
+function chooseCourse() {
+  if (typeof Classroom === 'undefined') { _ui('The Classroom service is not switched on in this script yet:\n\nScript editor ▸ Services ▸ + ▸ Google Classroom API ▸ Add.'); return; }
+  var cs;
+  try { cs = (Classroom.Courses.list({ teacherId: 'me', courseStates: ['ACTIVE'], pageSize: 50 }) || {}).courses || []; }
+  catch (e) { _ui('Google would not list your classes: ' + e.message); return; }
+  if (!cs.length) { _ui('Google says you teach no active class in Classroom. The announcement is posted by whoever installs the triggers, so that person must be a teacher of the class the announcement is for.'); return; }
+  var ui = SpreadsheetApp.getUi();
+  var list = cs.map(function (c, i) { return (i + 1) + '.  ' + c.name; }).join('\n');
+  var a = ui.prompt('Which class gets the announcements?', list + '\n\nType its number:', ui.ButtonSet.OK_CANCEL);
+  if (a.getSelectedButton() !== ui.Button.OK) return;
+  var n = parseInt(String(a.getResponseText()).trim(), 10);
+  if (!(n >= 1 && n <= cs.length)) { _ui('That was not one of the numbers on the list.'); return; }
+  _putSetting(S_COURSE, cs[n - 1].id);
+  _log('Announcements will go to ' + cs[n - 1].name, Session.getEffectiveUser().getEmail());
+  _toast('Announcements will go to ' + cs[n - 1].name + '.');
 }
 function previewAnnouncement() {
   var a = _announcement(_register(new Date()));
