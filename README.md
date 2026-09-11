@@ -77,6 +77,7 @@ there when you need them.
 | 👀 **Preview that announcement** | Shows the words first, without sending anything. |
 | 🔄 **Refresh the website now** | The site keeps its answer for ten minutes. This makes it read the sheet again at once. Rarely needed — an edit does it anyway. |
 | 🩺 **Check the website can read this** | Asks the website what address it is calling and tries it, as a stranger would. Tells you *Working*, or exactly what to change. Use this whenever the page looks empty. |
+| 🧪 **Test the pop-up window** | Only if the windows come up as plain grey boxes. It tries to build and show one in three steps and says which step Google refused, in Google's words. |
 | ✨ **Tidy the sheet up** | Puts the colours, widths and tick boxes back. Nothing you have written is changed. Use it after pasting a list in from somewhere else. |
 | ⚙️ **Set up the tabs** | Builds the five tabs, or repairs them. Safe to run again; it fills in blanks rather than replacing anything. |
 | 🎓 **Choose the Classroom class** | Lists the classes you teach and lets you pick the one announcements go to. **A teacher only.** |
@@ -279,7 +280,7 @@ says *Working, but a version behind* when the deployment is running older code.
 | *Specified permissions are not sufficient to call …* | The script's **manifest** does not ask for that permission yet, so Google never offered it. Script editor ▸ **⚙ Project Settings** ▸ tick **Show "appsscript.json" manifest file in editor**; open **appsscript.json** in the file list; replace all of it with [`apps-script/appsscript.json`](apps-script/appsscript.json) from here; **Save**; run the same menu item again and **Review permissions ▸ Allow**. The script shows you the same steps, with the manifest to copy, whenever it hits this. Nothing is lost. |
 | The editor sits on *Execution started* and nothing happens | A script run from the editor is waiting for a click in the **spreadsheet** window. Switch to it. Better: run these from the menu. |
 | A name on the page is wrong, or you want to be *Dr Smith* rather than *John* | It is the **Preferred name** column, **D**, on the Register tab. Type what you want shown; the page follows within a minute (or menu ▸ 🔄 *Refresh the website now*). Nothing ever overwrites what is typed there. |
-| The pop-ups come up as plain grey boxes | Something in this Google account will not open a drawn window. Everything still works — the grey boxes ask *Yes / No* and do the same jobs — and the box says why, and the **Log** tab records it. |
+| The pop-ups come up as plain grey boxes | Run menu ▸ 🧪 **Test the pop-up window**: it says which of the three steps Google refused and why, and writes it to the **Log**. Everything still works meanwhile — the grey boxes ask *Yes / No* and do the same jobs. |
 
 **If the sheet ever has to move** to another account: open a copy there and do steps 2 to 8
 again, then paste the new `/exec` address into `config.js`. Nothing else changes.

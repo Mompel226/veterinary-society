@@ -974,6 +974,31 @@ section('when the drawn window will not open');
   eq('and takes nobody out', G.__removed.length, 0);
 }
 
+section('why a drawn window would not open');
+{
+  const { G, api } = seeded();
+  api.testPopup();
+  ok('when all is well it opens the little window', G.__dialogs.length === 1);
+  ok('and says so quietly', G.__ss.toasts.join(' ').includes('pop-up opened'));
+  ok('the Log keeps the result either way', String(G.__ss.getSheetByName('Log').getRange(2, 2).getValue()).includes('Pop-up test'));
+}
+{
+  const { G, api } = seeded();
+  G.__noDialogs = true;
+  api.testPopup();
+  const said = G.__alerts.join(' ');
+  ok('when it will not, it says which step failed', said.includes('3. showing it — FAILED'), said.slice(0, 200));
+  ok('in Google’s own words', said.includes('Cannot show a dialog here'));
+  ok('and that the work can still be done', said.includes('Yes/No'));
+}
+{
+  const { G, api } = seeded();
+  G.HtmlService.createHtmlOutput = () => { throw new Error('Malformed HTML content'); };
+  api.testPopup();
+  const said = G.__alerts.join(' ');
+  ok('a page Google will not accept is named as that', said.includes('1. a plain page — FAILED') && said.includes('Malformed'), said.slice(0, 200));
+}
+
 section('the triggers');
 {
   const { G, api } = seeded();
