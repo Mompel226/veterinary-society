@@ -29,41 +29,88 @@ it up: **[Island Immunity](https://mompel226.github.io/veterinary-society/assets
 issue 1, four Jeju farm animals and the diseases that threaten them, written and edited by
 the society.
 
-On the page, a student signs in with the school Google account, puts their name down, and
-votes for the ideas they want the society to take on this year. The chair sees who is interested
-and what they voted for.
+On the page, a student signs in with the school Google account, puts their name down, and votes
+for the ideas they want the society to take on this year. The page also shows **when the next
+meeting is**, what it will be, and **who came to the ones before** — first names and year groups
+only. Addresses and full names stay in the society's own sheet, with the chair.
 
 **Want to join, or write for issue 2?** Email the chair, Henry Yuan: scyuan29@pupils.nlcsjeju.kr
 
 <details>
-<summary><b>For the chair: switching on sign-in and the votes</b> — one afternoon, once</summary>
+<summary><b>How the meetings, the register and the Classroom post work</b> — for the chair</summary>
 
 <br>
 
-The list of who is interested, and the votes, are kept in a small Google Sheet of the society’s
-own. It has nothing to do with the school’s marks. It is switched on once, by whoever looks after
-the society, like this.
+Everything the page shows about members and meetings lives in one Google Sheet, the society's
+own. It has nothing to do with the school's marks. The chair keeps the sheet; the website reads
+it. Nothing is typed into the website itself.
 
-1. **Make a new Google Sheet** and name it *Veterinary Society*. Make it in an account that
-   will outlive you: a departmental or society account if the school has one, or a Shared Drive.
-2. In the sheet, open **Extensions ▸ Apps Script**. Delete what is there and paste in the whole of
-   [`apps-script/Code.gs`](apps-script/Code.gs) from this repository.
-3. On the first lines of the script, paste the **Google Client ID** the Biology labs use, between
-   the quotes. The site’s address is already one of that ID’s authorised origins, so sign-in
-   works here as it does there. Dr Mompel has it.
-4. **Run ▸ setup**, once. Google will ask you to allow the script to use the sheet; allow it.
-   Two tabs appear, *Interested* and *Votes*.
-5. **Deploy ▸ New deployment ▸ Web app.** Execute as **Me**. Who has access: **Anyone**.
-   Press Deploy, and copy the address that ends in `/exec`.
-6. Open [`config.js`](config.js) in this repository, paste that address between the quotes after
-   `scriptUrl`, and commit. Within a minute or two the page shows the sign-in button and the
-   votes start counting.
+**The sheet has four tabs.** The one that matters is **Register**:
 
-To see who is interested and what they voted for, open the sheet. Share it with the next chair
-when the time comes; the page needs nothing else changed.
+| A | B | C | D | E | F | G | H | I, J, K … |
+|---|---|---|---|---|---|---|---|---|
+| Korean name | English name | Surname | **Preferred name** | Email | Year | Joined | Would like to do | **one column per meeting** |
 
-**If the sheet ever has to move** to a different account: open the copy in the new account, do
-steps 2 to 6 again there, and paste the new address into `config.js`. That is all.
+Row 1 of a meeting column holds **the date of that meeting** (with a time if there is one).
+Row 2 holds **what the meeting is**: *Suturing on practice pads · B12*. Members start on row 3.
+
+**To add a meeting:** menu **Veterinary Society ▸ Add the next meeting**, type the date and
+what you will do. A new column appears with a tick box on every member's row. Within a minute
+the website says *Next meeting — Thursday 17 September, 15:40*, and what it is.
+
+**After the meeting:** tick the box for everyone who came. The website shows the ticks.
+
+**To tell the class:** in the **Settings** tab, tick **Post the next meeting to Google
+Classroom**. An announcement is posted, and the box unticks itself, ready for next time.
+(Menu ▸ *Preview the Classroom announcement* shows you what it will say, first.)
+
+🔒 **What the website is shown, and what it is never shown.** The page is sent **preferred
+names, year groups and ticks** — nothing else. Email addresses, surnames and Korean names stay
+in the sheet: they are school information and they never leave it. That rule is checked by a
+test (`node tools/gastest.js`) every time the script is changed.
+
+</details>
+
+<details>
+<summary><b>Switching it on</b> — one afternoon, once, by the teacher</summary>
+
+<br>
+
+**1 · Make the sheet.** A new Google Sheet named *Veterinary Society*, made by the **teacher**,
+not a student — a student's account is closed when they leave and the sheet goes with it. Share
+it with the chair as an **Editor**.
+
+**2 · Paste the script.** In the sheet: **Extensions ▸ Apps Script**. Delete what is there and
+paste the whole of [`apps-script/Code.gs`](apps-script/Code.gs). Save.
+
+**3 · Add the Classroom service.** In the script editor, beside **Services**, press **+**,
+choose **Google Classroom API**, Add. (The manifest this project expects is
+[`apps-script/appsscript.json`](apps-script/appsscript.json), if you would rather paste it:
+Project Settings ▸ *Show appsscript.json*.)
+
+**4 · Run ▸ setup**, once, and allow the permissions it asks for. Four tabs appear: *Register*,
+*Votes*, *Settings*, *Log*.
+
+**5 · Fill in Settings.**
+
+| | |
+|---|---|
+| **Google Client ID** | the one the Biology labs use — Dr Mompel has it. The site's address is already an authorised origin, so sign-in works here as it does there. |
+| **Classroom course ID** | menu ▸ *Find my Classroom course ID* lists your classes and their IDs. It is **not** the number in the Classroom web address. |
+
+**6 · Deploy ▸ New deployment ▸ Web app.** Execute as **Me**, who has access **Anyone**.
+Deploy, and copy the address that ends in `/exec`.
+
+**7 · Paste that address** into [`config.js`](config.js) after `scriptUrl`, and commit. Within
+a minute or two the page shows the sign-in button, the register and the votes.
+
+**8 · Install the triggers.** Menu ▸ *Install the triggers*. Do this **in the teacher's own
+account**: an installed trigger runs as whoever installed it, and only a teacher of the class
+may post an announcement. That is what lets the chair tick one box in the sheet and have the
+announcement go out properly.
+
+**If the sheet ever has to move** to another account: open a copy there and do steps 2 to 8
+again, then paste the new `/exec` address into `config.js`. Nothing else changes.
 
 </details>
 
@@ -76,7 +123,9 @@ steps 2 to 6 again there, and paste the new address into `config.js`. That is al
 |---|---|
 | `index.html` | the page, all of it |
 | `config.js` | the two addresses the page needs: the Google Client ID and the script’s `/exec` address |
-| `apps-script/Code.gs` | the small script that keeps the list and the votes, for the chair to deploy |
+| `apps-script/Code.gs` | the script that keeps the register, the meetings and the votes, and posts to Classroom |
+| `apps-script/appsscript.json` | the services and permissions that script needs |
+| `tools/gastest.js` | proves the script keeps its rules — `node tools/gastest.js` |
 | `assets/` | the magazine, its cover, the pictures behind the cards, and the mark |
 | `tools/mark.py` | the numbers the mark is drawn from |
 
