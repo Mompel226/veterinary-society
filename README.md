@@ -81,12 +81,23 @@ what you would call out in a room. Leave *Joined* and *Would like to do* empty �
 signing in fills their own in.
 
 The **Year** column is a dropdown, Y7 to Y13 — pick, don't type, and nothing arrives as
-`year 7 ` with a stray space. A spreadsheet is a spreadsheet, so the quickest way in is usually:
-open your existing list, copy the columns you need into this order (a few `=` formulas will do
-it), then paste into the Register tab from row 3. A paste brings its own colours and fonts with
-it, so finish with menu ▸ **Tidy the sheet up**, which puts the look back without touching a
-single thing you wrote. Extra columns of your own may sit to the right of the meetings; the
-script ignores them.
+`year 7 ` with a stray space.
+
+**Bringing a list in from a file.** Save your list as a CSV with those eight columns in that
+order and **no heading row**, then, on the *Register* tab:
+
+> **File ▸ Import ▸ Upload**, choose the file, and set **Import location** to
+> **Append to current sheet**. Leave *Convert text to numbers and dates* **off**, so `Y7` and an
+> address are left exactly as you wrote them.
+
+Appending drops the rows in under the two heading rows, where members belong. Then run menu ▸
+**Tidy the sheet up**: an import brings its own fonts and colours with it, and that puts the
+society's look back without touching a single thing you wrote.
+
+(If you would rather import *before* running **setup**, keep the heading row in the file and
+choose **Replace current sheet** instead. `setup` leaves rows it finds alone.)
+
+Extra columns of your own may sit to the right of the meetings; the script ignores them.
 
 🔒 **What the website is shown, and what it is never shown.** The page is sent **preferred
 names, year groups and ticks** — nothing else. Email addresses, surnames and Korean names stay
