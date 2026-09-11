@@ -122,6 +122,7 @@ function postNow() {
   try { announce(_me()); _say('Posted', '<p class="ok">The announcement is in Google Classroom.</p>' +
     '<p class="note">Google Classroom shows it to the class straight away.</p>', 240); }
   catch (e) {
+    if (_isScopeTrouble(e)) { _say('One permission short', _scopeHelp('post to Google Classroom'), 560); return; }
     _say('Not posted', '<p class="warn">' + e.message + '</p>' +
       '<p>If it says you may not post: only a teacher of the class can announce. Tick <b>Post the next meeting to Google Classroom</b> in the <b>Settings</b> tab (cell B4) instead — the teacher who installed the triggers posts it for you.</p>', 300);
   }
@@ -746,7 +747,10 @@ function chooseCourse() {
   }
   var cs;
   try { cs = (Classroom.Courses.list({ teacherId: 'me', courseStates: ['ACTIVE'], pageSize: 50 }) || {}).courses || []; }
-  catch (e) { _ui('Google would not list your classes: ' + e.message); return; }
+  catch (e) {
+    if (_isScopeTrouble(e)) { _say('One permission short', _scopeHelp('read your list of classes'), 560); return; }
+    _say('Google would not list your classes', '<p class="warn">' + e.message + '</p>', 260); return;
+  }
   if (!cs.length) {
     _say('No classes', '<p>Google says you teach no active class in Classroom.</p>' +
       '<p class="note">The announcement is posted by whoever installs the triggers, so that person has to be a teacher of the class it is for.</p>', 260);
@@ -785,6 +789,57 @@ function announce(by) {
 function _log(what, by) {
   var sh = _tab(SpreadsheetApp.getActive(), T_LOG, ['When', 'What', 'By']);
   sh.appendRow([new Date(), what, String(by || '')]);
+}
+
+/* ---------- when Google says the permissions are not enough ----------
+   Apps Script works out what a script may do from its manifest. This project lists its
+   permissions there on purpose, so that a reader can see exactly what it asks for — the cost is
+   that adding a new one (the Classroom roster, say) means editing the manifest and letting
+   Google ask again. This is that message, with the manifest to paste. It is the same file as
+   apps-script/appsscript.json in the repository; tools/gastest.js fails if the two drift. */
+var MANIFEST = [
+  "{",
+  "  \"timeZone\": \"Asia/Seoul\",",
+  "  \"exceptionLogging\": \"STACKDRIVER\",",
+  "  \"runtimeVersion\": \"V8\",",
+  "  \"dependencies\": {",
+  "    \"enabledAdvancedServices\": [",
+  "      {",
+  "        \"userSymbol\": \"Classroom\",",
+  "        \"serviceId\": \"classroom\",",
+  "        \"version\": \"v1\"",
+  "      }",
+  "    ]",
+  "  },",
+  "  \"oauthScopes\": [",
+  "    \"https://www.googleapis.com/auth/spreadsheets.currentonly\",",
+  "    \"https://www.googleapis.com/auth/script.external_request\",",
+  "    \"https://www.googleapis.com/auth/userinfo.email\",",
+  "    \"https://www.googleapis.com/auth/script.scriptapp\",",
+  "    \"https://www.googleapis.com/auth/classroom.courses.readonly\",",
+  "    \"https://www.googleapis.com/auth/classroom.announcements\",",
+  "    \"https://www.googleapis.com/auth/classroom.rosters\",",
+  "    \"https://www.googleapis.com/auth/classroom.profile.emails\"",
+  "  ]",
+  "}"
+].join('\n');
+function _isScopeTrouble(e) {
+  return /permissions are not sufficient|Required permissions|insufficient authentication|ACCESS_TOKEN_SCOPE_INSUFFICIENT/i.test(String(e && e.message || e));
+}
+function _scopeHelp(what) {
+  return '<p>Google will not let this script ' + what + ' yet: the permission is not in its manifest, so it was never asked for.</p>' +
+    '<ol><li>Script editor ▸ <b>⚙ Project Settings</b></li>' +
+    '<li>tick <b>Show "appsscript.json" manifest file in editor</b></li>' +
+    '<li>Editor ▸ <b>appsscript.json</b> ▸ replace all of it with this ▸ <b>Save</b></li>' +
+    '<li>run the same thing again — Google will ask you to <b>Review permissions</b>, and this time the list will include what it needs. Allow it.</li></ol>' +
+    '<div class="url" style="max-height:150px;overflow:auto" id="u">' + MANIFEST.replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }) + '</div>' +
+    '<div class="row"><button class="btn" id="c">Copy the manifest</button></div>' +
+    '<script>document.getElementById("c").addEventListener("click",function(){' +
+    'var t=document.getElementById("u").textContent;' +
+    'navigator.clipboard.writeText(t).then(function(){var b=document.getElementById("c");b.textContent="Copied";' +
+    'setTimeout(function(){b.textContent="Copy the manifest"},1600)},function(){' +
+    'var r=document.createRange();r.selectNode(document.getElementById("u"));' +
+    'window.getSelection().removeAllRanges();window.getSelection().addRange(r)})});<\/script>';
 }
 
 /* ---------- the Classroom roster ----------
@@ -858,8 +913,11 @@ function syncClassroom() {
   if (!_courseOr(true)) return;
   var plan;
   try { plan = classroomPlan(); }
-  catch (e) { _say('Google would not say', '<p class="warn">' + e.message + '</p>' +
-    '<p class="note">Only a teacher of the class may see or change who is in it. If you are the chair, ask Dr Mompel to run this.</p>', 280); return; }
+  catch (e) {
+    if (_isScopeTrouble(e)) { _say('One permission short', _scopeHelp('see who is in the class'), 560); return; }
+    _say('Google would not say', '<p class="warn">' + e.message + '</p>' +
+      '<p class="note">Only a teacher of the class may see or change who is in it. If you are the chair, ask Dr Mompel to run this.</p>', 300); return;
+  }
   if (!plan) return;
   var list = function (people, none) {
     if (!people.length) return '<p class="note">' + none + '</p>';
