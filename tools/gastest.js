@@ -47,6 +47,13 @@ class Range {
   setHorizontalAlignment(v) { return this._mark('align', v); }
   setVerticalAlignment(v) { return this._mark('valign', v); }
   setBorder() { return this; }
+  _clearRegion(what) { for (let i = 0; i < this.nr; i++) for (let j = 0; j < this.nc; j++) {
+      const k = this._k2(this.r + i, this.c + j);
+      if (what !== 'validation') delete this.sh.look[k];
+      this.sh.validations = this.sh.validations.filter(v => !(v.r <= this.r + i && this.r + i < v.r + v.nr && v.c <= this.c + j && this.c + j < v.c + v.nc));
+    } return this; }
+  clearDataValidations() { return this._clearRegion('validation'); }
+  clearFormat() { return this._clearRegion('format'); }
   setDataValidation(rule) { this.sh.validations.push({ a1: this.getA1Notation(), r: this.r, c: this.c, nr: this.nr, nc: this.nc, rule }); return this._mark('rule', rule); }
   applyRowBanding(theme) { const b = { theme, a1: this.getA1Notation(), remove: () => { this.sh.bandings = this.sh.bandings.filter(x => x !== b); } }; this.sh.bandings.push(b); return b; }
   setNumberFormat(f) { this.sh.formats[this.r + ',' + this.c] = f; return this; } setWrap() { return this; }
@@ -253,6 +260,32 @@ section('the sheet is set up');
   eq('and the first setting sits under that heading', st0.getRange(2, 1).getValue(), 'Google Client ID');
 }
 
+section('tidying reaches the empty rows');
+{
+  const { G, api } = seeded();
+  const reg = G.__ss.getSheetByName('Register');
+  /* a register that used to be longer: rows 5 to 9 were people once */
+  for (let r = 5; r <= 9; r++) { reg.getRange(r, 4).setValue('Was here'); api.onRegisterEdit({ range: reg.getRange(r, 4) }); }
+  for (let r = 5; r <= 9; r++) reg.getRange(r, 1, 1, 8).setValue('');
+  api.setup();
+  const below = reg.validations.filter(v => v.c === 6 && v.r > 5);
+  eq('no year list is left below the last member', below.length, 0);
+  ok('nor any banding', !reg.look_of(7, 1).bg && !reg.look_of(20, 1).bg);
+  ok('but the rows that hold somebody keep theirs', !!reg.look_of(3, 1).bg && reg.look_of(3, 4).weight === 'bold');
+  const v = reg.validations.filter(x => x.c === 6);
+  ok('and the list still reaches one row past the last of them', v[v.length - 1].r + v[v.length - 1].nr - 1 === 5,
+     JSON.stringify([v[v.length - 1].r, v[v.length - 1].nr]));
+}
+{
+  const { G, api } = seeded();
+  /* one job now: setting up and tidying are the same call */
+  const st = G.__ss.getSheetByName('Settings');
+  st.getRange(2, 1).setValue('something somebody typed over it');
+  api.setup();
+  eq('a heading knocked out is put back', st.getRange(api._settingRow(st, 'Google Client ID'), 1).getValue(), 'Google Client ID');
+  ok('and the look with it', st.look_of(1, 1).bg === '#EDF3F5');
+}
+
 section('a vote says what it was for');
 {
   const { G, api } = seeded();
@@ -333,7 +366,7 @@ section('setting up does not stop and wait');
   const { G, api } = load();
   api.setup();
   eq('no dialog is raised, so the editor cannot appear to hang', G.__alerts.length, 0);
-  ok('it says it is ready, in passing', G.__ss.toasts.join(' ').includes('Ready'), G.__ss.toasts.join(' '));
+  ok('it says so once, in passing', G.__ss.toasts.join(' ').trim() === 'Tidied. Everything is where it should be.', G.__ss.toasts.join(' '));
   const st = G.__ss.getSheetByName('Settings');
   eq('the Client ID is already filled in', st.getRange(api._settingRow(st, 'Google Client ID'), 2).getValue(),
      '749068441640-jgh9s0rbg8ed9hl14mtv6kdhg5jg6ddf.apps.googleusercontent.com');
