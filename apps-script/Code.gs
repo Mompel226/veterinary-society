@@ -54,7 +54,7 @@ var T_REG = 'Register', T_VOTES = 'Votes', T_SET = 'Settings', T_LOG = 'Log', T_
 /* Bumped whenever this file changes in a way the website can see. The menu always runs the code
    you have just saved; the WEBSITE runs the code of the deployed version, which is a different
    thing and a common way to be fooled. The check compares the two and says so. */
-var CODE_STAMP = '2026-09-16b · the chair runs the society from the website';
+var CODE_STAMP = '2026-09-16c · a member who teaches the class is already in it';
 var HEAD = ['Korean name', 'English name', 'Surname', 'Preferred name', 'Email', 'Year', 'Joined', 'Would like to do'];
 var NOTE = ['', '', '', 'shown on the site', 'never shown — the first part is enough', 'shown',
             'filled in for you', 'in their own words'];
@@ -1275,7 +1275,7 @@ function _classroomReady(sayIt) {
 }
 /* everyone Google thinks is a student of the class, and everyone already invited */
 function _classNow(course) {
-  var out = { students: [], invited: {}, pending: [] }, token = null;
+  var out = { students: [], teachers: {}, teachersKnown: false, invited: {}, pending: [] }, token = null;
   do {
     var r = Classroom.Courses.Students.list(course, { pageSize: 100, pageToken: token }) || {};
     ((r.students) || []).forEach(function (st) {
@@ -1294,22 +1294,41 @@ function _classNow(course) {
     });
     token = q.nextPageToken;
   } while (token);
+  /* The class's TEACHERS. A member of the society may well be one of them — the chair of this
+     one is — and Google will not have the same person as a teacher and a student of the same
+     class. Without this they are invisible here, so they look like somebody who is not in the
+     class at all, and every sync offers to invite them again. If Google will not list them we
+     carry on without: better a sync that works as it used to than one that will not run. */
+  try {
+    token = null;
+    do {
+      var t = Classroom.Courses.Teachers.list(course, { pageSize: 100, pageToken: token }) || {};
+      ((t.teachers) || []).forEach(function (te) {
+        var e = String(((te.profile || {}).emailAddress) || '').toLowerCase();
+        if (e) out.teachers[e] = true;
+      });
+      token = t.nextPageToken;
+    } while (token);
+    out.teachersKnown = true;
+  } catch (e) { _log('Could not list the class teachers: ' + e.message, ''); }
   return out;
 }
 /* what would change, without changing anything */
 function classroomPlan() {
   var course = _courseOr(false); if (!course || !_classroomReady(false)) return null;
   var reg = _register(new Date());
-  var want = {}, wantList = [];
+  var now = _classNow(course);
+  var want = {}, wantList = [], asTeacher = [];
   reg.members.forEach(function (p) {
     if (p.staff || !p.email) return;                    /* teachers are not students of the class */
     if (want[p.email]) return;
+    /* already in the class, on the other side of it: leave them exactly alone */
+    if (now.teachers[p.email]) { want[p.email] = true; asTeacher.push({ email: p.email, name: p.name }); return; }
     want[p.email] = true; wantList.push({ email: p.email, name: p.name });
   });
-  var now = _classNow(course);
   var have = {};
   now.students.forEach(function (st) { if (st.email) have[st.email] = st; });
-  var plan = { course: course, invite: [], remove: [], already: 0, pending: 0, pendingList: [], name: '', link: '' };
+  var plan = { course: course, invite: [], remove: [], already: 0, pending: 0, pendingList: [], asTeacher: asTeacher, name: '', link: '' };
   wantList.forEach(function (p) {
     if (have[p.email]) { plan.already++; return; }
     if (now.invited[p.email]) { plan.pending++; plan.pendingList.push(p); return; }
@@ -1349,6 +1368,7 @@ function syncClassroom() {
   var body = where +
     '<p style="margin-top:12px"><b>To invite</b> — on the register, not in the class</p>' + list(plan.invite, 'Nobody. Everyone on the register is in the class already.') +
     '<p style="margin-top:12px"><b>To take out</b> — in the class, not on the register</p>' + list(plan.remove, 'Nobody.') +
+    (plan.asTeacher.length ? '<p style="margin-top:12px"><b>In the class already, as teachers of it</b> \u2014 left alone</p>' + list(plan.asTeacher, '') : '') +
     (plan.pending ? '<p style="margin-top:12px"><b>Invited, not yet accepted</b> — they are in Google Classroom under <i>Invited</i> until they press Join</p>' + list(plan.pendingList, '') : '') +
     '<p class="note">' + plan.already + ' already in · teachers are left alone.</p>' +
     '<div class="row" style="margin-top:12px">' +
