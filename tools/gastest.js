@@ -255,7 +255,13 @@ section('the sheet is set up');
   api.setup();      /* twice must not double anything */
   eq('setup run twice leaves one heading row', reg.getRange(1, 1).getValue(), 'Korean name');
   const st0 = G.__ss.getSheetByName('Settings');
-  eq('setup run twice leaves one settings row per key', st0.getLastRow(), 6);
+  /* the count is not the point — that no key is written twice is. Adding a setting should not
+     have to come with a new number here. */
+  {
+    const keys = st0.getRange(2, 1, st0.getLastRow() - 1, 1).getValues().map(r => String(r[0]));
+    eq('setup run twice leaves one settings row per key', keys.length, new Set(keys).size);
+    ok('and the Chair is one of them', keys.indexOf('Chair') >= 0, keys.join(', '));
+  }
   eq('Settings says where to type', st0.getRange(1, 1, 1, 3).getValues()[0], ['Setting', 'Type it here \u2192', 'What it is for']);
   eq('and the first setting sits under that heading', st0.getRange(2, 1).getValue(), 'Google Client ID');
 }
@@ -633,6 +639,63 @@ section('who may write');
   G.CLIENT_ID = '';
   G.__ss.getSheetByName('Settings').getRange(api._settingRow(G.__ss.getSheetByName('Settings'), 'Google Client ID'), 2).setValue('');
   eq('empty both and it says so plainly', api._handle({ action: 'join', token: 'X' }).why, 'sign-in is not set up');
+}
+
+/* The chair runs the society from the website, because his pupil account cannot authorise the
+   sheet's script — the school lets only staff grant the Classroom permissions it asks for. The
+   web app runs as the teacher, so nothing is ever asked of him. */
+section('the chair, from the website');
+{
+  const { G, api } = seeded();
+  const st = G.__ss.getSheetByName('Settings');
+  st.getRange(api._settingRow(st, 'Chair'), 2).setValue('jekim29@pupils.nlcsjeju.kr');
+
+  ok('a teacher is a chair without being written down', api._isChair('dmompelriera@nlcsjeju.kr'));
+  ok('the chair named in Settings is one', api._isChair('jekim29@pupils.nlcsjeju.kr'));
+  ok('and the capitals do not matter', api._isChair('JEKim29@Pupils.NLCSJeju.kr'));
+  ok('any other pupil is not', !api._isChair('sy4kim31@pupils.nlcsjeju.kr'));
+  ok('and nobody is, when no chair is named', !load().api._isChair('jekim29@pupils.nlcsjeju.kr'));
+
+  eq('the page is told who may', api._handle({ action: 'me', token: 'TOK-JIEUN' }).chair, true);
+  eq('and who may not', api._handle({ action: 'me', token: 'TOK-NEW' }).chair, false);
+
+  const before = G.__ss.getSheetByName('Register').getLastColumn();
+  const no = api._handle({ action: 'meeting', token: 'TOK-NEW', date: '2026-10-01T15:40', plan: 'Mine' });
+  eq('an ordinary member cannot add a meeting', no.why, 'only the chair or a teacher may do that');
+  eq('and nothing was written', G.__ss.getSheetByName('Register').getLastColumn(), before);
+
+  const yes = api._handle({ action: 'meeting', token: 'TOK-JIEUN', date: '2026-10-01T15:40', plan: 'One Health' });
+  ok('the chair can', yes.ok, JSON.stringify(yes));
+  eq('a column was added', G.__ss.getSheetByName('Register').getLastColumn(), before + 1);
+  eq('the website is told about it at once', yes.next.date, '2026-09-17T15:40');
+  eq('the column is wide enough for its date', G.__ss.getSheetByName('Register').widths[before + 1], 124);
+
+  eq('a date that is not one', api._handle({ action: 'meeting', token: 'TOK-JIEUN', date: 'soon', plan: 'x' }).why, 'that did not read as a date');
+  eq('a meeting with no plan', api._handle({ action: 'meeting', token: 'TOK-JIEUN', date: '2026-10-08T15:40', plan: '  ' }).why, 'say what the meeting will be');
+  eq('the same day twice', api._handle({ action: 'meeting', token: 'TOK-JIEUN', date: '2026-10-01T16:00', plan: 'Again' }).why, 'there is already a meeting that day');
+}
+{
+  const { G, api } = seeded();
+  const st = G.__ss.getSheetByName('Settings');
+  st.getRange(api._settingRow(st, 'Chair'), 2).setValue('jekim29@pupils.nlcsjeju.kr');
+  st.getRange(api._settingRow(st, 'Classroom course ID'), 2).setValue('COURSE-1');
+
+  eq('an ordinary member cannot tell the class', api._handle({ action: 'tellClass', token: 'TOK-NEW' }).why, 'only the chair or a teacher may do that');
+  eq('nothing was posted', G.__classroom.length, 0);
+
+  const out = api._handle({ action: 'tellClass', token: 'TOK-JIEUN' });
+  ok('the chair can, and it goes out under the teacher', out.ok, JSON.stringify(out));
+  eq('one announcement', G.__classroom.length, 1);
+  ok('it carries the meeting', /17 Sep|September/.test(JSON.stringify(G.__classroom[0])), JSON.stringify(G.__classroom[0]));
+}
+{
+  const { G, api } = seeded();
+  const st = G.__ss.getSheetByName('Settings');
+  st.getRange(api._settingRow(st, 'Chair'), 2).setValue('jekim29@pupils.nlcsjeju.kr');
+  st.getRange(api._settingRow(st, 'Classroom course ID'), 2).setValue('');
+  const out = api._handle({ action: 'tellClass', token: 'TOK-JIEUN' });
+  ok('with no class chosen it says so rather than failing', out.ok && /Classroom class is chosen/.test(out.said), JSON.stringify(out));
+  eq('and nothing was posted', G.__classroom.length, 0);
 }
 
 section('votes');
