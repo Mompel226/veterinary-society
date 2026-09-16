@@ -54,7 +54,7 @@ var T_REG = 'Register', T_VOTES = 'Votes', T_SET = 'Settings', T_LOG = 'Log', T_
 /* Bumped whenever this file changes in a way the website can see. The menu always runs the code
    you have just saved; the WEBSITE runs the code of the deployed version, which is a different
    thing and a common way to be fooled. The check compares the two and says so. */
-var CODE_STAMP = '2026-09-16k · a repeated name is told apart, in letters';
+var CODE_STAMP = '2026-09-16l · signing in lives at the top of the page';
 var HEAD = ['Korean name', 'English name', 'Surname', 'Preferred name', 'Email', 'Year', 'Role', 'Joined', 'Would like to do'];
 var NOTE = ['', '', '', 'shown on the site', 'never shown — the first part is enough', 'shown',
             'Chair or Secretary — they run it from the website', 'filled in for you', 'in their own words'];
@@ -1034,6 +1034,8 @@ function _list(who) {
   if (who) {
     out.name = who.given || who.name;
     out.member = reg.members.some(function (p) { return p.email === who.email; });
+    var mine = reg.members.filter(function (p) { return p.email === who.email; })[0];
+    out.role = (mine && mine.role) || '';       /* so the page can say what you are, at the top */
     out.officer = _isOfficer(who.email);
     out.chair = out.officer;         /* the old name, so a page and a script deployed minutes apart agree */
     out.staff = _isStaff(who.email);

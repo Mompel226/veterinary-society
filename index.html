@@ -25,6 +25,12 @@ body{margin:0;font-family:var(--sans);font-size:15.5px;line-height:1.6;color:var
 a{color:inherit} h1,h2,h3,p,ul,ol{margin:0} ul,ol{padding:0;list-style:none}
 button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
 .wrap{max-width:1120px;margin:0 auto;padding:22px clamp(16px,3vw,40px) 40px}
+.topbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 18px}
+.me{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:10px 14px}
+.me .who-i-am{margin:0}
+.signout{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--moss);
+  background:none;border:1px solid rgba(157,183,174,.4);border-radius:999px;padding:4px 11px;cursor:pointer}
+.signout:hover{color:var(--chalk);border-color:rgba(157,183,174,.75)}
 .crumb{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);text-decoration:none}
 .crumb::before{content:"\2190";color:var(--mute)} .crumb:hover{color:var(--chalk)}
 .eyebrow{font-family:var(--mono);font-size:10.5px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
@@ -99,7 +105,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .panel{border:1px solid rgba(245,166,35,.35);border-radius:6px;padding:18px 20px;background:rgba(245,166,35,.06)}
 .panel h3{font-family:var(--serif);font-size:22px;font-weight:400} .panel p{margin-top:6px;color:#C5D4DD;font-size:14.5px}
 .panel .mail{font-family:var(--mono);font-size:12px;color:var(--amber);text-decoration:none;border-bottom:1px solid rgba(245,166,35,.45)}
-#gsi{margin-top:12px;min-height:40px}
+#gsi{min-height:40px}
 .form{margin-top:12px;display:grid;gap:8px}
 .form label{display:grid;gap:4px;font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
 .form input,.form select{font:inherit;font-size:14px;color:var(--chalk);background:rgba(7,15,21,.6);border:1px solid rgba(150,190,215,.3);border-radius:3px;padding:8px 10px}
@@ -171,7 +177,17 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 <body>
 <script>if (/[?&]still\b/.test(location.search)) document.documentElement.classList.add('still');</script>
 <div class="wrap">
-  <a class="crumb" href="https://nlcsbiology.com/biology-hub/#societies">Biology Hub · Societies</a>
+  <!-- Signing in belongs at the top of a page, not three screens down inside one section of it:
+       whoever signs in should see at once what being signed in gets them — the officers' desk if
+       it is theirs, and their own name on the register. -->
+  <div class="topbar">
+    <a class="crumb" href="https://nlcsbiology.com/biology-hub/#societies">Biology Hub · Societies</a>
+    <div class="me">
+      <p class="who-i-am" id="whoIAm" hidden></p>
+      <div id="gsi"></div>
+      <button type="button" class="signout" id="signOut" hidden>sign out</button>
+    </div>
+  </div>
 
   <!-- EDIT: the name, the one-paragraph description, and who runs it -->
   <header class="head">
@@ -255,10 +271,9 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
   <div class="band join-band" id="register"><h2>Members and the register</h2><small id="listCount"></small></div>
   <div class="join">
     <div class="panel">
-      <h3>Put your name down</h3>
-      <p>Sign in with your school Google account, the same as for the labs. Then say what you would like to do, and you can vote on the ideas above. Your address stays with the chair; the page shows your first name and year only.</p>
-      <div id="gsi"></div>
-      <p class="who-i-am" id="whoIAm" hidden></p>
+      <h3 id="joinHead">Put your name down</h3>
+      <p id="joinIntro">Sign in with your school Google account, the same as for the labs. Then say what you would like to do, and you can vote on the ideas above. Your address stays with the chair; the page shows your first name and year only.</p>
+      <p class="msg" id="signInFirst" hidden>Sign in at the top of the page first — the button is up beside the society’s name.</p>
       <form class="form" id="form" hidden>
         <label id="yearWrap">Year group<select id="year"><option>Year 7</option><option>Year 8</option><option>Year 9</option><option>Year 10</option><option>Year 11</option><option>Year 12</option><option>Year 13</option><option>Teacher</option></select></label>
         <!-- teachers are known by a title and a surname; the page asks, because nobody else can know it -->
@@ -350,11 +365,21 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
   /* a teacher's address has no `pupils.` in it. The page uses that to fill the form in for them;
      the script checks it again on the way in, so a pupil cannot put themselves down as staff. */
   function amStaff() { return !!me && /@nlcsjeju\.kr$/i.test(String(me.email || '')) && !/@pupils\./i.test(String(me.email || '')); }
+  /* what being signed in says at the top of the page: your name, and what it gets you here */
+  function myTitle() {
+    if (amStaff()) return 'teacher';
+    if (state.role) return String(state.role).toLowerCase();
+    if (state.officer || state.chair) return 'runs the society';
+    return state.member ? 'on the register' : '';
+  }
   function paintMe() {
-    var w = $('whoIAm'), f = $('form'), g = $('gsi'), y = $('year');
+    var w = $('whoIAm'), f = $('form'), g = $('gsi'), y = $('year'), so = $('signOut');
+    if (so) so.hidden = !me;
+    if ($('signInFirst')) $('signInFirst').hidden = !!me;
     if (me) {
+      var t = myTitle();
       w.hidden = false;
-      w.innerHTML = 'Signed in as <b>' + esc(me.name || me.email) + '</b>' + (amStaff() ? ' \u00B7 teacher' : '');
+      w.innerHTML = 'Signed in as <b>' + esc(me.name || me.email) + '</b>' + (t ? ' \u00B7 ' + esc(t) : '');
       if (amStaff()) $('note').placeholder = 'e.g. I can bring a vet in, or run the suturing';
       f.hidden = false; if (g) g.hidden = true;
       if (amStaff()) { y.value = 'Teacher'; y.disabled = true; $('yearWrap').hidden = true; $('titleWrap').hidden = false; }
@@ -478,7 +503,12 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
   function chairSay(t) { var m = $('chairMsg'); if (m) m.textContent = t || ''; }
 
   function paint() {
-    paintNext(); paintRegister(); paintChair();
+    paintNext(); paintRegister(); paintChair(); paintMe();
+    /* somebody already on the list is not asked to join it again */
+    if ($('joinHead')) $('joinHead').textContent = (me && state.member) ? 'You are on the list' : 'Put your name down';
+    if ($('joinIntro')) $('joinIntro').textContent = (me && state.member)
+      ? 'Nothing else to do \u2014 you are on the register above, and you can vote on the ideas. Change what you would like to do here whenever you want.'
+      : 'Sign in with your school Google account, the same as for the labs. Then say what you would like to do, and you can vote on the ideas above. Your address stays with the chair; the page shows your first name and year only.';
     var all = state.members || [], mt = (state.meetings || []).length;
     var n = all.filter(function (p) { return !p.staff; }).length, t = all.length - n;
     var bits = [];
@@ -517,6 +547,17 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
   }
 
   setInterval(function () { try { paintNext(); } catch (e) {} }, 1000);
+
+  var so = $('signOut');
+  if (so) so.addEventListener('click', function () {
+    me = null;
+    try { localStorage.removeItem(KEY); } catch (e) {}
+    try { if (window.google && google.accounts) google.accounts.id.disableAutoSelect(); } catch (e) {}
+    state.chair = state.officer = state.member = false;
+    paintMe(); paintChair();
+    if (URL_) refresh();
+    toast('Signed out.');
+  });
 
   load(); paintMe();
   if (!URL_) {
