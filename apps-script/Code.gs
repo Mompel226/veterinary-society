@@ -54,7 +54,7 @@ var T_REG = 'Register', T_VOTES = 'Votes', T_SET = 'Settings', T_LOG = 'Log', T_
 /* Bumped whenever this file changes in a way the website can see. The menu always runs the code
    you have just saved; the WEBSITE runs the code of the deployed version, which is a different
    thing and a common way to be fooled. The check compares the two and says so. */
-var CODE_STAMP = '2026-09-16h · who runs it, in a window, and on the register';
+var CODE_STAMP = '2026-09-16i · first names only, and two Henrys told apart';
 var HEAD = ['Korean name', 'English name', 'Surname', 'Preferred name', 'Email', 'Year', 'Role', 'Joined', 'Would like to do'];
 var NOTE = ['', '', '', 'shown on the site', 'never shown — the first part is enough', 'shown',
             'Chair or Secretary — they run it from the website', 'filled in for you', 'in their own words'];
@@ -225,6 +225,30 @@ function _migrateRole(sh) {
   return true;
 }
 
+/* Rows brought in from Google Classroom before this was put right carry the WHOLE NAME in the
+   preferred-name column, and that put surnames on a public page. Any pupil row whose preferred
+   name still carries its own surname is cut back to the name they go by. Nothing else is
+   touched: a teacher is known by a title and a surname there on purpose. */
+function _tidyPreferred(sh) {
+  if (!sh) return 0;
+  var last = sh.getLastRow(); if (last < DATA_ROW) return 0;
+  var rows = sh.getRange(DATA_ROW, 1, last - DATA_ROW + 1, HEAD.length).getValues(), fixed = 0;
+  rows.forEach(function (r, i) {
+    var shown = String(r[C_SHOWN - 1] || '').trim();
+    var family = String(r[C_SURNAME - 1] || '').trim();
+    var given = String(r[C_ENGLISH - 1] || '').trim();
+    var email = _email(r[C_EMAIL - 1]);
+    if (!shown || !family || _isStaff(email) || _year(r[C_YEAR - 1]) === 'Teacher') return;
+    if (shown.toLowerCase().indexOf(family.toLowerCase()) < 0) return;
+    var want = _preferred(given, shown);
+    if (!want || want === shown) return;
+    sh.getRange(DATA_ROW + i, C_SHOWN).setValue(want);
+    fixed++;
+  });
+  if (fixed) _log(fixed + ' preferred name(s) cut back to the name they go by \u2014 a surname was reaching the website', _me());
+  return fixed;
+}
+
 function setup() {
   var ss = SpreadsheetApp.getActive();
   var reg = ss.getSheetByName(T_REG) || ss.insertSheet(T_REG, 0);
@@ -246,6 +270,7 @@ function setup() {
   if (oldBox) st.deleteRow(oldBox);
   _startHere(ss);
   _stampJoined(reg);
+  _tidyPreferred(reg);
   dress(true);
   _flush();
   /* No alert here on purpose. A dialog raised by a script started from the editor waits for a
@@ -672,12 +697,22 @@ function _register(now) {
   if (lastRow >= DATA_ROW) {
     var rows = sh.getRange(DATA_ROW, 1, lastRow - DATA_ROW + 1, lastCol).getValues();
     rows.forEach(function (r, i) {
-      var name = String(r[C_SHOWN - 1] || r[C_ENGLISH - 1] || r[C_KOREAN - 1] || '').trim();
+      var given = String(r[C_ENGLISH - 1] || '').trim();
+      var family = String(r[C_SURNAME - 1] || '').trim();
+      var korean = String(r[C_KOREAN - 1] || '').trim();
+      var name = String(r[C_SHOWN - 1] || given || korean || '').trim();
       var email = _email(r[C_EMAIL - 1]);
       if (!name && !email) return;
       var year = _year(r[C_YEAR - 1]), staff = _isStaff(email) || year === 'Teacher';
+      /* The guarantee, enforced here rather than trusted: a pupil's name that carries their own
+         surname never leaves this script, whatever is in the cell. An import used to write the
+         full name into the preferred-name column, and that put surnames on a public page. */
+      if (!staff && family && name.toLowerCase().indexOf(family.toLowerCase()) >= 0) {
+        name = _preferred(given, name) || name;
+      }
       out.members.push({
         row: DATA_ROW + i, name: name, year: staff ? 'Teacher' : year, email: email, staff: staff,
+        other: _otherName(given),
         role: beforeRole ? '' : _role(r[C_ROLE - 1]),
         marks: out.meetings.map(function (m) { return _present(r[m.col - 1]); })
       });
@@ -718,6 +753,22 @@ function _present(v) {
    meant, so the word inside is what counts; anything else is kept as they typed it, shown on the
    site, and carries no powers — a society may want a Treasurer without that being this script's
    business. */
+/* THE NAME THE PAGE IS ALLOWED. The site is promised preferred names only — never a surname,
+   never a Korean name of its own. The school writes a given name as "Haoran (Henry)": the name
+   they go by is the one in brackets, and if there are no brackets it is the first word. */
+function _preferred(given, full) {
+  var m = /\(([^)]+)\)/.exec(String(given || '')) || /\(([^)]+)\)/.exec(String(full || ''));
+  if (m && m[1].trim()) return m[1].trim();
+  var g = String(given || '').trim();
+  if (g) return g.split(/\s+/)[0];
+  return String(full || '').trim().split(/\s+/)[0] || '';
+}
+/* The other half of "Haoran (Henry)" — the name they do not go by. It is what tells two members
+   called Henry apart, and it is emphatically not the surname. */
+function _otherName(given) {
+  var m = /^(.*?)\s*\(([^)]*)\)\s*$/.exec(String(given || '').trim());
+  return m ? m[1].trim() : '';
+}
 function _role(v) {
   var t = String(v == null ? '' : v).trim();
   if (!t) return '';
@@ -728,6 +779,16 @@ function _role(v) {
 }
 /* the two that run the society: the chair's desk on the website is theirs */
 function _officer(role) { return role === 'Chair' || role === 'Secretary'; }
+/* The name as the page shows it: theirs alone, or theirs with the one word that says which.
+   That word is the given name they do not go by — "Haoran" of "Haoran (Henry)" — and not the
+   surname, which is the point, and not the Korean-script name either, which this page has always
+   promised never to carry. If there is no such word the name stands alone rather than something
+   new being disclosed to solve a tie. */
+function _apart(p, shared) {
+  var name = String(p.name || '');
+  if (shared[name.toLowerCase()] < 2) return name;
+  return p.other ? name + ' (' + p.other + ')' : name;
+}
 function _year(v) {
   var s = String(v || '').trim();
   if (/teacher|staff/i.test(s)) return 'Teacher';
@@ -807,7 +868,7 @@ function _handle(d) {
           var t = _title(d.title);
           shown = ((t ? t + ' ' : '') + (who.family || who.given || who.name || '')).trim() || who.email.split('@')[0];
         } else {
-          shown = who.given || who.name || who.email.split('@')[0];
+          shown = _preferred(who.given, who.name) || who.email.split('@')[0];
         }
         sh.appendRow(['', who.given || '', who.family || '', shown, who.email, year, '', new Date(), note]);
         _dressRow(sh, sh.getLastRow());
@@ -935,6 +996,14 @@ function _list(who) {
   var reg = _register(new Date()), tz = reg.tz;
   var past = reg.meetings.filter(function (m) { return m.over; });
   past.sort(function (a, b) { return b.date - a.date; });          /* newest first */
+  /* Two members called Henry are both "Henry" on the page, and nobody can tell which tally is
+     whose. They are told apart by the Korean name, or by the given name they do not go by — and
+     never by the surname, which is the one thing this page must not carry. */
+  var shared = {};
+  reg.members.forEach(function (p) {
+    var k = String(p.name || '').toLowerCase();
+    shared[k] = (shared[k] || 0) + 1;
+  });
   var next = _next(reg);
   var out = {
     ok: true,
@@ -946,7 +1015,7 @@ function _list(who) {
       return { date: _stamp(m.date, tz), time: _hasTime(m.date), plan: m.plan, came: came };
     }),
     members: reg.members.map(function (p) {
-      return { name: p.name, year: p.year, staff: !!p.staff, role: p.role || '',
+      return { name: _apart(p, shared), year: p.year, staff: !!p.staff, role: p.role || '',
                present: past.map(function (m) { return !!p.marks[reg.meetings.indexOf(m)]; }) };
     }),
     votes: {}, mine: [], member: false
@@ -1239,7 +1308,7 @@ function setOfficers(chair, secretary) {
       var c = _courseOr(false);
       if (c && _classroomReady(false)) t = _classTeachers(c).filter(function (x) { return x.email === e; })[0];
     } catch (err) {}
-    var shown = (t && t.name) || e.split('@')[0];
+    var shown = (t ? _preferred(t.given, t.name) : '') || e.split('@')[0];
     sh.appendRow(['', (t && t.given) || '', (t && t.family) || '', shown, e,
                   _isStaff(e) ? 'Teacher' : '', '', new Date(), '']);
     _dressRow(sh, sh.getLastRow());
@@ -1395,7 +1464,7 @@ function addTeachers() {
   picked.forEach(function (t) {
     if (on[t.email]) { already.push(t.name || t.email); return; }
     var staff = _isStaff(t.email);
-    var shown = t.name || (t.given + ' ' + t.family).trim() || t.email.split('@')[0];
+    var shown = (staff ? (t.name || '') : _preferred(t.given, t.name)) || t.email.split('@')[0];
     sh.appendRow(['', t.given || '', t.family || '', shown, t.email, staff ? 'Teacher' : '', '', new Date(), '']);
     _dressRow(sh, sh.getLastRow());
     on[t.email] = true;

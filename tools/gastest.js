@@ -787,10 +787,60 @@ section('the chair, from the website');
    register, so they do not appear in the register. And I want them to also be able to say I was
    present here." So choosing an officer puts them on the register if they are not on it — an
    officer who is not a member has no row, and no row means no box to tick. */
+/* Daniel saw "Haoran (Henry) Jiang" and "Sicheng (Henry) Yuan" on the public page. Surnames.
+   The site is promised preferred names only, and an import had written the whole name into the
+   preferred-name column. Three things had to be true afterwards: the import writes the right
+   thing, the read refuses the wrong thing whatever the cell says, and the rows already written
+   get put right. */
+section('first names only');
+{
+  const { api, reg } = seeded();
+  /* the two of them, exactly as the school's Google accounts are shaped */
+  reg.appendRow(['浩然', 'Haoran (Henry)', 'Jiang', 'Haoran (Henry) Jiang', 'hjiang30@pupils.nlcsjeju.kr', 'Y12', '', new Date(2026, 8, 1), '']);
+  reg.appendRow(['思成', 'Sicheng (Henry)', 'Yuan', 'Sicheng (Henry) Yuan', 'scyuan29@pupils.nlcsjeju.kr', 'Y12', 'Secretary', new Date(2026, 8, 1), '']);
+
+  const text = JSON.stringify(api._list(null));
+  ok('no surname reaches the page, whatever the cell says', !/Jiang|Yuan/.test(text), text.slice(0, 300));
+  ok('and no Korean name either', !/[가-힣\u4e00-\u9fff]/.test(text), text.slice(0, 300));
+
+  /* both are called Henry, so neither may be shown as just "Henry" */
+  const names = api._list(null).members.map(p => p.name);
+  ok('the first Henry is told apart', names.indexOf('Henry (Haoran)') >= 0, names.join(' | '));
+  ok('the second Henry too', names.indexOf('Henry (Sicheng)') >= 0, names.join(' | '));
+  ok('and nobody else was given a bracket', names.indexOf('Jieun') >= 0);
+}
+{
+  /* the rows already written are put right by the tidy-up, so the sheet stops carrying it too */
+  const { api, reg } = seeded();
+  reg.appendRow(['', 'Haoran (Henry)', 'Jiang', 'Haoran (Henry) Jiang', 'hjiang30@pupils.nlcsjeju.kr', 'Y12', '', new Date(2026, 8, 1), '']);
+  reg.appendRow(['', 'Daniel', 'Mompel Riera', 'Dr Mompel Riera', 'dmompelriera@nlcsjeju.kr', 'Teacher', '', new Date(2026, 8, 1), '']);
+  api.setup();
+  eq('the pupil is cut back to the name he goes by', reg.getRange(5, C.SHOWN).getValue(), 'Henry');
+  eq('the teacher keeps his title and surname, which is the point of his', reg.getRange(6, C.SHOWN).getValue(), 'Dr Mompel Riera');
+  eq('and running it again changes nothing', (api.setup(), reg.getRange(5, C.SHOWN).getValue()), 'Henry');
+}
+{
+  /* somebody signing themselves up on the website */
+  const { G, api } = seeded();
+  G.__tokens['TOK-HENRY'] = { aud: 'CID', exp: Math.floor(Date.now() / 1000) + 3600, email_verified: 'true',
+    email: 'hjiang30@pupils.nlcsjeju.kr', name: 'Haoran (Henry) Jiang', given_name: 'Haoran (Henry)', family_name: 'Jiang' };
+  api._handle({ action: 'join', token: 'TOK-HENRY', year: 'Year 12', note: 'suturing' });
+  const out = api._list(null);
+  ok('goes on by the name he goes by', out.members.some(p => p.name === 'Henry'), JSON.stringify(out.members));
+  ok('and his surname is nowhere in it', !/Jiang/.test(JSON.stringify(out)));
+}
+{
+  /* a name with no bracket at all still loses its surname */
+  const { api, reg } = seeded();
+  reg.appendRow(['', 'Benedict', 'Cho', 'Benedict Cho', 'bcho31@pupils.nlcsjeju.kr', 'Y8', '', new Date(2026, 8, 1), '']);
+  eq('the first word is what is left', api._register(new Date()).members.filter(p => p.email === 'bcho31@pupils.nlcsjeju.kr')[0].name, 'Benedict');
+}
+
 section('who runs it');
 {
   const { G, api, reg } = seeded();
-  G.__teachers = [{ id: 't4', email: 'scyuan29@pupils.nlcsjeju.kr', name: 'Henry Yuan' }];
+  G.__teachers = [{ id: 't4', email: 'scyuan29@pupils.nlcsjeju.kr',
+                    name: 'Sicheng (Henry) Yuan', given: 'Sicheng (Henry)', family: 'Yuan' }];
   const before = api._register(new Date()).members.length;
 
   const said = api.setOfficers('scyuan29@pupils.nlcsjeju.kr', 'hwyang29@pupils.nlcsjeju.kr');
@@ -799,7 +849,7 @@ section('who runs it');
 
   const henry = after.filter(p => p.email === 'scyuan29@pupils.nlcsjeju.kr')[0];
   ok('he is on the register', !!henry);
-  eq('with the name the class knows him by', henry.name, 'Henry Yuan');
+  eq('by the name he goes by, and no surname', henry.name, 'Henry');
   eq('as the chair', henry.role, 'Chair');
   ok('and not as staff, because his address is a pupil one', !henry.staff);
   ok('it says he was added', /register/.test(said), said);
@@ -811,8 +861,9 @@ section('who runs it');
   api._newMeeting(new Date(2026, 8, 24, 15, 40), 'One Health');
   const col = reg.getLastColumn();
   reg.getRange(henry.row, col).setValue(true);
-  const marked = api._list(null).members.filter(p => p.name === 'Henry Yuan')[0];
+  const marked = api._list(null).members.filter(p => p.name === 'Henry')[0];
   ok('and the website can show he was there', !!marked);
+  ok('with no surname anywhere in what it is sent', !/Yuan/.test(JSON.stringify(api._list(null))));
 }
 {
   const { api, reg } = seeded();
@@ -1307,14 +1358,16 @@ section('teachers brought in from the class');
   /* the chair of this society teaches its class on a PUPIL account: adding him must not make
      him staff, or he would vanish out of the members list and out of the class roster */
   const { G, api, reg } = seeded();
-  G.__teachers = [{ id: 't4', email: 'scyuan29@pupils.nlcsjeju.kr', name: 'Henry Yuan' }];
+  G.__teachers = [{ id: 't4', email: 'scyuan29@pupils.nlcsjeju.kr',
+                    name: 'Sicheng (Henry) Yuan', given: 'Sicheng (Henry)', family: 'Yuan' }];
   G.__answer = ['1'];
   api.addTeachers();
   const henry = api._register(new Date()).members.filter(p => p.email === 'scyuan29@pupils.nlcsjeju.kr')[0];
   ok('he is on the register', !!henry);
+  eq('by the name he goes by', henry.name, 'Henry');
   ok('and he is not staff', !henry.staff);
   eq('his year is left for the teacher to set', henry.year, '');
-  ok('so the site still counts him a member', api._list(null).members.some(p => p.name === 'Henry Yuan' && !p.staff));
+  ok('so the site still counts him a member', api._list(null).members.some(p => p.name === 'Henry' && !p.staff));
 }
 
 /* Daniel: "chairs and secretaries are added as teachers, so they should be exported from there,

@@ -216,7 +216,12 @@ choose **Replace current sheet** instead. `setup` leaves rows it finds alone.)
 Extra columns of your own may sit to the right of the meetings; the script ignores them.
 
 🔒 **What the website is shown, and what it is never shown.** The page is sent **preferred
-names, year groups and ticks** — nothing else. Email addresses, surnames and Korean names stay
+names, year groups and ticks** — nothing else. The script enforces that rather than trusting the
+sheet: a pupil's name that carries their own surname is cut back to the name they go by before it
+is sent, whatever the cell says, and the tidy-up puts the cell right too. Where two members go by
+the same name — two Henrys — they are told apart by the given name they do not go by,
+*Henry (Haoran)* and *Henry (Sicheng)*, never by the surname and never by the Korean-script name.
+Email addresses, surnames and Korean names stay
 in the sheet: they are school information and they never leave it. That rule is checked by a
 test (`node tools/gastest.js`) every time the script is changed.
 
