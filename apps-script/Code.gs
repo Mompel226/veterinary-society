@@ -64,6 +64,10 @@ var MEET_COL = HEAD.length + 1;       /* I: the first meeting column */
    that is over and whose ticks belong in the register. A column with a date but no time is a
    whole-day entry and is over when that day is. */
 var MEET_MINUTES = 60;
+/* Wide enough for the whole of "Wed 16 Sep 15:40" at Arial 10 bold, with room to spare. A date
+   that does not fit its column is not clipped by Google Sheets, it is replaced by ####, and the
+   chair cannot see the date at all. */
+var MEET_WIDTH = 124;
 var DATA_ROW = 3;                     /* row 1 headings and dates, row 2 notes and plans */
 var SITE = 'https://nlcsbiology.com/veterinary-society/';
 var DOMAINS = ['pupils.nlcsjeju.kr', 'nlcsjeju.kr'];
@@ -308,6 +312,16 @@ function _heads(sh, row, n, align) {
     .setHorizontalAlignment(align || 'left').setVerticalAlignment('middle');
   sh.setRowHeight(row, 34);
 }
+/* A meeting column, dressed: the short date format and a column wide enough to show it. Every
+   way a column can appear goes through here — the menu, a tidy-up, and a date typed straight
+   into row 1 — so none of them can leave a #### behind. */
+function _dressMeetingCol(sh, col) {
+  var cell = sh.getRange(1, col), d = _asDate(cell.getValue());
+  if (d) cell.setNumberFormat(_hasTime(d) ? 'ddd d mmm HH:mm' : 'ddd d mmm');
+  cell.setBackground(INK).setFontColor(CREAM).setFontWeight('bold')
+      .setHorizontalAlignment('center').setVerticalAlignment('middle');
+  sh.setColumnWidth(col, MEET_WIDTH);
+}
 function _dressRegister(sh) {
   if (!sh) return;
   _plain(sh, INK);
@@ -324,7 +338,7 @@ function _dressRegister(sh) {
     sh.getRange(1, MEET_COL, 1, n).setBackground(INK).setFontColor(CREAM).setFontWeight('bold').setHorizontalAlignment('center').setVerticalAlignment('middle');
     sh.getRange(2, MEET_COL, 1, n).setBackground('#EDF3F5').setFontColor(MUTED).setFontStyle('italic').setFontSize(9.5).setWrap(true).setHorizontalAlignment('center');
     sh.getRange(DATA_ROW, MEET_COL, Math.max(1, lastRow - DATA_ROW + 1), n).setHorizontalAlignment('center');
-    for (var c = MEET_COL; c <= lastCol; c++) sh.setColumnWidth(c, 110);
+    for (var c = MEET_COL; c <= lastCol; c++) _dressMeetingCol(sh, c);
   }
   /* The member rows — and only those. An empty sheet painted to row 1000 looks like a form
      nobody filled in; a row is dressed when somebody is in it, and a row added by hand dresses
@@ -886,7 +900,7 @@ function _newMeeting(date, plan) {
     .setBackground('#EDF3F5').setFontColor(MUTED).setFontStyle('italic').setFontSize(9.5).setWrap(true).setHorizontalAlignment('center');
   var last = sh.getLastRow();
   if (last >= DATA_ROW) sh.getRange(DATA_ROW, col, last - DATA_ROW + 1, 1).insertCheckboxes().setHorizontalAlignment('center');
-  sh.setColumnWidth(col, 110);
+  _dressMeetingCol(sh, col);
   _flush();
   return sh.getRange(1, col).getA1Notation().replace(/\d+$/, '');
 }
@@ -1349,6 +1363,12 @@ function onRegisterEdit(e) {
     /* a row somebody has just written in dresses itself, and is stamped with the day it arrived */
     if (sh.getName() === T_REG && r.getRow() >= DATA_ROW && r.getColumn() <= HEAD.length) {
       for (var i = 0; i < r.getNumRows(); i++) _dressRow(sh, r.getRow() + i);
+      return;
+    }
+    /* a date typed straight into row 1 is a new meeting: give it the short format and a column
+       wide enough for it, the same as the menu would */
+    if (sh.getName() === T_REG && r.getRow() === 1 && r.getColumn() >= MEET_COL) {
+      for (var j = 0; j < r.getNumColumns(); j++) _dressMeetingCol(sh, r.getColumn() + j);
       return;
     }
   } catch (err) { _log('Trigger error: ' + err.message, ''); }

@@ -133,12 +133,15 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .next{margin-top:26px;display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px;
   border:1px solid rgba(74,222,128,.4);border-left:4px solid var(--green);border-radius:6px;
   padding:14px 18px;background:linear-gradient(90deg,rgba(74,222,128,.12),rgba(74,222,128,.03))}
+/* over: the whole band goes amber, so a glance says the meeting has been and gone */
+.next.is-done{border-color:rgba(245,166,35,.42);border-left-color:var(--amber);
+  background:linear-gradient(90deg,rgba(245,166,35,.13),rgba(245,166,35,.03))}
+.next.is-done .next__eyebrow{color:var(--amber)}
 .next__eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--green)}
 .next__when{font-family:var(--serif);font-size:clamp(19px,2vw,26px);color:var(--chalk)}
 .next__plan{color:#D7E3EA;font-size:14.5px}
 .next__soon{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;color:#06140B;background:var(--green);border-radius:999px;padding:3px 10px}
-.next__soon.is-now{background:var(--amber)}
-.next__soon.is-over{background:none;color:var(--moss);border:1px solid rgba(157,183,174,.4);padding:2px 9px}
+.next__soon.is-over{background:var(--amber);color:#1B1206}
 .foot{margin-top:44px;padding-top:16px;border-top:1px solid var(--rule);font-size:12.5px;color:var(--dim)}
 .foot strong{font-weight:500;color:var(--chalk)} .foot p+p{margin-top:6px;font-family:var(--mono);font-size:9.5px;letter-spacing:.04em;color:var(--mute)}
 .credits-box{margin-top:10px} .credits-box summary{cursor:pointer;width:max-content;font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#A9BECB;border:1px solid rgba(150,190,215,.3);border-radius:2px;padding:5px 10px;background:rgba(7,15,21,.6);list-style:none}
@@ -366,12 +369,13 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
     box.hidden = false;
     var soon = $('nextSoon'), eye = $('nextEyebrow');
     soon.classList.remove('is-now', 'is-over');
+    box.classList.toggle('is-done', !d);
 
     if (!d) {                                   /* nothing left to come: stand as the record */
       eye.textContent = 'Last meeting';
       $('nextWhen').textContent = longDate(od, over.time);
       $('nextPlan').textContent = over.plan || '';
-      soon.hidden = false; soon.classList.add('is-over'); soon.textContent = 'over';
+      soon.hidden = false; soon.classList.add('is-over'); soon.textContent = 'this meeting is over';
       return;
     }
     eye.textContent = 'Next meeting';

@@ -663,6 +663,24 @@ section('a new meeting column');
   eq('every member gets a box, unticked', [reg.getRange(3, before + 1).getValue(), reg.getRange(4, before + 1).getValue()], [false, false]);
   eq('the website now names it as next', api._list(null).next.date, '2026-09-17T15:40');
   ok('the date cell is formatted with its time', reg.formats['1,' + (before + 1)].includes('HH:mm'));
+  /* a date that does not fit its column is not clipped by Sheets, it becomes ####, and the
+     chair cannot see when the meeting is */
+  eq('the column is wide enough for that date', reg.widths[before + 1], 124);
+}
+{
+  /* the README lets a date be typed straight into row 1 instead of using the menu, and a column
+     made that way used to keep the default long format in a narrow column: ####. */
+  const { api, reg } = seeded();
+  const col = reg.getLastColumn() + 1;
+  reg.getRange(1, col).setValue(new Date(2026, 9, 1, 15, 40));
+  api.onRegisterEdit({ range: reg.getRange(1, col) });
+  ok('a date typed by hand gets the short format', (reg.formats['1,' + col] || '').includes('ddd d mmm'));
+  eq('and a column wide enough for it', reg.widths[col], 124);
+
+  const { api: api2, reg: reg2 } = seeded();
+  reg2.getRange(1, reg2.getLastColumn() + 1).setValue(new Date(2026, 9, 8, 15, 40));
+  api2.setup();
+  eq('and tidying up fixes one that was already there', reg2.widths[reg2.getLastColumn()], 124);
 }
 {
   /* a column added past the sheet's width must widen the sheet, not throw */
