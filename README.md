@@ -76,7 +76,7 @@ The four you will use are at the top; setting up and checking are folded into a 
 | 🗂 **Open the panel** | The panel down the right-hand side: when the next meeting is, how many members and teachers, and buttons for the jobs below. It opens by itself whenever the sheet is opened; this is for putting it back if you close it. |
 | 📅 **Add the next meeting** | Asks the date and what you will do, then makes a new column for it. The website shows it as *Next meeting* straight away. |
 | 🧑‍🏫 **Put a teacher on the register** | Lists whoever teaches the Google Classroom class and lets you pick the ones who belong in the society — a class often carries a head of department who does not. A Classroom teacher on a **pupil** account (the chair here is one) is added as the pupil they are, with the Year left for you to set, rather than being made staff. |
-| 🪑 **Who is the chair?** | Under *Setting up, and checks*. Lists the register and lets you pick; what they get is the chair's desk on the website. |
+| 👥 **Who runs it** | Chair and secretary, from two drop-downs. Offers the members and the class's teachers, and puts anybody chosen onto the register so they can be marked present. In the panel, and under *Setting up, and checks*. |
 | 📣 **Post the next meeting now** | Announces that meeting in Google Classroom. A **teacher** posts it there and then; when the **chair** presses it, the teacher's computer posts it within five minutes, under the teacher's name. Nothing to tick. |
 | 👀 **Preview that announcement** | Shows the words first, without sending anything. |
 | 🎒 **Update who is in the class** | Compares the register with the Google Classroom class and shows the lists — who to invite as students, who to ask to teach it (the chair and the secretary), who to take out — before doing anything. It names the class and links to it, so you can be sure it is the right one. **A teacher only.** |
@@ -108,7 +108,14 @@ changes here, but *Update who is in the class* knows about it: Google will not h
 both a teacher and a student of the same class, so he is listed under **in the class already, as
 teachers of it** and left alone, rather than being offered for invitation every time.
 
-**To say who runs it:** the **Role** column, next to the year. Choose **Chair** or **Secretary**
+**To say who runs it:** panel ▸ **👥 Who runs it**, or menu ▸ ⚙️ ▸ *Who runs it — chair and
+secretary*. A window with two drop-downs: pick the chair, pick the secretary, press Save. It
+offers the society's members **and the teachers of its Google Classroom class**, because that is
+usually where an officer is before anybody puts them on the register — and **anyone you choose
+who is not on the register is put on it**, so they get a row, a tick box, and can be marked
+present like everybody else. Handing over clears the old officer; choosing *nobody* clears both.
+
+**Or by hand:** the **Role** column, next to the year. Choose **Chair** or **Secretary**
 from the drop-down beside somebody's name. Either of them gets the desk on the website, so either
 can add a meeting and tell the class; the role shows beside their name in *Who comes*, and their
 year group still shows too — a Y12 secretary is still in Y12. Any other word you type there is
