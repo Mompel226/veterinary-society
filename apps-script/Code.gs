@@ -54,7 +54,7 @@ var T_REG = 'Register', T_VOTES = 'Votes', T_SET = 'Settings', T_LOG = 'Log', T_
 /* Bumped whenever this file changes in a way the website can see. The menu always runs the code
    you have just saved; the WEBSITE runs the code of the deployed version, which is a different
    thing and a common way to be fooled. The check compares the two and says so. */
-var CODE_STAMP = '2026-09-16c · a member who teaches the class is already in it';
+var CODE_STAMP = '2026-09-16d · the chair can be named before he has signed up';
 var HEAD = ['Korean name', 'English name', 'Surname', 'Preferred name', 'Email', 'Year', 'Joined', 'Would like to do'];
 var NOTE = ['', '', '', 'shown on the site', 'never shown — the first part is enough', 'shown',
             'filled in for you', 'in their own words'];
@@ -1111,19 +1111,20 @@ function _announcement(reg) {
    it buys them is the chair's desk on the website — see _isChair. */
 function chooseChair() {
   var people = _register(new Date()).members.filter(function (p) { return !p.staff && p.email; });
-  if (!people.length) {
-    _say('Nobody to choose from', '<p>No member of the register has an address against them yet.</p>' +
-      '<p class="note">They appear here as soon as somebody signs in on the website and puts their name down, or when you type an address into the Email column.</p>', 300);
-    return;
-  }
   var now = String(_setting(S_CHAIR) || '').toLowerCase();
   var ui = SpreadsheetApp.getUi();
   var list = people.map(function (p, i) {
     return (i + 1) + '.  ' + p.name + (p.year ? '  (' + p.year + ')' : '') +
            (now.indexOf(p.email) >= 0 ? '   \u2190 chair now' : '');
   }).join('\n');
+  /* The chair may not have put their name down yet, and a society should not have to wait for
+     that before it has a chair. So an address does as well as a number, and the one who holds it
+     is named above the list whether or not they are on it. */
+  var head = (now ? 'The chair now: ' + now + '\n\n' : '') +
+             (people.length ? list + '\n\nType the number, or their school address if they are not on the list yet.'
+                            : 'Nobody on the register has an address against them yet.\n\nType the chair\u2019s school address.');
   var a = ui.prompt('Who is the chair?',
-    list + '\n\nType the number. Two of them, separated by a comma, if the chair is shared. ' +
+    head + ' Two of them, separated by a comma, if the chair is shared. ' +
     'Leave it empty for no chair at all.', ui.ButtonSet.OK_CANCEL);
   if (a.getSelectedButton() !== ui.Button.OK) return;
 
@@ -1134,18 +1135,27 @@ function chooseChair() {
     _toast('Nobody is the chair now. Only teachers can run the society from the website.');
     return;
   }
-  var picked = [], bad = [];
+  var picked = [], bad = [], seen = {};
+  var take = function (who) { if (!seen[who.email]) { seen[who.email] = true; picked.push(who); } };
   txt.split(/[\s,;]+/).filter(String).forEach(function (t) {
-    var n = parseInt(t, 10);
-    if (n >= 1 && n <= people.length) { if (picked.indexOf(people[n - 1]) < 0) picked.push(people[n - 1]); }
-    else bad.push(t);
+    if (/^\d+$/.test(t)) {                                   /* a number must be one on the list */
+      var n = +t;
+      if (n >= 1 && n <= people.length) take(people[n - 1]); else bad.push(t);
+      return;
+    }
+    var e = _email(t);                                       /* a bare name becomes a pupil address */
+    if (!_schoolAccount(e)) { bad.push(t); return; }
+    var known = people.filter(function (p) { return p.email === e; })[0];
+    take(known || { name: e, email: e, onRegister: false });
   });
   if (bad.length || !picked.length) { _ui('That was not one of the numbers on the list: ' + (bad.join(', ') || txt)); return; }
   var names = picked.map(function (p) { return p.name; }).join(' and ');
+  var strangers = picked.filter(function (p) { return p.onRegister === false; });
   _putSetting(S_CHAIR, picked.map(function (p) { return p.email; }).join(', '));
   _log('The chair is ' + names, _me());
   _flush();
-  _toast(names + ' can now run the society from the website: sign in there and the chair\u2019s desk appears.');
+  _toast(names + ' can now run the society from the website: sign in there and the chair\u2019s desk appears.' +
+    (strangers.length ? ' They are not on the register yet \u2014 put their name down on the website too, so they show up with everybody else.' : ''));
 }
 
 function chooseCourse() {

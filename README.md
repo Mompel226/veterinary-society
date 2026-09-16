@@ -109,7 +109,9 @@ teachers of it** and left alone, rather than being offered for invitation every 
 
 **To say who the chair is:** menu ▸ **⚙️ Setting up, and checks ▸ Who is the chair?** It lists the
 register — name and year, with an arrow against whoever holds it now — and you type the number.
-Two numbers separated by a comma if the chair is shared; leave it empty for no chair at all. It
+**If the chair has not put their name down yet they are not on that list, so type their school
+address instead** (the first part of it is enough). Two of either, separated by a comma, if the
+chair is shared; leave it empty for no chair at all. It
 writes the address into **Settings ▸ Chair**, which is a plain cell you can also read or correct
 by hand. A teacher may always do both jobs and never needs listing — which is why, once the
 script is deployed, **you** see the desk on the website without doing anything.
