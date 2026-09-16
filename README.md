@@ -34,6 +34,14 @@ for the ideas they want the society to take on this year. The page also shows **
 meeting is**, what it will be, and **who came to the ones before** — first names and year groups
 only. Addresses and full names stay in the society's own sheet, with the chair.
 
+**A second visit is instant.** The browser keeps what the society said last time, shows it at
+once, and checks behind it — so a refresh costs nothing to look at and still ends up saying
+whatever is true now. It keeps nothing the page does not already show anybody: first names,
+years, roles, ticks and meeting dates, never an address. It is kept per signed-in person, so a
+shared laptop cannot show one pupil the page another was looking at; signing out throws it away;
+and it is forgotten after a day rather than telling somebody about a meeting long gone. Only the
+**first** visit waits.
+
 **The page waits before it shows itself.** Nothing appears until the society's list has arrived,
 because a meeting band and an officers' desk appearing a second later push everything down under
 somebody who has already started reading — and anyone who has scrolled past never learns they were
