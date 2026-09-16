@@ -51,7 +51,7 @@ colour-coded), **Register**, *Votes* (one row per vote, with the idea written ou
 
 | A | B | C | D | E | F | G | H | I, J, K … |
 |---|---|---|---|---|---|---|---|---|
-| Korean name | English name | Surname | **Preferred name** | Email | Year | Joined | Would like to do | **one column per meeting** |
+| Korean name | English name | Surname | **Preferred name** | Email | Year | **Role** | Joined | Would like to do | **one column per meeting** |
 
 **Joined** is the day they came on to the register — a date, filled in for you: the day they
 signed up on the website, or the day their row was typed in. You never write it. **Would like to
@@ -107,7 +107,15 @@ changes here, but *Update who is in the class* knows about it: Google will not h
 both a teacher and a student of the same class, so he is listed under **in the class already, as
 teachers of it** and left alone, rather than being offered for invitation every time.
 
-**To say who the chair is:** menu ▸ **⚙️ Setting up, and checks ▸ Who is the chair?** It lists the
+**To say who runs it:** the **Role** column, next to the year. Choose **Chair** or **Secretary**
+from the drop-down beside somebody's name. Either of them gets the desk on the website, so either
+can add a meeting and tell the class; the role shows beside their name in *Who comes*, and their
+year group still shows too — a Y12 secretary is still in Y12. Any other word you type there is
+kept and shown, and carries nothing with it, so a society may have a Treasurer without this
+script having an opinion about it.
+
+**Or from the menu**, which is the way to name somebody who has not signed up yet:
+menu ▸ **⚙️ Setting up, and checks ▸ Who is the chair?** It lists the
 register — name and year, with an arrow against whoever holds it now — and you type the number.
 **If the chair has not put their name down yet they are not on that list, so type their school
 address instead** (the first part of it is enough). Two of either, separated by a comma, if the
@@ -150,14 +158,14 @@ the *Register* tab from row 3 down:
 
 | A | B | C | D | E | F | G | H |
 |---|---|---|---|---|---|---|---|
-| Korean name | English name | Surname | **Preferred name** | **Email** | Year | Joined | Would like to do |
+| Korean name | English name | Surname | **Preferred name** | **Email** | Year | Role | Joined | Would like to do |
 | Gildong | John | Hong | John | ghong31 | Y9 | | |
 
 Two things make this easy. The **Email** column takes *just the first part* —
 `ghong31` — because the school's addresses are that plus `@pupils.nlcsjeju.kr`; write the whole
 address if you prefer, both work, and a student signing in is matched either way. The
 **Preferred name** is the only name the website ever shows, so it is the one to get right: put
-what you would call out in a room. Leave *Joined* and *Would like to do* empty — a student
+what you would call out in a room. Leave *Role*, *Joined* and *Would like to do* empty — a student
 signing in fills their own in.
 
 The **Year** column is a dropdown, Y7 to Y13 and **Teacher** — pick, don't type, and nothing
