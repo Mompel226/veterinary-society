@@ -698,6 +698,30 @@ section('the chair, from the website');
   eq('and nothing was posted', G.__classroom.length, 0);
 }
 
+section('picking the chair off the register');
+{
+  const { G, api } = seeded();
+  G.__answer = ['2'];
+  api.chooseChair();
+  const st = G.__ss.getSheetByName('Settings');
+  eq('the second member is the chair now', st.getRange(api._settingRow(st, 'Chair'), 2).getValue(), 'hwyang29@pupils.nlcsjeju.kr');
+  ok('and the website will let them in', api._isChair('hwyang29@pupils.nlcsjeju.kr'));
+  ok('while the other one is back out', !api._isChair('jekim29@pupils.nlcsjeju.kr'));
+
+  G.__answer = ['1, 2'];
+  api.chooseChair();
+  ok('a shared chair is two of them', api._isChair('jekim29@pupils.nlcsjeju.kr') && api._isChair('hwyang29@pupils.nlcsjeju.kr'));
+
+  G.__answer = ['9'];
+  api.chooseChair();
+  ok('a number that is not on the list changes nothing', api._isChair('jekim29@pupils.nlcsjeju.kr'));
+
+  G.__answer = [''];
+  api.chooseChair();
+  ok('and empty means no chair at all', !api._isChair('jekim29@pupils.nlcsjeju.kr'));
+  ok('but a teacher is still a teacher', api._isChair('dmompelriera@nlcsjeju.kr'));
+}
+
 section('votes');
 {
   const { api } = seeded();

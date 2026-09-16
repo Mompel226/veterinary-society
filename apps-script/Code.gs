@@ -54,7 +54,7 @@ var T_REG = 'Register', T_VOTES = 'Votes', T_SET = 'Settings', T_LOG = 'Log', T_
 /* Bumped whenever this file changes in a way the website can see. The menu always runs the code
    you have just saved; the WEBSITE runs the code of the deployed version, which is a different
    thing and a common way to be fooled. The check compares the two and says so. */
-var CODE_STAMP = '2026-09-16 · a meeting ends at its own time, not at midnight';
+var CODE_STAMP = '2026-09-16b · the chair runs the society from the website';
 var HEAD = ['Korean name', 'English name', 'Surname', 'Preferred name', 'Email', 'Year', 'Joined', 'Would like to do'];
 var NOTE = ['', '', '', 'shown on the site', 'never shown — the first part is enough', 'shown',
             'filled in for you', 'in their own words'];
@@ -102,6 +102,7 @@ function onOpen() {
     .addSubMenu(ui.createMenu('⚙️  Setting up, and checks')
       .addItem('Set the sheet up, or tidy it', 'setup')
       .addItem('Choose the Classroom class', 'chooseCourse')
+      .addItem('Who is the chair?', 'chooseChair')
       .addItem('Install the triggers (a teacher, once)', 'installTriggers')
       .addSeparator()
       .addItem('Check the website can read this', 'checkWebApp')
@@ -237,6 +238,7 @@ function _startHere(ss) {
     ['step',  '2.  Tell the class', 'Panel \u25B8 \uD83D\uDCE3 Tell the class. A teacher posts it to Google Classroom there and then; if the chair presses it, the teacher\u2019s computer posts it within five minutes.'],
     ['step',  '3.  After the meeting', 'Register tab \u25B8 tick the box for everyone who came. A ticked box turns green, and the website shows who came to what \u2014 as soon as the meeting has finished, not the next day.'],
     ['band',  'Now and then', ''],
+    ['step',  'Who is the chair', 'Panel \u25B8 \u2699\uFE0F Setting up, and checks \u25B8 Who is the chair? Pick them off the register. They then get the chair\u2019s desk on the website \u2014 add a meeting, tell the class \u2014 which is how they run the society, because a pupil cannot be given permission to use this menu.'],
     ['step',  'Somebody new', 'They sign up on the website themselves, or you type them into the next empty row of the Register \u2014 the row dresses itself.'],
     ['step',  'Keep the class in step', 'Panel \u25B8 \uD83C\uDF92 Update the class. It shows who to invite and who to take out before it does anything. A teacher only.'],
     ['step',  'Something looks wrong', '\u2728 Tidy the sheet puts the look back and changes nothing you wrote. \uD83E\uDE7A Check the website says whether the page and this sheet are talking.'],
@@ -1104,6 +1106,48 @@ function _announcement(reg) {
 }
 /* The course ID is not the number in the Classroom web address, so nobody should have to find
    it: this asks Google which classes you teach and writes the one you pick into Settings. */
+/* Who the chair is, picked off the register rather than typed. It is kept in Settings ▸ Chair,
+   which is a plain cell anybody can read or correct by hand; this is only the easy way in. What
+   it buys them is the chair's desk on the website — see _isChair. */
+function chooseChair() {
+  var people = _register(new Date()).members.filter(function (p) { return !p.staff && p.email; });
+  if (!people.length) {
+    _say('Nobody to choose from', '<p>No member of the register has an address against them yet.</p>' +
+      '<p class="note">They appear here as soon as somebody signs in on the website and puts their name down, or when you type an address into the Email column.</p>', 300);
+    return;
+  }
+  var now = String(_setting(S_CHAIR) || '').toLowerCase();
+  var ui = SpreadsheetApp.getUi();
+  var list = people.map(function (p, i) {
+    return (i + 1) + '.  ' + p.name + (p.year ? '  (' + p.year + ')' : '') +
+           (now.indexOf(p.email) >= 0 ? '   \u2190 chair now' : '');
+  }).join('\n');
+  var a = ui.prompt('Who is the chair?',
+    list + '\n\nType the number. Two of them, separated by a comma, if the chair is shared. ' +
+    'Leave it empty for no chair at all.', ui.ButtonSet.OK_CANCEL);
+  if (a.getSelectedButton() !== ui.Button.OK) return;
+
+  var txt = String(a.getResponseText()).trim();
+  if (!txt) {
+    _putSetting(S_CHAIR, '');
+    _log('No chair is named now', _me());
+    _toast('Nobody is the chair now. Only teachers can run the society from the website.');
+    return;
+  }
+  var picked = [], bad = [];
+  txt.split(/[\s,;]+/).filter(String).forEach(function (t) {
+    var n = parseInt(t, 10);
+    if (n >= 1 && n <= people.length) { if (picked.indexOf(people[n - 1]) < 0) picked.push(people[n - 1]); }
+    else bad.push(t);
+  });
+  if (bad.length || !picked.length) { _ui('That was not one of the numbers on the list: ' + (bad.join(', ') || txt)); return; }
+  var names = picked.map(function (p) { return p.name; }).join(' and ');
+  _putSetting(S_CHAIR, picked.map(function (p) { return p.email; }).join(', '));
+  _log('The chair is ' + names, _me());
+  _flush();
+  _toast(names + ' can now run the society from the website: sign in there and the chair\u2019s desk appears.');
+}
+
 function chooseCourse() {
   if (typeof Classroom === 'undefined') {
     _say('One thing is missing', '<p>The Classroom service is not switched on in this script yet.</p>' +
