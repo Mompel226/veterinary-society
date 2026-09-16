@@ -448,12 +448,31 @@ section('the register is read');
   const { api } = seeded();
   const reg = api._register(new Date(2026, 8, 14, 9, 0));
   eq('three meetings', reg.meetings.length, 3);
-  eq('two of them are past', reg.meetings.filter(m => m.past).length, 2);
+  eq('two of them are over', reg.meetings.filter(m => m.over).length, 2);
   eq('the plan is read from row 2', reg.meetings[1].plan, 'Suturing on practice pads · B12');
   eq('two members', reg.members.length, 2);
   eq('a tick, a ✓ and a "y" all count as present', [reg.members[0].marks[0], reg.members[0].marks[1], reg.members[1].marks[1]], [true, true, true]);
   eq('a false is an absence', reg.members[1].marks[0], false);
   eq('"Year 11" and "Y11" are the same year', [reg.members[0].year, reg.members[1].year], ['Y11', 'Y11']);
+}
+
+/* The bug this guards: a meeting used to count as over only once the DATE had passed, so the
+   ticks for a meeting held this morning stayed invisible until midnight, and the site went on
+   calling it the next meeting all afternoon. A meeting is over when it has finished. */
+section('a meeting on the day itself');
+{
+  const { api } = seeded();                       /* meetings on 3, 10 and 17 September, 15:40 */
+  const over = at => api._register(at).meetings.filter(m => m.over).length;
+  eq('the morning of the day, still to come', over(new Date(2026, 8, 17, 9, 0)), 2);
+  eq('a minute before it starts',             over(new Date(2026, 8, 17, 15, 39)), 2);
+  eq('while it is going on',                  over(new Date(2026, 8, 17, 16, 20)), 2);
+  eq('once it has finished',                  over(new Date(2026, 8, 17, 16, 41)), 3);
+  eq('and the next morning',                  over(new Date(2026, 8, 18, 9, 0)), 3);
+
+  const before = api._register(new Date(2026, 8, 17, 15, 0));
+  eq('it is still the next meeting until it ends', api._next(before).date.getDate(), 17);
+  const after = api._register(new Date(2026, 8, 17, 16, 41));
+  eq('and there is nothing next once it has', api._next(after), null);
 }
 
 section('what the website is told — and what it is not');

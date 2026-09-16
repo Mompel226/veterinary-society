@@ -25,8 +25,12 @@
    ticks, the meeting dates and plans, and the vote counts. It is never sent an email address, a
    surname or a Korean name: those stay in this sheet, which is the school's information.
 
-   THE NEXT MEETING is the first meeting column whose date is today or later. Add a column (the
-   menu does it, or type a date in row 1 of a new column) and the page shows it within a minute.
+   THE NEXT MEETING is the first meeting column that has not finished yet. Add a column (the menu
+   does it, or type a date in row 1 of a new column) and the page shows it within a minute, and
+   counts down to it. A meeting written with a time runs for MEET_MINUTES from that time; one
+   written with a date alone lasts the day. While it is running the page says so; the moment it
+   finishes, the page stops calling it next and its column joins the register, ticks and all.
+   That is deliberate: the ticks for a meeting held this morning have to show this morning.
    Tick "Post the next meeting to Google Classroom" in Settings and it is announced there too.
 
    SETTING IT UP — the Start here tab says the same, and so does the README:
@@ -50,11 +54,16 @@ var T_REG = 'Register', T_VOTES = 'Votes', T_SET = 'Settings', T_LOG = 'Log', T_
 /* Bumped whenever this file changes in a way the website can see. The menu always runs the code
    you have just saved; the WEBSITE runs the code of the deployed version, which is a different
    thing and a common way to be fooled. The check compares the two and says so. */
-var CODE_STAMP = '2026-09-11 · teachers, register, roster';
+var CODE_STAMP = '2026-09-16 · a meeting ends at its own time, not at midnight';
 var HEAD = ['Korean name', 'English name', 'Surname', 'Preferred name', 'Email', 'Year', 'Joined', 'Would like to do'];
 var NOTE = ['', '', '', 'shown on the site', 'never shown — the first part is enough', 'shown',
             'filled in for you', 'in their own words'];
 var MEET_COL = HEAD.length + 1;       /* I: the first meeting column */
+/* How long a meeting lasts, when its column carries a time. It is what tells the site the
+   difference between a meeting that has not happened yet, one that is happening now, and one
+   that is over and whose ticks belong in the register. A column with a date but no time is a
+   whole-day entry and is over when that day is. */
+var MEET_MINUTES = 60;
 var DATA_ROW = 3;                     /* row 1 headings and dates, row 2 notes and plans */
 var SITE = 'https://nlcsbiology.com/veterinary-society/';
 var DOMAINS = ['pupils.nlcsjeju.kr', 'nlcsjeju.kr'];
@@ -114,7 +123,7 @@ function panel(quiet) {
           : '<p class="note">Nothing in the diary. Add one below.</p>') +
     '<p class="note">' + members + ' member' + (members === 1 ? '' : 's') +
       (staff ? ' · ' + staff + ' teacher' + (staff === 1 ? '' : 's') : '') +
-      ' · ' + reg.meetings.filter(function (m) { return m.past; }).length + ' meeting(s) so far</p>' +
+      ' · ' + reg.meetings.filter(function (m) { return m.over; }).length + ' meeting(s) so far</p>' +
     '<div class="row" style="margin-top:14px;flex-direction:column;align-items:stretch">' +
     '<button class="btn" data-do="addMeeting">📅  Add a meeting</button>' +
     '<button class="btn" data-do="postNow">📣  Tell the class</button>' +
@@ -221,7 +230,7 @@ function _startHere(ss) {
     ['band',  'Every week', ''],
     ['step',  '1.  Add the meeting', 'Panel \u25B8 \uD83D\uDCC5 Add a meeting. Type the date and what you will do. A new column appears on the Register tab, and the website says when the next meeting is.'],
     ['step',  '2.  Tell the class', 'Panel \u25B8 \uD83D\uDCE3 Tell the class. A teacher posts it to Google Classroom there and then; if the chair presses it, the teacher\u2019s computer posts it within five minutes.'],
-    ['step',  '3.  After the meeting', 'Register tab \u25B8 tick the box for everyone who came. A ticked box turns green, and the website shows who came to what.'],
+    ['step',  '3.  After the meeting', 'Register tab \u25B8 tick the box for everyone who came. A ticked box turns green, and the website shows who came to what \u2014 as soon as the meeting has finished, not the next day.'],
     ['band',  'Now and then', ''],
     ['step',  'Somebody new', 'They sign up on the website themselves, or you type them into the next empty row of the Register \u2014 the row dresses itself.'],
     ['step',  'Keep the class in step', 'Panel \u25B8 \uD83C\uDF92 Update the class. It shows who to invite and who to take out before it does anything. A teacher only.'],
@@ -585,7 +594,7 @@ function _putSetting(key, value) {
 function _clientId() { return String(_setting(S_CLIENT) || CLIENT_ID || ''); }
 
 /* ---------- the register, read once ----------
-   meetings: [{ col, date, plan, past }]   members: [{ row, name, year, email, marks: [bool per meeting] }] */
+   meetings: [{ col, date, plan, over }]   members: [{ row, name, year, email, marks: [bool per meeting] }] */
 function _register(now) {
   var ss = SpreadsheetApp.getActive(), sh = ss.getSheetByName(T_REG), out = { meetings: [], members: [], tz: ss.getSpreadsheetTimeZone() };
   if (!sh) return out;
@@ -594,7 +603,7 @@ function _register(now) {
     var heads = sh.getRange(1, MEET_COL, 2, lastCol - MEET_COL + 1).getValues();
     for (var c = 0; c < heads[0].length; c++) {
       var d = _asDate(heads[0][c]); if (!d) continue;
-      out.meetings.push({ col: MEET_COL + c, date: d, plan: String(heads[1][c] || '').trim(), past: d.getTime() < _startOfDay(now || new Date()).getTime() });
+      out.meetings.push({ col: MEET_COL + c, date: d, plan: String(heads[1][c] || '').trim(), over: _isOver(d, now) });
     }
   }
   if (lastRow >= DATA_ROW) {
@@ -628,6 +637,13 @@ function _email(v) {
 }
 function _startOfDay(d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
 function _hasTime(d) { return d.getHours() !== 0 || d.getMinutes() !== 0; }
+/* when a meeting finishes: MEET_MINUTES after it starts, or the end of its day if it was
+   written with no time at all */
+function _endOf(d) {
+  return _hasTime(d) ? new Date(d.getTime() + MEET_MINUTES * 60000)
+                     : new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1);
+}
+function _isOver(d, now) { return _endOf(d).getTime() <= (now || new Date()).getTime(); }
 function _present(v) {
   if (v === true) return true; if (v === false || v == null) return false;
   return /^(✓|✔|√|1|p|y|yes|present|o|here|came)$/i.test(String(v).trim());
@@ -646,9 +662,10 @@ function _title(v) {
 /* Who is a teacher is not a matter of what anybody typed: the school gives teachers an address
    without `pupils.` in it, and Google has already proved the address. A pupil cannot claim it. */
 function _isStaff(email) { return (String(email || '').split('@')[1] || '') === STAFF_DOMAIN; }
-/* the next meeting: the first whose date is today or later */
+/* the next meeting: the first that has not finished yet — so a meeting still counts as next
+   while it is going on, and stops the moment it ends */
 function _next(reg) {
-  var up = reg.meetings.filter(function (m) { return !m.past; });
+  var up = reg.meetings.filter(function (m) { return !m.over; });
   up.sort(function (a, b) { return a.date - b.date; });
   return up[0] || null;
 }
@@ -785,12 +802,14 @@ function _flush() { try { CacheService.getScriptCache().remove(CACHE_KEY); } cat
 /* preferred names, years, ticks, dates and plans, vote counts. Never an address, a surname or a Korean name. */
 function _list(who) {
   var reg = _register(new Date()), tz = reg.tz;
-  var past = reg.meetings.filter(function (m) { return m.past; });
+  var past = reg.meetings.filter(function (m) { return m.over; });
   past.sort(function (a, b) { return b.date - a.date; });          /* newest first */
   var next = _next(reg);
   var out = {
     ok: true,
-    next: next ? { date: _stamp(next.date, tz), time: _hasTime(next.date), plan: next.plan } : null,
+    next: next ? { date: _stamp(next.date, tz), time: _hasTime(next.date), plan: next.plan,
+                   ends: _stamp(_endOf(next.date), tz) } : null,
+    now: _stamp(new Date(), tz),
     meetings: past.map(function (m) {
       var came = 0; reg.members.forEach(function (p) { if (p.marks[reg.meetings.indexOf(m)]) came++; });
       return { date: _stamp(m.date, tz), time: _hasTime(m.date), plan: m.plan, came: came };

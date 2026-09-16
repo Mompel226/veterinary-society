@@ -82,10 +82,18 @@ The four you will use are at the top; setting up and checking are folded into a 
 
 **To add a meeting:** menu **🐴 Veterinary Society ▸ 📅 Add the next meeting**, type the date and
 what you will do. A new column appears with a tick box on every member's row. Within a minute
-the website says *Next meeting — Thursday 17 September, 15:40*, and what it is.
+the website says *Next meeting — Thursday 17 September, 15:40*, what it is, and **how long until
+it starts**, counting down as the day gets closer.
+
+**While it is on**, the website says *happening now*. **An hour after it starts** — or at the end
+of the day, if you typed a date with no time — the meeting is over: the website stops calling it
+the next one, and its column joins the register. If there is nothing after it, the website shows
+that last meeting and says *over*, rather than going blank.
 
 **After the meeting:** tick the box for everyone who came. The website shows the ticks, and each
-member's tally beside their name.
+member's tally beside their name. You can tick them the moment the meeting ends; you do not have
+to wait for the next day. (An hour is `MEET_MINUTES` at the top of the script, if your meetings
+run longer.)
 
 **To keep the Google Classroom class in step:** menu ▸ 🎒 **Update who is in the class**. It
 reads the register, asks Google who is in the class, and shows you two lists by name — *to

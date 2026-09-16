@@ -137,6 +137,8 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .next__when{font-family:var(--serif);font-size:clamp(19px,2vw,26px);color:var(--chalk)}
 .next__plan{color:#D7E3EA;font-size:14.5px}
 .next__soon{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;color:#06140B;background:var(--green);border-radius:999px;padding:3px 10px}
+.next__soon.is-now{background:var(--amber)}
+.next__soon.is-over{background:none;color:var(--moss);border:1px solid rgba(157,183,174,.4);padding:2px 9px}
 .foot{margin-top:44px;padding-top:16px;border-top:1px solid var(--rule);font-size:12.5px;color:var(--dim)}
 .foot strong{font-weight:500;color:var(--chalk)} .foot p+p{margin-top:6px;font-family:var(--mono);font-size:9.5px;letter-spacing:.04em;color:var(--mute)}
 .credits-box{margin-top:10px} .credits-box summary{cursor:pointer;width:max-content;font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#A9BECB;border:1px solid rgba(150,190,215,.3);border-radius:2px;padding:5px 10px;background:rgba(7,15,21,.6);list-style:none}
@@ -170,9 +172,11 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
   </header>
 
   <!-- The next meeting. Nothing is written here: it comes from the register, where the chair
-       adds a column with the date of the meeting in it. Hidden until there is one. -->
+       adds a column with the date of the meeting in it. It counts down to the meeting, says so
+       while the meeting is happening, and once the last one has finished it stands as a record
+       of it instead. Hidden only when the register holds no meeting at all. -->
   <section class="next" id="next" hidden>
-    <span class="next__eyebrow">Next meeting</span>
+    <span class="next__eyebrow" id="nextEyebrow">Next meeting</span>
     <span class="next__when" id="nextWhen"></span>
     <span class="next__soon" id="nextSoon" hidden></span>
     <span class="next__plan" id="nextPlan"></span>
@@ -335,17 +339,55 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
     return s;
   }
   function shortDate(d) { return d.getDate() + ' ' + MON[d.getMonth()].slice(0, 3); }
-  function daysAway(d) { var a = new Date(); a.setHours(0, 0, 0, 0); var b = new Date(d); b.setHours(0, 0, 0, 0); return Math.round((b - a) / 86400000); }
 
+  /* The society's own clock, not the device's. A school laptop with the date set wrong would
+     otherwise count down to the wrong moment, or call a meeting over while it is going on. */
+  var skew = 0;
+  function nowHere() { return new Date(Date.now() + skew); }
+
+  function countdown(ms) {
+    var s = Math.round(ms / 1000);
+    var d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600),
+        m = Math.floor((s % 3600) / 60), sec = s % 60;
+    var one = function (n, w) { return n + ' ' + w + (n === 1 ? '' : 's'); };
+    if (d) return 'in ' + one(d, 'day') + (h ? ', ' + one(h, 'hour') : '');
+    if (h) return 'in ' + one(h, 'hour') + (m ? ', ' + one(m, 'minute') : '');
+    if (m) return 'in ' + one(m, 'minute');
+    return 'in ' + one(Math.max(sec, 1), 'second');
+  }
+
+  /* three things this can be showing, and the meeting's own end decides which: still to come,
+     happening now, or — once there is nothing left to come — the last one, over. */
+  var wasOver = null;
   function paintNext() {
     var box = $('next'), n = state.next, d = n && when(n.date);
-    if (!d) { box.hidden = true; return; }
+    var over = !d && (state.meetings || [])[0], od = over && when(over.date);
+    if (!d && !od) { box.hidden = true; return; }
     box.hidden = false;
+    var soon = $('nextSoon'), eye = $('nextEyebrow');
+    soon.classList.remove('is-now', 'is-over');
+
+    if (!d) {                                   /* nothing left to come: stand as the record */
+      eye.textContent = 'Last meeting';
+      $('nextWhen').textContent = longDate(od, over.time);
+      $('nextPlan').textContent = over.plan || '';
+      soon.hidden = false; soon.classList.add('is-over'); soon.textContent = 'over';
+      return;
+    }
+    eye.textContent = 'Next meeting';
     $('nextWhen').textContent = longDate(d, n.time);
     $('nextPlan').textContent = n.plan || '';
-    var away = daysAway(d), soon = $('nextSoon');
-    soon.hidden = away > 7;
-    soon.textContent = away <= 0 ? 'today' : away === 1 ? 'tomorrow' : 'in ' + away + ' days';
+    /* an hour is what the script calls a meeting, and the fallback keeps this box sane against
+       a copy of the script that is not up to date yet and sends no end */
+    var ends = when(n.ends) || new Date(d.getTime() + 3600000), left = d - nowHere();
+    soon.hidden = false;
+    if (left > 0) soon.textContent = countdown(left);
+    else { soon.classList.add('is-now'); soon.textContent = 'happening now'; }
+    /* the moment it finishes, ask again: the register gains its column and its ticks, and the
+       box moves on to whatever is next, without anybody reloading the page */
+    var done = nowHere() >= ends;
+    if (wasOver === false && done) refresh();
+    wasOver = done;
   }
 
   /* one table per group — the members, then the teachers who come with them — sharing the
@@ -398,7 +440,8 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
   }
   function take(j, quiet) {
     if (!j || !j.ok) { if (!quiet) toast(j && j.why === 'not signed in' ? 'Your sign-in has run out. Sign in again.' : 'Could not reach the society\u2019s list just now.'); return false; }
-    state = j; paint(); return true;
+    var t = when(j.now); if (t) skew = t - Date.now();
+    state = j; wasOver = null; paint(); return true;
   }
   function refresh() {
     if (!URL_) return;
@@ -413,6 +456,8 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
     b.disabled = true;
     api({ action: 'vote', token: me.token, idea: id }).then(function (j) { b.disabled = false; take(j); }).catch(function () { b.disabled = false; toast('Could not reach the society\u2019s list just now.'); });
   }
+
+  setInterval(function () { try { paintNext(); } catch (e) {} }, 1000);
 
   load(); paintMe();
   if (!URL_) {
