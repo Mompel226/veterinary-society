@@ -254,20 +254,20 @@ function seeded(now = new Date(2026, 8, 14, 9, 0)) {
   const st = G.__ss.getSheetByName('Settings');
   st.getRange(api._settingRow(st, 'Google Client ID'), 2).setValue('CID');
   st.getRange(api._settingRow(st, 'Classroom course ID'), 2).setValue('COURSE1');
-  reg.appendRow(['지은', 'Jieun', 'Kim', 'Jieun', 'jekim29@pupils.nlcsjeju.kr', 'Y11', '', new Date(2026, 8, 1), 'suturing']);
-  reg.appendRow(['현우', 'Hyunwoo', 'Yang', 'Hyunwoo', 'hwyang29@pupils.nlcsjeju.kr', 'Year 11', '', new Date(2026, 8, 1), '']);
+  reg.appendRow(['가온', 'Aera', 'Vale', 'Aera', 'avale31@pupils.nlcsjeju.kr', 'Y11', '', new Date(2026, 8, 1), 'suturing']);
+  reg.appendRow(['라온', 'Bora', 'Roe', 'Bora', 'broe31@pupils.nlcsjeju.kr', 'Year 11', '', new Date(2026, 8, 1), '']);
   api._newMeeting(new Date(2026, 8, 3, 15, 40), 'Clinical case: the lame horse · B12');
   api._newMeeting(new Date(2026, 8, 10, 15, 40), 'Suturing on practice pads · B12');
   api._newMeeting(new Date(2026, 8, 17, 15, 40), 'Taking blood from the mould · B12');
-  /* who came: Jieun both, Hyunwoo the second only, in the two past columns (J and K) */
+  /* who came: Aera both, Bora the second only, in the two past columns (J and K) */
   reg.getRange(3, 10).setValue(true); reg.getRange(3, 11).setValue('✓');
   reg.getRange(4, 10).setValue(false); reg.getRange(4, 11).setValue('y');
-  G.__tokens['TOK-JIEUN'] = { aud: 'CID', exp: Math.floor(now.getTime() / 1000) + 3600, email_verified: 'true', email: 'jekim29@pupils.nlcsjeju.kr', name: 'Jieun Kim', given_name: 'Jieun', family_name: 'Kim' };
-  G.__tokens['TOK-NEW'] = { aud: 'CID', exp: Math.floor(now.getTime() / 1000) + 3600, email_verified: 'true', email: 'sy4kim31@pupils.nlcsjeju.kr', name: 'Sungyoon Kim', given_name: 'Sungyoon', family_name: 'Kim' };
+  G.__tokens['TOK-JIEUN'] = { aud: 'CID', exp: Math.floor(now.getTime() / 1000) + 3600, email_verified: 'true', email: 'avale31@pupils.nlcsjeju.kr', name: 'Aera Vale', given_name: 'Aera', family_name: 'Vale' };
+  G.__tokens['TOK-NEW'] = { aud: 'CID', exp: Math.floor(now.getTime() / 1000) + 3600, email_verified: 'true', email: 'cfenn33@pupils.nlcsjeju.kr', name: 'Chae Fenn', given_name: 'Chae', family_name: 'Vale' };
   G.__tokens['TOK-TEACHER'] = { aud: 'CID', exp: Math.floor(now.getTime() / 1000) + 3600, email_verified: 'true', email: 'dmompelriera@nlcsjeju.kr', name: 'Daniel Mompel Riera', given_name: 'Daniel', family_name: 'Mompel Riera' };
   G.__tokens['TOK-OUTSIDE'] = { aud: 'CID', exp: Math.floor(now.getTime() / 1000) + 3600, email_verified: 'true', email: 'someone@gmail.com', name: 'Someone Else', given_name: 'Someone', family_name: 'Else' };
-  G.__tokens['TOK-OLD'] = { aud: 'CID', exp: Math.floor(now.getTime() / 1000) - 60, email_verified: 'true', email: 'jekim29@pupils.nlcsjeju.kr', name: 'Jieun Kim' };
-  G.__tokens['TOK-OTHERAPP'] = { aud: 'SOMEONE-ELSE', exp: Math.floor(now.getTime() / 1000) + 3600, email_verified: 'true', email: 'jekim29@pupils.nlcsjeju.kr', name: 'Jieun Kim' };
+  G.__tokens['TOK-OLD'] = { aud: 'CID', exp: Math.floor(now.getTime() / 1000) - 60, email_verified: 'true', email: 'avale31@pupils.nlcsjeju.kr', name: 'Aera Vale' };
+  G.__tokens['TOK-OTHERAPP'] = { aud: 'SOMEONE-ELSE', exp: Math.floor(now.getTime() / 1000) + 3600, email_verified: 'true', email: 'avale31@pupils.nlcsjeju.kr', name: 'Aera Vale' };
   return { G, api, reg, st };
 }
 
@@ -282,8 +282,8 @@ section('a register built before Role');
   const OLD = ['Korean name', 'English name', 'Surname', 'Preferred name', 'Email', 'Year', 'Joined', 'Would like to do'];
   reg.appendRow(OLD);
   reg.appendRow(['', '', '', 'shown on the site', 'never shown', 'shown', 'filled in for you', 'in their own words']);
-  reg.appendRow(['지은', 'Jieun', 'Kim', 'Jieun', 'jekim29@pupils.nlcsjeju.kr', 'Y11', new Date(2026, 8, 1), 'suturing']);
-  reg.appendRow(['현우', 'Hyunwoo', 'Yang', 'Hyunwoo', 'hwyang29@pupils.nlcsjeju.kr', 'Y11', new Date(2026, 8, 1), 'blood']);
+  reg.appendRow(['가온', 'Aera', 'Vale', 'Aera', 'avale31@pupils.nlcsjeju.kr', 'Y11', new Date(2026, 8, 1), 'suturing']);
+  reg.appendRow(['라온', 'Bora', 'Roe', 'Bora', 'broe31@pupils.nlcsjeju.kr', 'Y11', new Date(2026, 8, 1), 'blood']);
   /* two meetings, in the old first meeting column (I) and the one after it */
   reg.getRange(1, 9).setValue(new Date(2026, 8, 3, 15, 40));
   reg.getRange(2, 9).setValue('Clinical case: the lame horse');
@@ -299,8 +299,8 @@ section('a register built before Role');
      well be redeployed first — the meetings are simply one column to the left */
   const before = api._register(new Date(2026, 8, 14, 9, 0));
   eq('unmigrated, both meetings are still found', before.meetings.length, 2);
-  eq('unmigrated, Jieun came to both', before.members[0].marks, [true, true]);
-  eq('unmigrated, Hyunwoo to the second only', before.members[1].marks, [false, true]);
+  eq('unmigrated, Aera came to both', before.members[0].marks, [true, true]);
+  eq('unmigrated, Bora to the second only', before.members[1].marks, [false, true]);
   eq('unmigrated, nobody has a role, because there is no column for one', before.members.map(p => p.role), ['', '']);
   eq('unmigrated, what they wrote is still theirs', api._list(null).members.length, 2);
 
@@ -316,8 +316,8 @@ section('a register built before Role');
 
   const after = api._register(new Date(2026, 8, 14, 9, 0));
   eq('still two meetings, not three', after.meetings.length, 2);
-  eq('Jieun still came to both', after.members[0].marks, [true, true]);
-  eq('Hyunwoo still to the second only', after.members[1].marks, [false, true]);
+  eq('Aera still came to both', after.members[0].marks, [true, true]);
+  eq('Bora still to the second only', after.members[1].marks, [false, true]);
   eq('and nobody lost their year', [after.members[0].year, after.members[1].year], ['Y11', 'Y11']);
 
   api.setup();
@@ -437,7 +437,7 @@ section('the sheet is dressed');
   api.dress(); api.dress();
   eq('tidying twice leaves no bandings', reg.bandings.length, 0);
   eq('and one rule', reg.cf.length, 1);
-  eq('and does not touch what is written', reg.getRange(3, 4).getValue(), 'Jieun');
+  eq('and does not touch what is written', reg.getRange(3, 4).getValue(), 'Aera');
 }
 {
   const { G, api } = seeded();
@@ -510,8 +510,8 @@ section('a row written by hand, and the day somebody joined');
   const { G, api } = load();
   api.setup();
   const reg = G.__ss.getSheetByName('Register');
-  reg.appendRow(['', 'Sarah', 'Jiang', 'Sarah', 'mjiang30@pupils.nlcsjeju.kr', 'Y10', '', '']);
-  reg.appendRow(['', 'Anna', 'Wise', 'Anna', 'anwise28@pupils.nlcsjeju.kr', 'Y12', '', '']);
+  reg.appendRow(['', 'Sana', 'Ash', 'Sana', 'sash32@pupils.nlcsjeju.kr', 'Y10', '', '']);
+  reg.appendRow(['', 'Nova', 'Bly', 'Nova', 'nbly28@pupils.nlcsjeju.kr', 'Y12', '', '']);
   api.setup();
   ok('setup fills in the blanks', reg.getRange(3, C.JOINED).getValue() instanceof Date && reg.getRange(4, C.JOINED).getValue() instanceof Date);
   const was = reg.getRange(3, 7).getValue();
@@ -569,11 +569,11 @@ section('what the website is told — and what it is not');
   const out = api._list(null);
   const text = JSON.stringify(out);
   ok('no email address anywhere in the answer', !/@/.test(text), text.slice(0, 400));
-  ok('no surname', !/Kim|Yang/.test(text.replace(/"name":"[^"]*"/g, '')) && !/"name":"[^"]*Kim"/.test(text), text.slice(0, 400));
+  ok('no surname', !/Vale|Roe/.test(text.replace(/"name":"[^"]*"/g, '')) && !/"name":"[^"]*Vale"/.test(text), text.slice(0, 400));
   ok('no Korean name', !/[가-힣]/.test(text));
   eq('members are a first name, a year, a role, whether they are staff, and ticks',
      Object.keys(out.members[0]).sort(), ['name', 'present', 'role', 'staff', 'year']);
-  eq('the first member', [out.members[0].name, out.members[0].year], ['Jieun', 'Y11']);
+  eq('the first member', [out.members[0].name, out.members[0].year], ['Aera', 'Y11']);
   eq('the next meeting is the one to come', out.next.date, '2026-09-17T15:40');
   eq('its plan travels with it', out.next.plan, 'Taking blood from the mould · B12');
   eq('past meetings come newest first', out.meetings.map(m => m.date), ['2026-09-10T15:40', '2026-09-03T15:40']);
@@ -608,11 +608,11 @@ section('a student signs in');
   const out = api._handle({ action: 'join', token: 'TOK-NEW', year: 'Year 9', note: 'I want to learn to suture' });
   ok('the answer is good', out.ok);
   eq('a row was added', reg.getLastRow(), 5);
-  eq('their row carries the address, out of sight of the page', reg.getRange(5, 5).getValue(), 'sy4kim31@pupils.nlcsjeju.kr');
-  eq('the preferred name is their first name', reg.getRange(5, 4).getValue(), 'Sungyoon');
+  eq('their row carries the address, out of sight of the page', reg.getRange(5, 5).getValue(), 'cfenn33@pupils.nlcsjeju.kr');
+  eq('the preferred name is their first name', reg.getRange(5, 4).getValue(), 'Chae');
   eq('the year is tidied', reg.getRange(5, 6).getValue(), 'Y9');
   eq('the page sees them as a member', out.member, true);
-  eq('and by first name only', out.members.map(p => p.name), ['Jieun', 'Hyunwoo', 'Sungyoon']);
+  eq('and by first name only', out.members.map(p => p.name), ['Aera', 'Bora', 'Chae']);
 
   const again = api._handle({ action: 'join', token: 'TOK-NEW', year: 'Year 10', note: 'or write for issue 2' });
   eq('signing up twice does not add a second row', reg.getLastRow(), 5);
@@ -621,19 +621,19 @@ section('a student signs in');
 
   const known = api._handle({ action: 'join', token: 'TOK-JIEUN', year: 'Year 11', note: '' });
   eq('a member already on the register is not duplicated', reg.getLastRow(), 5);
-  eq('the chair’s spelling of their name is left alone', reg.getRange(3, 4).getValue(), 'Jieun');
+  eq('the chair’s spelling of their name is left alone', reg.getRange(3, 4).getValue(), 'Aera');
   ok('and their ticks are untouched', reg.getRange(3, C.MEET).getValue() === true);
 }
 
 section('an address written as just its first part');
 {
   const { G, api, reg } = seeded();
-  /* the chair's own list is kept the way the school writes it: ghong31, not the whole address */
-  reg.appendRow(['', 'Sungyoon', 'Kim', 'Sungyoon', 'sy4kim31', 'Y9', new Date(2026, 8, 1), '']);
+  /* the chair's own list is kept the way the school writes it: jbloggs, not the whole address */
+  reg.appendRow(['', 'Chae', 'Vale', 'Chae', 'cfenn33', 'Y9', new Date(2026, 8, 1), '']);
   api.onRegisterEdit({ range: reg.getRange(5, 5) });
   const out = api._handle({ action: 'join', token: 'TOK-NEW', year: 'Year 9', note: 'suturing' });
   eq('they are recognised, not added twice', reg.getLastRow(), 5);
-  eq('the chair’s own spelling is left in the cell', reg.getRange(5, 5).getValue(), 'sy4kim31');
+  eq('the chair’s own spelling is left in the cell', reg.getRange(5, 5).getValue(), 'cfenn33');
   eq('what they wrote reached their row', reg.getRange(5, C.NOTE).getValue(), 'suturing');
   eq('and the page counts them as a member', out.member, true);
   ok('still no address on the way out', !/@/.test(JSON.stringify(out)));
@@ -663,17 +663,17 @@ section('teachers');
 {
   /* the chair may type a teacher in by hand — the address is what counts, not the column */
   const { G, api, reg } = seeded();
-  reg.appendRow(['', 'Anna', 'Wise', 'Ms Wise', 'awise@nlcsjeju.kr', 'Y12', new Date(2026, 8, 1), '']);
+  reg.appendRow(['', 'Nova', 'Bly', 'Ms Bly', 'mbly@nlcsjeju.kr', 'Y12', new Date(2026, 8, 1), '']);
   api.onRegisterEdit({ range: reg.getRange(5, 5) });
-  const p = api._list(null).members.filter(x => x.name === 'Ms Wise')[0];
+  const p = api._list(null).members.filter(x => x.name === 'Ms Bly')[0];
   eq('typed in by hand, still a teacher', [p.staff, p.year], [true, 'Teacher']);
 }
 {
   /* and a row with Teacher written in the Year column but no address is taken at its word */
   const { G, api, reg } = seeded();
-  reg.appendRow(['', 'Sam', 'Park', 'Mr Park', '', 'Teacher', new Date(2026, 8, 1), '']);
+  reg.appendRow(['', 'Sam', 'Frost', 'Mr Frost', '', 'Teacher', new Date(2026, 8, 1), '']);
   api.onRegisterEdit({ range: reg.getRange(5, 6) });
-  const p = api._list(null).members.filter(x => x.name === 'Mr Park')[0];
+  const p = api._list(null).members.filter(x => x.name === 'Mr Frost')[0];
   eq('the Year column can say it too', [p.staff, p.year], [true, 'Teacher']);
 }
 
@@ -690,17 +690,17 @@ section('teachers');
 {
   const { G, api, reg } = seeded();
   api._handle({ action: 'join', token: 'TOK-NEW', year: 'Year 9', title: 'Dr', note: '' });
-  eq('a pupil is still their first name, title or no title', reg.getRange(reg.getLastRow(), 4).getValue(), 'Sungyoon');
+  eq('a pupil is still their first name, title or no title', reg.getRange(reg.getLastRow(), 4).getValue(), 'Chae');
 }
 {
   const { G, api, reg } = seeded();
-  reg.appendRow(['', 'Anna', 'Wise', 'Ms Wise', 'awise@nlcsjeju.kr', 'Teacher', new Date(2026, 8, 1), '']);
+  reg.appendRow(['', 'Nova', 'Bly', 'Ms Bly', 'mbly@nlcsjeju.kr', 'Teacher', new Date(2026, 8, 1), '']);
   api.onRegisterEdit({ range: reg.getRange(5, 5) });
   /* the clock inside the script is the test's clock, not this machine's */
   G.__tokens['TOK-WISE'] = { aud: 'CID', exp: Math.floor(new Date(2026, 8, 20).getTime() / 1000), email_verified: 'true',
-    email: 'awise@nlcsjeju.kr', name: 'Anna Wise', given_name: 'Anna', family_name: 'Wise' };
+    email: 'mbly@nlcsjeju.kr', name: 'Nova Bly', given_name: 'Nova', family_name: 'Bly' };
   api._handle({ action: 'join', token: 'TOK-WISE', year: 'Year 9', title: 'Dr', note: 'happy to help' });
-  eq('a name the chair wrote is never rewritten', reg.getRange(5, 4).getValue(), 'Ms Wise');
+  eq('a name the chair wrote is never rewritten', reg.getRange(5, 4).getValue(), 'Ms Bly');
   eq('but what they say they would like to do is theirs', reg.getRange(5, C.NOTE).getValue(), 'happy to help');
 }
 
@@ -730,13 +730,13 @@ section('the chair, from the website');
 {
   const { G, api } = seeded();
   const st = G.__ss.getSheetByName('Settings');
-  st.getRange(api._settingRow(st, 'Chair'), 2).setValue('jekim29@pupils.nlcsjeju.kr');
+  st.getRange(api._settingRow(st, 'Chair'), 2).setValue('avale31@pupils.nlcsjeju.kr');
 
   ok('a teacher is a chair without being written down', api._isOfficer('dmompelriera@nlcsjeju.kr'));
-  ok('the chair named in Settings is one', api._isOfficer('jekim29@pupils.nlcsjeju.kr'));
-  ok('and the capitals do not matter', api._isOfficer('JEKim29@Pupils.NLCSJeju.kr'));
-  ok('any other pupil is not', !api._isOfficer('sy4kim31@pupils.nlcsjeju.kr'));
-  ok('and nobody is, when no chair is named', !load().api._isOfficer('jekim29@pupils.nlcsjeju.kr'));
+  ok('the chair named in Settings is one', api._isOfficer('avale31@pupils.nlcsjeju.kr'));
+  ok('and the capitals do not matter', api._isOfficer('AVale31@Pupils.NLCSJeju.kr'));
+  ok('any other pupil is not', !api._isOfficer('cfenn33@pupils.nlcsjeju.kr'));
+  ok('and nobody is, when no chair is named', !load().api._isOfficer('avale31@pupils.nlcsjeju.kr'));
 
   eq('the page is told who may', api._handle({ action: 'me', token: 'TOK-JIEUN' }).chair, true);
   eq('and who may not', api._handle({ action: 'me', token: 'TOK-NEW' }).chair, false);
@@ -759,7 +759,7 @@ section('the chair, from the website');
 {
   const { G, api } = seeded();
   const st = G.__ss.getSheetByName('Settings');
-  st.getRange(api._settingRow(st, 'Chair'), 2).setValue('jekim29@pupils.nlcsjeju.kr');
+  st.getRange(api._settingRow(st, 'Chair'), 2).setValue('avale31@pupils.nlcsjeju.kr');
   st.getRange(api._settingRow(st, 'Classroom course ID'), 2).setValue('COURSE-1');
 
   eq('an ordinary member cannot tell the class', api._handle({ action: 'tellClass', token: 'TOK-NEW' }).why, 'only the chair, the secretary or a teacher may do that');
@@ -773,7 +773,7 @@ section('the chair, from the website');
 {
   const { G, api } = seeded();
   const st = G.__ss.getSheetByName('Settings');
-  st.getRange(api._settingRow(st, 'Chair'), 2).setValue('jekim29@pupils.nlcsjeju.kr');
+  st.getRange(api._settingRow(st, 'Chair'), 2).setValue('avale31@pupils.nlcsjeju.kr');
   st.getRange(api._settingRow(st, 'Classroom course ID'), 2).setValue('');
   const out = api._handle({ action: 'tellClass', token: 'TOK-JIEUN' });
   ok('with no class chosen it says so rather than failing', out.ok && /Classroom class is chosen/.test(out.said), JSON.stringify(out));
@@ -787,7 +787,7 @@ section('the chair, from the website');
    register, so they do not appear in the register. And I want them to also be able to say I was
    present here." So choosing an officer puts them on the register if they are not on it — an
    officer who is not a member has no row, and no row means no box to tick. */
-/* Daniel saw "Haoran (Henry) Jiang" and "Sicheng (Henry) Yuan" on the public page. Surnames.
+/* Daniel saw "Gino (Kay) Ash" and "Kai (Kay) Dove" on the public page. Surnames.
    The site is promised preferred names only, and an import had written the whole name into the
    preferred-name column. Three things had to be true afterwards: the import writes the right
    thing, the read refuses the wrong thing whatever the cell says, and the rows already written
@@ -796,19 +796,19 @@ section('first names only');
 {
   const { api, reg } = seeded();
   /* the two of them, exactly as the school's Google accounts are shaped */
-  reg.appendRow(['浩然', 'Haoran (Henry)', 'Jiang', 'Haoran (Henry) Jiang', 'hjiang30@pupils.nlcsjeju.kr', 'Y12', '', new Date(2026, 8, 1), '']);
-  reg.appendRow(['思成', 'Sicheng (Henry)', 'Yuan', 'Sicheng (Henry) Yuan', 'scyuan29@pupils.nlcsjeju.kr', 'Y12', 'Secretary', new Date(2026, 8, 1), '']);
+  reg.appendRow(['테스트가', 'Gino (Kay)', 'Ash', 'Gino (Kay) Ash', 'gcrane32@pupils.nlcsjeju.kr', 'Y12', '', new Date(2026, 8, 1), '']);
+  reg.appendRow(['테스트나', 'Kai (Kay)', 'Dove', 'Kai (Kay) Dove', 'kdove31@pupils.nlcsjeju.kr', 'Y12', 'Secretary', new Date(2026, 8, 1), '']);
 
   const text = JSON.stringify(api._list(null));
-  ok('no surname reaches the page, whatever the cell says', !/Jiang|Yuan/.test(text), text.slice(0, 300));
+  ok('no surname reaches the page, whatever the cell says', !/Ash|Dove/.test(text), text.slice(0, 300));
 
-  /* Both go by Henry, so neither may be shown as just "Henry". Daniel's rule: the real name in
+  /* Both go by Kay, so neither may be shown as just "Kay". Daniel's rule: the real name in
      brackets — never the surname. */
   const names = api._list(null).members.map(p => p.name);
-  ok('the first Henry is told apart by his real name', names.indexOf('Henry (Haoran)') >= 0, names.join(' | '));
-  ok('and so is the second', names.indexOf('Henry (Sicheng)') >= 0, names.join(' | '));
+  ok('the first Kay is told apart by his real name', names.indexOf('Kay (Gino)') >= 0, names.join(' | '));
+  ok('and so is the second', names.indexOf('Kay (Kai)') >= 0, names.join(' | '));
   ok('written in letters, not in script', !/[가-힣\u4e00-\u9fff]/.test(JSON.stringify(api._list(null))));
-  ok('somebody nobody shares a name with is shown alone', names.indexOf('Jieun') >= 0, names.join(' | '));
+  ok('somebody nobody shares a name with is shown alone', names.indexOf('Aera') >= 0, names.join(' | '));
 
   /* it is for every member, not only the ones who run the society */
   const solo = api._list(null).members.filter(p => p.name.indexOf('(') < 0);
@@ -818,88 +818,88 @@ section('first names only');
 {
   /* the rows already written are put right by the tidy-up, so the sheet stops carrying it too */
   const { api, reg } = seeded();
-  reg.appendRow(['', 'Haoran (Henry)', 'Jiang', 'Haoran (Henry) Jiang', 'hjiang30@pupils.nlcsjeju.kr', 'Y12', '', new Date(2026, 8, 1), '']);
+  reg.appendRow(['', 'Gino (Kay)', 'Ash', 'Gino (Kay) Ash', 'gcrane32@pupils.nlcsjeju.kr', 'Y12', '', new Date(2026, 8, 1), '']);
   reg.appendRow(['', 'Daniel', 'Mompel Riera', 'Dr Mompel Riera', 'dmompelriera@nlcsjeju.kr', 'Teacher', '', new Date(2026, 8, 1), '']);
   api.setup();
-  eq('the pupil is cut back to the name he goes by', reg.getRange(5, C.SHOWN).getValue(), 'Henry');
+  eq('the pupil is cut back to the name he goes by', reg.getRange(5, C.SHOWN).getValue(), 'Kay');
   eq('the teacher keeps his title and surname, which is the point of his', reg.getRange(6, C.SHOWN).getValue(), 'Dr Mompel Riera');
-  eq('and running it again changes nothing', (api.setup(), reg.getRange(5, C.SHOWN).getValue()), 'Henry');
+  eq('and running it again changes nothing', (api.setup(), reg.getRange(5, C.SHOWN).getValue()), 'Kay');
 }
 {
   /* somebody signing themselves up on the website */
   const { G, api } = seeded();
   G.__tokens['TOK-HENRY'] = { aud: 'CID', exp: Math.floor(Date.now() / 1000) + 3600, email_verified: 'true',
-    email: 'hjiang30@pupils.nlcsjeju.kr', name: 'Haoran (Henry) Jiang', given_name: 'Haoran (Henry)', family_name: 'Jiang' };
+    email: 'gcrane32@pupils.nlcsjeju.kr', name: 'Gino (Kay) Ash', given_name: 'Gino (Kay)', family_name: 'Ash' };
   api._handle({ action: 'join', token: 'TOK-HENRY', year: 'Year 12', note: 'suturing' });
   const out = api._list(null);
-  ok('goes on by the name he goes by', out.members.some(p => p.name === 'Henry'), JSON.stringify(out.members));
-  ok('and his surname is nowhere in it', !/Jiang/.test(JSON.stringify(out)));
+  ok('goes on by the name he goes by', out.members.some(p => p.name === 'Kay'), JSON.stringify(out.members));
+  ok('and his surname is nowhere in it', !/Ash/.test(JSON.stringify(out)));
 }
 {
   /* a name with no bracket at all still loses its surname */
   const { api, reg } = seeded();
-  reg.appendRow(['', 'Benedict', 'Cho', 'Benedict Cho', 'bcho31@pupils.nlcsjeju.kr', 'Y8', '', new Date(2026, 8, 1), '']);
-  eq('the first word is what is left', api._register(new Date()).members.filter(p => p.email === 'bcho31@pupils.nlcsjeju.kr')[0].name, 'Benedict');
+  reg.appendRow(['', 'Finn', 'Ellis', 'Finn Ellis', 'fellis33@pupils.nlcsjeju.kr', 'Y8', '', new Date(2026, 8, 1), '']);
+  eq('the first word is what is left', api._register(new Date()).members.filter(p => p.email === 'fellis33@pupils.nlcsjeju.kr')[0].name, 'Finn');
 }
 
 {
   /* "make sure that it's for all of the students, not just the chair and the secretary" — two
      ordinary members who happen to share a name are told apart exactly the same way */
   const { api, reg } = seeded();
-  reg.appendRow(['', 'Jisoo (Grace)', 'Park', 'Grace', 'jspark30@pupils.nlcsjeju.kr', 'Y9', '', new Date(2026, 8, 1), '']);
-  reg.appendRow(['', 'Eunseo (Grace)', 'Lim', 'Grace', 'eslim31@pupils.nlcsjeju.kr', 'Y10', '', new Date(2026, 8, 1), '']);
+  reg.appendRow(['', 'Hana (Robin)', 'Frost', 'Robin', 'hfrost32@pupils.nlcsjeju.kr', 'Y9', '', new Date(2026, 8, 1), '']);
+  reg.appendRow(['', 'Ida (Robin)', 'Gale', 'Robin', 'igale33@pupils.nlcsjeju.kr', 'Y10', '', new Date(2026, 8, 1), '']);
   const names = api._list(null).members.map(p => p.name);
-  ok('one Grace', names.indexOf('Grace (Jisoo)') >= 0, names.join(' | '));
-  ok('and the other', names.indexOf('Grace (Eunseo)') >= 0, names.join(' | '));
-  ok('neither of them runs anything', !api._isOfficer('jspark30@pupils.nlcsjeju.kr'));
-  ok('and no surname came with it', !/Park|Lim/.test(JSON.stringify(api._list(null))));
+  ok('one Robin', names.indexOf('Robin (Hana)') >= 0, names.join(' | '));
+  ok('and the other', names.indexOf('Robin (Ida)') >= 0, names.join(' | '));
+  ok('neither of them runs anything', !api._isOfficer('hfrost32@pupils.nlcsjeju.kr'));
+  ok('and no surname came with it', !/Frost|Gale/.test(JSON.stringify(api._list(null))));
 }
 {
   /* three of them, and a row whose Korean name is already written in letters */
   const { api, reg } = seeded();
-  reg.appendRow(['', 'Jisoo (Grace)', 'Park', 'Grace', 'jspark30@pupils.nlcsjeju.kr', 'Y9', '', new Date(2026, 8, 1), '']);
-  reg.appendRow(['', 'Eunseo (Grace)', 'Lim', 'Grace', 'eslim31@pupils.nlcsjeju.kr', 'Y10', '', new Date(2026, 8, 1), '']);
-  reg.appendRow(['Yerin', 'Grace', 'Song', 'Grace', 'ysong32@pupils.nlcsjeju.kr', 'Y8', '', new Date(2026, 8, 1), '']);
+  reg.appendRow(['', 'Hana (Robin)', 'Frost', 'Robin', 'hfrost32@pupils.nlcsjeju.kr', 'Y9', '', new Date(2026, 8, 1), '']);
+  reg.appendRow(['', 'Ida (Robin)', 'Gale', 'Robin', 'igale33@pupils.nlcsjeju.kr', 'Y10', '', new Date(2026, 8, 1), '']);
+  reg.appendRow(['Jinho', 'Robin', 'Hale', 'Robin', 'jhale34@pupils.nlcsjeju.kr', 'Y8', '', new Date(2026, 8, 1), '']);
   const names = api._list(null).members.map(p => p.name);
-  eq('all three are told apart', names.filter(n => n.indexOf('Grace') === 0).sort(),
-     ['Grace (Eunseo)', 'Grace (Jisoo)', 'Grace (Yerin)']);
+  eq('all three are told apart', names.filter(n => n.indexOf('Robin') === 0).sort(),
+     ['Robin (Hana)', 'Robin (Ida)', 'Robin (Jinho)']);
 }
 
 section('who runs it');
 {
   const { G, api, reg } = seeded();
-  G.__teachers = [{ id: 't4', email: 'scyuan29@pupils.nlcsjeju.kr',
-                    name: 'Sicheng (Henry) Yuan', given: 'Sicheng (Henry)', family: 'Yuan' }];
+  G.__teachers = [{ id: 't4', email: 'kdove31@pupils.nlcsjeju.kr',
+                    name: 'Kai (Kay) Dove', given: 'Kai (Kay)', family: 'Dove' }];
   const before = api._register(new Date()).members.length;
 
-  const said = api.setOfficers('scyuan29@pupils.nlcsjeju.kr', 'hwyang29@pupils.nlcsjeju.kr');
+  const said = api.setOfficers('kdove31@pupils.nlcsjeju.kr', 'broe31@pupils.nlcsjeju.kr');
   const after = api._register(new Date()).members;
   eq('the chair was not a member, so he is one now', after.length, before + 1);
 
-  const henry = after.filter(p => p.email === 'scyuan29@pupils.nlcsjeju.kr')[0];
+  const henry = after.filter(p => p.email === 'kdove31@pupils.nlcsjeju.kr')[0];
   ok('he is on the register', !!henry);
-  eq('by the name he goes by, and no surname', henry.name, 'Henry');
+  eq('by the name he goes by, and no surname', henry.name, 'Kay');
   eq('as the chair', henry.role, 'Chair');
   ok('and not as staff, because his address is a pupil one', !henry.staff);
   ok('it says he was added', /register/.test(said), said);
 
-  eq('the secretary is the one who was already a member', after.filter(p => p.role === 'Secretary').map(p => p.email), ['hwyang29@pupils.nlcsjeju.kr']);
-  ok('both may run it from the website', api._isOfficer('scyuan29@pupils.nlcsjeju.kr') && api._isOfficer('hwyang29@pupils.nlcsjeju.kr'));
+  eq('the secretary is the one who was already a member', after.filter(p => p.role === 'Secretary').map(p => p.email), ['broe31@pupils.nlcsjeju.kr']);
+  ok('both may run it from the website', api._isOfficer('kdove31@pupils.nlcsjeju.kr') && api._isOfficer('broe31@pupils.nlcsjeju.kr'));
 
   /* and now the point of it: a box to tick */
   api._newMeeting(new Date(2026, 8, 24, 15, 40), 'One Health');
   const col = reg.getLastColumn();
   reg.getRange(henry.row, col).setValue(true);
-  const marked = api._list(null).members.filter(p => p.name === 'Henry')[0];
+  const marked = api._list(null).members.filter(p => p.name === 'Kay')[0];
   ok('and the website can show he was there', !!marked);
-  ok('with no surname anywhere in what it is sent', !/Yuan/.test(JSON.stringify(api._list(null))));
+  ok('with no surname anywhere in what it is sent', !/Dove/.test(JSON.stringify(api._list(null))));
 }
 {
   const { api, reg } = seeded();
-  api.setOfficers('jekim29@pupils.nlcsjeju.kr', '');
+  api.setOfficers('avale31@pupils.nlcsjeju.kr', '');
   eq('a chair on their own', reg.getRange(3, C.ROLE).getValue(), 'Chair');
 
-  api.setOfficers('hwyang29@pupils.nlcsjeju.kr', '');
+  api.setOfficers('broe31@pupils.nlcsjeju.kr', '');
   eq('handing over clears the old one', reg.getRange(3, C.ROLE).getValue(), '');
   eq('and writes the new', reg.getRange(4, C.ROLE).getValue(), 'Chair');
 
@@ -909,7 +909,7 @@ section('who runs it');
 {
   const { api, reg } = seeded();
   reg.getRange(3, C.ROLE).setValue('Treasurer');
-  api.setOfficers('hwyang29@pupils.nlcsjeju.kr', '');
+  api.setOfficers('broe31@pupils.nlcsjeju.kr', '');
   eq('a role this script does not run is left alone', reg.getRange(3, C.ROLE).getValue(), 'Treasurer');
 
   eq('the same person twice is refused', api.setOfficers('a@pupils.nlcsjeju.kr', 'a@pupils.nlcsjeju.kr'),
@@ -921,12 +921,12 @@ section('who runs it');
      officer usually is before anybody puts them on the register */
   const { G, api } = seeded();
   G.__teachers = [
-    { id: 't4', email: 'scyuan29@pupils.nlcsjeju.kr', name: 'Henry Yuan' },
+    { id: 't4', email: 'kdove31@pupils.nlcsjeju.kr', name: 'Kai Dove' },
     { id: 't1', email: 'dmompelriera@nlcsjeju.kr', name: 'Daniel Mompel Riera' }
   ];
   const who = api._officerChoices().map(c => c.email);
-  ok('the members are offered', who.indexOf('jekim29@pupils.nlcsjeju.kr') >= 0);
-  ok('and the pupil who teaches the class', who.indexOf('scyuan29@pupils.nlcsjeju.kr') >= 0);
+  ok('the members are offered', who.indexOf('avale31@pupils.nlcsjeju.kr') >= 0);
+  ok('and the pupil who teaches the class', who.indexOf('kdove31@pupils.nlcsjeju.kr') >= 0);
   ok('but not a member of staff, who is never an officer', who.indexOf('dmompelriera@nlcsjeju.kr') < 0);
   ok('and nobody is offered twice', who.length === new Set(who).size);
 }
@@ -935,23 +935,23 @@ section('the Role column');
 {
   const { api, reg } = seeded();
   eq('nobody has a role to begin with', api._register(new Date()).members.map(p => p.role), ['', '']);
-  ok('and nobody but a teacher may run it', !api._isOfficer('jekim29@pupils.nlcsjeju.kr'));
+  ok('and nobody but a teacher may run it', !api._isOfficer('avale31@pupils.nlcsjeju.kr'));
 
   reg.getRange(3, C.ROLE).setValue('Chair');
-  ok('the chair may', api._isOfficer('jekim29@pupils.nlcsjeju.kr'));
-  ok('the other one still may not', !api._isOfficer('hwyang29@pupils.nlcsjeju.kr'));
+  ok('the chair may', api._isOfficer('avale31@pupils.nlcsjeju.kr'));
+  ok('the other one still may not', !api._isOfficer('broe31@pupils.nlcsjeju.kr'));
   eq('and their year is untouched by it', api._register(new Date()).members[0].year, 'Y11');
 
   reg.getRange(4, C.ROLE).setValue('Secretary');
-  ok('the secretary may too', api._isOfficer('hwyang29@pupils.nlcsjeju.kr'));
+  ok('the secretary may too', api._isOfficer('broe31@pupils.nlcsjeju.kr'));
 
   reg.getRange(4, C.ROLE).setValue('Treasurer');
   ok('a role this script does not know is kept', api._register(new Date()).members[1].role, 'Treasurer');
-  ok('but it carries no powers', !api._isOfficer('hwyang29@pupils.nlcsjeju.kr'));
+  ok('but it carries no powers', !api._isOfficer('broe31@pupils.nlcsjeju.kr'));
 
   reg.getRange(4, C.ROLE).setValue('co-chair');
   eq('the word inside is what counts', api._register(new Date()).members[1].role, 'Chair');
-  ok('so a co-chair may run it', api._isOfficer('hwyang29@pupils.nlcsjeju.kr'));
+  ok('so a co-chair may run it', api._isOfficer('broe31@pupils.nlcsjeju.kr'));
 
   reg.getRange(4, C.ROLE).setValue('secretery');
   eq('spelt however', api._register(new Date()).members[1].role, 'Secretary');
@@ -979,7 +979,7 @@ section('the Role column');
   G.__answer = [''];
   api.chooseChair();
   eq('and cleared off their row as well', reg.getRange(3, C.ROLE).getValue(), '');
-  ok('so they cannot run it any more', !api._isOfficer('jekim29@pupils.nlcsjeju.kr'));
+  ok('so they cannot run it any more', !api._isOfficer('avale31@pupils.nlcsjeju.kr'));
 
   reg.getRange(4, C.ROLE).setValue('Secretary');
   G.__answer = ['1'];
@@ -996,42 +996,42 @@ section('picking the chair off the register');
   /* it is written on their row, where you can see it — not tucked away in Settings */
   eq('the second member is the chair now', reg.getRange(4, C.ROLE).getValue(), 'Chair');
   eq('and Settings holds nobody, because they have a row', st.getRange(api._settingRow(st, 'Chair'), 2).getValue(), '');
-  ok('and the website will let them in', api._isOfficer('hwyang29@pupils.nlcsjeju.kr'));
-  ok('while the other one is back out', !api._isOfficer('jekim29@pupils.nlcsjeju.kr'));
+  ok('and the website will let them in', api._isOfficer('broe31@pupils.nlcsjeju.kr'));
+  ok('while the other one is back out', !api._isOfficer('avale31@pupils.nlcsjeju.kr'));
 
   G.__answer = ['1, 2'];
   api.chooseChair();
-  ok('a shared chair is two of them', api._isOfficer('jekim29@pupils.nlcsjeju.kr') && api._isOfficer('hwyang29@pupils.nlcsjeju.kr'));
+  ok('a shared chair is two of them', api._isOfficer('avale31@pupils.nlcsjeju.kr') && api._isOfficer('broe31@pupils.nlcsjeju.kr'));
 
   G.__answer = ['9'];
   api.chooseChair();
-  ok('a number that is not on the list changes nothing', api._isOfficer('jekim29@pupils.nlcsjeju.kr'));
+  ok('a number that is not on the list changes nothing', api._isOfficer('avale31@pupils.nlcsjeju.kr'));
 
   G.__answer = [''];
   api.chooseChair();
-  ok('and empty means no chair at all', !api._isOfficer('jekim29@pupils.nlcsjeju.kr'));
+  ok('and empty means no chair at all', !api._isOfficer('avale31@pupils.nlcsjeju.kr'));
   ok('but a teacher is still a teacher', api._isOfficer('dmompelriera@nlcsjeju.kr'));
 }
 {
   /* The chair had not put his name down, so he was on no list and could not be named — and a
      society should not have to wait for that before it has a chair. */
   const { G, api } = seeded();
-  G.__answer = ['scyuan29@pupils.nlcsjeju.kr'];
+  G.__answer = ['kdove31@pupils.nlcsjeju.kr'];
   api.chooseChair();
-  ok('an address does as well as a number', api._isOfficer('scyuan29@pupils.nlcsjeju.kr'));
+  ok('an address does as well as a number', api._isOfficer('kdove31@pupils.nlcsjeju.kr'));
 
-  G.__answer = ['scyuan29'];
+  G.__answer = ['kdove31'];
   api.chooseChair();
-  ok('and so does the first part of one', api._isOfficer('scyuan29@pupils.nlcsjeju.kr'));
+  ok('and so does the first part of one', api._isOfficer('kdove31@pupils.nlcsjeju.kr'));
 
-  G.__answer = ['1, scyuan29@pupils.nlcsjeju.kr'];
+  G.__answer = ['1, kdove31@pupils.nlcsjeju.kr'];
   api.chooseChair();
-  ok('a number and an address together', api._isOfficer('jekim29@pupils.nlcsjeju.kr') && api._isOfficer('scyuan29@pupils.nlcsjeju.kr'));
+  ok('a number and an address together', api._isOfficer('avale31@pupils.nlcsjeju.kr') && api._isOfficer('kdove31@pupils.nlcsjeju.kr'));
 
   G.__answer = ['someone@gmail.com'];
   api.chooseChair();
   ok('but not an address outside the school', !api._isOfficer('someone@gmail.com'));
-  ok('and that leaves the chair as it was', api._isOfficer('jekim29@pupils.nlcsjeju.kr'));
+  ok('and that leaves the chair as it was', api._isOfficer('avale31@pupils.nlcsjeju.kr'));
 
   /* a number off the end of the list is a slip, not somebody called "20" */
   G.__answer = ['20'];
@@ -1100,7 +1100,7 @@ section('the ten-minute cache');
   const { G, api, reg } = seeded();
   api._handle({ action: 'list' });
   ok('the public answer is kept', G.__cache.has('list-v2'));
-  reg.appendRow(['', 'Anna', 'Wise', 'Anna', 'anwise28@pupils.nlcsjeju.kr', 'Y12', new Date(), '']);
+  reg.appendRow(['', 'Nova', 'Bly', 'Nova', 'nbly28@pupils.nlcsjeju.kr', 'Y12', new Date(), '']);
   eq('a stale answer is still served', api._handle({ action: 'list' }).members.length, 2);
   api.onRegisterEdit({ range: reg.getRange(5, 4) });
   eq('an edit throws it away', api._handle({ action: 'list' }).members.length, 3);
@@ -1355,7 +1355,7 @@ section('teachers brought in from the class');
     { id: 't1', email: 'dmompelriera@nlcsjeju.kr', name: 'Daniel Mompel Riera' },
     { id: 't2', email: 'jsmith@nlcsjeju.kr',       name: 'Jane Smith' },
     { id: 't3', email: 'bjones@nlcsjeju.kr',       name: 'Brian Jones' },
-    { id: 't4', email: 'scyuan29@pupils.nlcsjeju.kr', name: 'Henry Yuan' }
+    { id: 't4', email: 'kdove31@pupils.nlcsjeju.kr', name: 'Kai Dove' }
   ];
   const before = api._register(new Date()).members.length;
 
@@ -1389,16 +1389,16 @@ section('teachers brought in from the class');
   /* the chair of this society teaches its class on a PUPIL account: adding him must not make
      him staff, or he would vanish out of the members list and out of the class roster */
   const { G, api, reg } = seeded();
-  G.__teachers = [{ id: 't4', email: 'scyuan29@pupils.nlcsjeju.kr',
-                    name: 'Sicheng (Henry) Yuan', given: 'Sicheng (Henry)', family: 'Yuan' }];
+  G.__teachers = [{ id: 't4', email: 'kdove31@pupils.nlcsjeju.kr',
+                    name: 'Kai (Kay) Dove', given: 'Kai (Kay)', family: 'Dove' }];
   G.__answer = ['1'];
   api.addTeachers();
-  const henry = api._register(new Date()).members.filter(p => p.email === 'scyuan29@pupils.nlcsjeju.kr')[0];
+  const henry = api._register(new Date()).members.filter(p => p.email === 'kdove31@pupils.nlcsjeju.kr')[0];
   ok('he is on the register', !!henry);
-  eq('by the name he goes by', henry.name, 'Henry');
+  eq('by the name he goes by', henry.name, 'Kay');
   ok('and he is not staff', !henry.staff);
   eq('his year is left for the teacher to set', henry.year, '');
-  ok('so the site still counts him a member', api._list(null).members.some(p => p.name === 'Henry' && !p.staff));
+  ok('so the site still counts him a member', api._list(null).members.some(p => p.name === 'Kay' && !p.staff));
 }
 
 /* Daniel: "chairs and secretaries are added as teachers, so they should be exported from there,
@@ -1411,12 +1411,12 @@ section('officers go on the teacher side of the class');
   G.__roster = [];                                  /* nobody in the class yet */
   G.__teachers = [];
   const plan = api.classroomPlan();
-  eq('the chair is not offered a student invitation', plan.invite.map(p => p.email), ['hwyang29@pupils.nlcsjeju.kr']);
-  eq('he is asked to teach it instead', plan.teachers.map(p => p.email), ['jekim29@pupils.nlcsjeju.kr']);
+  eq('the chair is not offered a student invitation', plan.invite.map(p => p.email), ['broe31@pupils.nlcsjeju.kr']);
+  eq('he is asked to teach it instead', plan.teachers.map(p => p.email), ['avale31@pupils.nlcsjeju.kr']);
   ok('and nobody thinks he was a student', !plan.teachers[0].wasStudent);
 
   api.classroomApplyTeachers();
-  eq('the invitation is a teacher one', G.__teacherInvites, ['jekim29@pupils.nlcsjeju.kr']);
+  eq('the invitation is a teacher one', G.__teacherInvites, ['avale31@pupils.nlcsjeju.kr']);
   eq('and nobody was taken out of anything', G.__removed.length, 0);
 }
 {
@@ -1424,64 +1424,64 @@ section('officers go on the teacher side of the class');
      one person as both, so they have to come off the student list first */
   const { G, api, reg } = seeded();
   reg.getRange(4, C.ROLE).setValue('Secretary');
-  G.__roster = [{ id: '11', email: 'hwyang29@pupils.nlcsjeju.kr', name: 'Hyunwoo Yang' }];
+  G.__roster = [{ id: '11', email: 'broe31@pupils.nlcsjeju.kr', name: 'Bora Roe' }];
   G.__teachers = [];
   const plan = api.classroomPlan();
-  eq('the secretary is to be asked to teach it', plan.teachers.map(p => p.email), ['hwyang29@pupils.nlcsjeju.kr']);
+  eq('the secretary is to be asked to teach it', plan.teachers.map(p => p.email), ['broe31@pupils.nlcsjeju.kr']);
   ok('and it knows he is on the student list', plan.teachers[0].wasStudent);
   eq('he is not on the list to be taken out, though', plan.remove.map(p => p.email), []);
 
   api.classroomApplyTeachers();
-  eq('off the student list', G.__removed.map(r => r.email), ['hwyang29@pupils.nlcsjeju.kr']);
-  eq('and asked to teach it', G.__teacherInvites, ['hwyang29@pupils.nlcsjeju.kr']);
+  eq('off the student list', G.__removed.map(r => r.email), ['broe31@pupils.nlcsjeju.kr']);
+  eq('and asked to teach it', G.__teacherInvites, ['broe31@pupils.nlcsjeju.kr']);
 }
 {
   /* an officer already teaching it is left completely alone */
   const { G, api, reg } = seeded();
   reg.getRange(3, C.ROLE).setValue('Chair');
   G.__roster = [];
-  G.__teachers = [{ id: '99', email: 'jekim29@pupils.nlcsjeju.kr', name: 'Jieun Kim' }];
+  G.__teachers = [{ id: '99', email: 'avale31@pupils.nlcsjeju.kr', name: 'Aera Vale' }];
   const plan = api.classroomPlan();
   eq('nothing to ask', plan.teachers.map(p => p.email), []);
-  eq('nothing to invite him to', plan.invite.map(p => p.email), ['hwyang29@pupils.nlcsjeju.kr']);
-  eq('and he is shown as already teaching it', plan.asTeacher.map(p => p.email), ['jekim29@pupils.nlcsjeju.kr']);
+  eq('nothing to invite him to', plan.invite.map(p => p.email), ['broe31@pupils.nlcsjeju.kr']);
+  eq('and he is shown as already teaching it', plan.asTeacher.map(p => p.email), ['avale31@pupils.nlcsjeju.kr']);
 }
 
 section('a member who teaches the class');
 {
   const { G, api, reg } = seeded();
-  G.__roster = [{ id: '11', email: 'hwyang29@pupils.nlcsjeju.kr', name: 'Hyunwoo Yang' }];
-  G.__teachers = [{ id: '99', email: 'jekim29@pupils.nlcsjeju.kr', name: 'Jieun Kim' }];
+  G.__roster = [{ id: '11', email: 'broe31@pupils.nlcsjeju.kr', name: 'Bora Roe' }];
+  G.__teachers = [{ id: '99', email: 'avale31@pupils.nlcsjeju.kr', name: 'Aera Vale' }];
   const plan = api.classroomPlan();
   eq('the chair is not offered for invitation', plan.invite.map(p => p.email), []);
-  eq('he is shown as already in it, on the other side', plan.asTeacher.map(p => p.email), ['jekim29@pupils.nlcsjeju.kr']);
+  eq('he is shown as already in it, on the other side', plan.asTeacher.map(p => p.email), ['avale31@pupils.nlcsjeju.kr']);
   eq('and he is not taken out of it either', plan.remove.map(p => p.email), []);
   eq('the one who really is a student stays counted', plan.already, 1);
 }
 {
   /* and if Google will not list the teachers, the sync must still run — as it used to */
   const { G, api } = seeded();
-  G.__roster = [{ id: '11', email: 'hwyang29@pupils.nlcsjeju.kr', name: 'Hyunwoo Yang' }];
+  G.__roster = [{ id: '11', email: 'broe31@pupils.nlcsjeju.kr', name: 'Bora Roe' }];
   const T = G.Classroom.Courses.Teachers;
   G.Classroom.Courses.Teachers = { list: () => { throw new Error('no'); } };
   const plan = api.classroomPlan();
   ok('a plan is still made', !!plan);
-  eq('and it behaves as it did before', plan.invite.map(p => p.email), ['jekim29@pupils.nlcsjeju.kr']);
+  eq('and it behaves as it did before', plan.invite.map(p => p.email), ['avale31@pupils.nlcsjeju.kr']);
   G.Classroom.Courses.Teachers = T;
 }
 
 section('keeping the Classroom class in step with the register');
 {
   const { G, api, reg } = seeded();
-  /* the register: Jieun and Hyunwoo, plus a teacher; the class: Hyunwoo and someone who left */
+  /* the register: Aera and Bora, plus a teacher; the class: Bora and someone who left */
   reg.appendRow(['', 'Daniel', 'Mompel Riera', 'Dr Mompel', 'dmompelriera@nlcsjeju.kr', 'Teacher', new Date(2026, 8, 1), '']);
   api.onRegisterEdit({ range: reg.getRange(5, 5) });
   G.__roster = [
-    { id: '11', email: 'hwyang29@pupils.nlcsjeju.kr', name: 'Hyunwoo Yang' },
+    { id: '11', email: 'broe31@pupils.nlcsjeju.kr', name: 'Bora Roe' },
     { id: '22', email: 'gone30@pupils.nlcsjeju.kr', name: 'Someone Who Left' }
   ];
   const plan = api.classroomPlan();
-  eq('the one missing from the class is to be invited', plan.invite.map(p => p.email), ['jekim29@pupils.nlcsjeju.kr']);
+  eq('the one missing from the class is to be invited', plan.invite.map(p => p.email), ['avale31@pupils.nlcsjeju.kr']);
   eq('the one no longer on the register is to be taken out', plan.remove.map(p => p.email), ['gone30@pupils.nlcsjeju.kr']);
   eq('the one in both is left alone', plan.already, 1);
   ok('the teacher is not made a student', !plan.invite.some(p => /dmompel/.test(p.email)));
@@ -1489,14 +1489,14 @@ section('keeping the Classroom class in step with the register');
 
   api.syncClassroom();
   const said = G.__dialogs.map(d => d.html).join(' ');
-  ok('it shows the names before doing anything', said.includes('Jieun') && said.includes('Someone Who Left'), said.slice(0, 300));
+  ok('it shows the names before doing anything', said.includes('Aera') && said.includes('Someone Who Left'), said.slice(0, 300));
   ok('and does nothing until a button is pressed', G.__invites.length === 0 && G.__removed.length === 0);
   ok('it says which class, by name', said.includes('BioGuardians'));
   ok('and offers to open it, to be sure', said.includes('https://classroom.google.com/c/ABC123'));
 
   eq('inviting only invites', api.classroomApply(false),
      '1 invited to BioGuardians. They are in that class under Invited until they press Join.');
-  eq('one invitation went out', G.__invites, ['jekim29@pupils.nlcsjeju.kr']);
+  eq('one invitation went out', G.__invites, ['avale31@pupils.nlcsjeju.kr']);
   eq('and nobody was taken out', G.__removed.length, 0);
   const logged = String(G.__ss.getSheetByName('Log').getRange(2, 2).getValue());
   ok('the Log says what happened', logged.includes('1 invited'));
@@ -1506,7 +1506,7 @@ section('keeping the Classroom class in step with the register');
   const plan2 = api.classroomPlan();
   eq('an invitation already sent is not sent again', plan2.invite.length, 0);
   eq('and it is counted as pending', plan2.pending, 1);
-  eq('by name, so he can see who has not pressed Join', plan2.pendingList.map(p => p.name), ['Jieun']);
+  eq('by name, so he can see who has not pressed Join', plan2.pendingList.map(p => p.name), ['Aera']);
 
   api.syncClassroom();
   const again = G.__dialogs[G.__dialogs.length - 1].html;
@@ -1514,7 +1514,7 @@ section('keeping the Classroom class in step with the register');
   ok('and offers to take the invitation back', again.includes('Take back the 1 invitation'));
 
   eq('taking it back says so', api.classroomCancel(), '1 invitation taken back.');
-  eq('and Google was told', G.__cancelled, ['jekim29@pupils.nlcsjeju.kr']);
+  eq('and Google was told', G.__cancelled, ['avale31@pupils.nlcsjeju.kr']);
   eq('after which they are due an invitation again', api.classroomPlan().invite.length, 1);
 }
 {
@@ -1541,7 +1541,7 @@ section('keeping the Classroom class in step with the register');
 }
 {
   const { G, api, reg } = seeded();
-  G.__inviteFails['jekim29@pupils.nlcsjeju.kr'] = 'Requested entity already exists';
+  G.__inviteFails['avale31@pupils.nlcsjeju.kr'] = 'Requested entity already exists';
   const out = api.classroomApply(false);
   ok('one that will not go through is counted and logged', out.indexOf('1 would not') > 0, out);
   ok('and the reason is in the Log', String(G.__ss.getSheetByName('Log').getRange(2, 2).getValue()).includes('already exists'));
@@ -1595,7 +1595,7 @@ section('when the drawn window will not open');
   const asked = G.__asked.join(' || ');
   ok('it asks plainly instead', asked.includes('Invite 2'), asked.slice(0, 200));
   ok('naming the class', asked.includes('BioGuardians'));
-  ok('and the people', asked.includes('Jieun') && asked.includes('Someone Who Left'));
+  ok('and the people', asked.includes('Aera') && asked.includes('Someone Who Left'));
   eq('a yes invites', G.__invites.length, 2);
   ok('a second yes takes the leaver out', G.__removed.length === 1);
   ok('and the Log records why the window would not open', 
