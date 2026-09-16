@@ -54,7 +54,7 @@ var T_REG = 'Register', T_VOTES = 'Votes', T_SET = 'Settings', T_LOG = 'Log', T_
 /* Bumped whenever this file changes in a way the website can see. The menu always runs the code
    you have just saved; the WEBSITE runs the code of the deployed version, which is a different
    thing and a common way to be fooled. The check compares the two and says so. */
-var CODE_STAMP = '2026-09-16i · first names only, and two Henrys told apart';
+var CODE_STAMP = '2026-09-16j · a shared name is told apart by the Korean name';
 var HEAD = ['Korean name', 'English name', 'Surname', 'Preferred name', 'Email', 'Year', 'Role', 'Joined', 'Would like to do'];
 var NOTE = ['', '', '', 'shown on the site', 'never shown — the first part is enough', 'shown',
             'Chair or Secretary — they run it from the website', 'filled in for you', 'in their own words'];
@@ -712,7 +712,7 @@ function _register(now) {
       }
       out.members.push({
         row: DATA_ROW + i, name: name, year: staff ? 'Teacher' : year, email: email, staff: staff,
-        other: _otherName(given),
+        korean: korean, other: _otherName(given),
         role: beforeRole ? '' : _role(r[C_ROLE - 1]),
         marks: out.meetings.map(function (m) { return _present(r[m.col - 1]); })
       });
@@ -779,15 +779,17 @@ function _role(v) {
 }
 /* the two that run the society: the chair's desk on the website is theirs */
 function _officer(role) { return role === 'Chair' || role === 'Secretary'; }
-/* The name as the page shows it: theirs alone, or theirs with the one word that says which.
-   That word is the given name they do not go by — "Haoran" of "Haoran (Henry)" — and not the
-   surname, which is the point, and not the Korean-script name either, which this page has always
-   promised never to carry. If there is no such word the name stands alone rather than something
-   new being disclosed to solve a tie. */
+/* The name as the page shows it: theirs alone, or theirs with the one thing that says which.
+   Two members who go by Henry are both just "Henry" otherwise, and nobody can tell whose tally
+   is whose. Daniel's rule, given twice: it is their REAL NAME in brackets — the Korean name —
+   and never the surname. The Korean-name column is it; where a row has none, the given name they
+   do not go by ("Haoran" of "Haoran (Henry)") does instead. A name nobody shares is shown alone,
+   so nothing extra is disclosed about anybody who does not need telling apart. */
 function _apart(p, shared) {
   var name = String(p.name || '');
   if (shared[name.toLowerCase()] < 2) return name;
-  return p.other ? name + ' (' + p.other + ')' : name;
+  var tell = p.korean || p.other || '';
+  return tell ? name + ' (' + tell + ')' : name;
 }
 function _year(v) {
   var s = String(v || '').trim();

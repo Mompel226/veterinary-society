@@ -801,13 +801,18 @@ section('first names only');
 
   const text = JSON.stringify(api._list(null));
   ok('no surname reaches the page, whatever the cell says', !/Jiang|Yuan/.test(text), text.slice(0, 300));
-  ok('and no Korean name either', !/[가-힣\u4e00-\u9fff]/.test(text), text.slice(0, 300));
 
-  /* both are called Henry, so neither may be shown as just "Henry" */
+  /* Both go by Henry, so neither may be shown as just "Henry". Daniel's rule: the real name in
+     brackets — never the surname. */
   const names = api._list(null).members.map(p => p.name);
-  ok('the first Henry is told apart', names.indexOf('Henry (Haoran)') >= 0, names.join(' | '));
-  ok('the second Henry too', names.indexOf('Henry (Sicheng)') >= 0, names.join(' | '));
-  ok('and nobody else was given a bracket', names.indexOf('Jieun') >= 0);
+  ok('the first Henry is told apart by his real name', names.indexOf('Henry (浩然)') >= 0, names.join(' | '));
+  ok('and so is the second', names.indexOf('Henry (思成)') >= 0, names.join(' | '));
+  ok('somebody nobody shares a name with is shown alone', names.indexOf('Jieun') >= 0, names.join(' | '));
+
+  /* and a real name is disclosed ONLY where it is needed to tell two people apart */
+  const solo = api._list(null).members.filter(p => p.name.indexOf('(') < 0);
+  ok('nobody who needs no telling apart carries one',
+     !solo.some(p => /[가-힣\u4e00-\u9fff]/.test(p.name)), solo.map(p => p.name).join(' | '));
 }
 {
   /* the rows already written are put right by the tidy-up, so the sheet stops carrying it too */
