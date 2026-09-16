@@ -201,7 +201,7 @@ html.ready .mo-fade{animation:fadeUp .9s var(--wait,0s) ease-out both}
 <body>
 <script>if (/[?&]still\b/.test(location.search)) document.documentElement.classList.add('still');</script>
 <noscript><style>.wrap{opacity:1}.boot{display:none}</style></noscript>
-<div class="boot" id="boot" aria-hidden="true"><span>loading the society’s list…</span></div>
+<div class="boot" id="boot" aria-hidden="true"><span>loading the society’s website…</span></div>
 <div class="wrap">
   <!-- Signing in belongs at the top of a page, not three screens down inside one section of it:
        whoever signs in should see at once what being signed in gets them — the officers' desk if
@@ -573,9 +573,30 @@ html.ready .mo-fade{animation:fadeUp .9s var(--wait,0s) ease-out both}
     });
     if (me && state.member) $('go').textContent = 'Update what I wrote';
   }
-  function take(j, quiet) {
+  /* What the society last said, kept in this browser so a second visit is instant. It holds
+     nothing the page does not already show anybody: first names, years, roles, ticks, the
+     meeting dates. Never an address — the script does not send one. It is kept per signed-in
+     person, so a shared laptop cannot show one pupil the page another was looking at, and it is
+     thrown away after a day rather than telling somebody about a meeting that has long gone. */
+  var SEEN = 'vetsoc.seen', SEEN_FOR = 24 * 3600 * 1000;
+  function seenKey() { return SEEN + '.' + ((me && me.email) || 'anon'); }
+  function seenRead() {
+    try {
+      var r = JSON.parse(localStorage.getItem(seenKey()) || 'null');
+      return (r && r.at && Date.now() - r.at < SEEN_FOR && r.j) ? r.j : null;
+    } catch (e) { return null; }
+  }
+  function seenWrite(j) {
+    try { localStorage.setItem(seenKey(), JSON.stringify({ at: Date.now(), j: j })); } catch (e) {}
+  }
+  function seenForget() { try { localStorage.removeItem(seenKey()); } catch (e) {} }
+
+  function take(j, quiet, remembered) {
     if (!j || !j.ok) { if (!quiet) toast(j && j.why === 'not signed in' ? 'Your sign-in has run out. Sign in again.' : 'Could not reach the society\u2019s list just now.'); return false; }
-    var t = when(j.now); if (t) skew = t - Date.now();
+    /* the society's clock, but only from an answer that has just come back: a remembered one
+       carries the time it was remembered at, and counting down from that would be wrong by
+       however long ago that was */
+    if (!remembered) { var t = when(j.now); if (t) skew = t - Date.now(); seenWrite(j); }
     state = j; wasOver = null; paint(); return true;
   }
   function refresh() {
@@ -596,6 +617,7 @@ html.ready .mo-fade{animation:fadeUp .9s var(--wait,0s) ease-out both}
 
   var so = $('signOut');
   if (so) so.addEventListener('click', function () {
+    seenForget();
     me = null;
     try { localStorage.removeItem(KEY); } catch (e) {}
     try { if (window.google && google.accounts) google.accounts.id.disableAutoSelect(); } catch (e) {}
@@ -606,6 +628,11 @@ html.ready .mo-fade{animation:fadeUp .9s var(--wait,0s) ease-out both}
   });
 
   load(); paintMe();
+
+  /* Show what the society said last time at once, and check behind it. A return visit then costs
+     nothing to look at, and the page still ends up saying whatever is true now. */
+  var remembered = URL_ ? seenRead() : null;
+  if (remembered) { take(remembered, true, true); reveal(); }
   if (!URL_) {
     /* nothing to send to yet: no button, no form, and a plain word about why */
     $('gsi').hidden = true; $('form').hidden = true; $('whoIAm').hidden = true;
