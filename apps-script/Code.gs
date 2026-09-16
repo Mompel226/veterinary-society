@@ -12,8 +12,8 @@
                 (a date cell, with a time if there is one). Row 2 holds, under each date, what
                 the meeting is: "Suturing on practice pads · B12". Members start on row 3.
                 Tick the box under a meeting for everyone who came.
-                The Email column takes the whole address or just the first part of it: ghong31
-                and ghong31@pupils.nlcsjeju.kr are the same person. A bare name is a pupil's;
+                The Email column takes the whole address or just the first part of it: jbloggs
+                and jbloggs@pupils.nlcsjeju.kr are the same person. A bare name is a pupil's;
                 write a teacher's address out in full — no `pupils.` in it is what makes them
                 staff, and the website lists them apart from the members.
      Votes      when · email · idea            (a second vote on the same idea takes it back)
