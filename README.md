@@ -100,8 +100,12 @@ for. So the two jobs that are his are on the **website** instead: sign in as usu
 **the chair’s desk** appears under the meeting band, with *Add the meeting* and *Tell the class*.
 Nobody else is shown it, and showing it is not what makes it safe: the script checks who is signed
 in on every request. The website’s script runs under **your** authority, so nothing is ever asked
-of his account, and the announcement goes out under your name — which is the only way Google
-Classroom carries it anyway.
+of his account, and the announcement goes out under your name, because that script runs as you.
+
+If the chair is also a **teacher of the society's Google Classroom** — as this one is — nothing
+changes here, but *Update who is in the class* knows about it: Google will not have one person as
+both a teacher and a student of the same class, so he is listed under **in the class already, as
+teachers of it** and left alone, rather than being offered for invitation every time.
 
 **To say who the chair is:** menu ▸ **⚙️ Setting up, and checks ▸ Who is the chair?** It lists the
 register — name and year, with an arrow against whoever holds it now — and you type the number.

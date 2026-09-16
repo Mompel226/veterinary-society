@@ -160,6 +160,9 @@ function makeGlobals(now) {
       Courses: {
         get: (id) => ({ id, name: 'BioGuardians', alternateLink: 'https://classroom.google.com/c/ABC123' }),
         Announcements: { create: (res, course) => { G.__classroom.push({ res, course }); return { id: 'a' + G.__classroom.length }; } },
+        Teachers: {
+          list: (course, opts) => ({ teachers: G.__teachers.map(t => ({ userId: t.id, profile: { emailAddress: t.email, name: { fullName: t.name } } })) })
+        },
         Students: {
           list: (course, opts) => ({ students: G.__roster.map(r => ({ userId: r.id, profile: { emailAddress: r.email, name: { fullName: r.name } } })) }),
           remove: (course, userId) => { const i = G.__roster.findIndex(r => r.id === userId || r.email === userId);
@@ -178,7 +181,7 @@ function makeGlobals(now) {
     HtmlService: { createHtmlOutput: (html) => { const o = { html, setWidth: () => o, setHeight: () => o, setTitle: () => o }; return o; } },
     Logger: { log: () => {} },
     __answer: [], __webAppUrl: '', __webReply: null, __dialogs: [], __sidebars: [],
-    __roster: [], __invites: [], __removed: [], __cancelled: [], __inviteFails: {},
+    __roster: [], __teachers: [], __invites: [], __removed: [], __cancelled: [], __inviteFails: {},
     __noDialogs: false, __asked: [], __answerYesNo: [], __menus: []
   };
   /* a Date that answers "now" with the test's now, while every real date still passes
@@ -1023,6 +1026,33 @@ section('the panel and the announcement');
   const said = api.postNow();
   ok('with no class chosen it says so', said.indexOf('Not posted') === 0, said);
   eq('and nothing went out', G.__classroom.length, 0);
+}
+
+/* The chair of this society is a TEACHER of its Google Classroom, and a pupil on its register.
+   Google will not have one person as both teacher and student of a class, so if the sync cannot
+   see the teachers he looks like somebody who is not in the class at all — and every sync offers
+   to invite him again, and every invitation is refused. */
+section('a member who teaches the class');
+{
+  const { G, api, reg } = seeded();
+  G.__roster = [{ id: '11', email: 'hwyang29@pupils.nlcsjeju.kr', name: 'Hyunwoo Yang' }];
+  G.__teachers = [{ id: '99', email: 'jekim29@pupils.nlcsjeju.kr', name: 'Jieun Kim' }];
+  const plan = api.classroomPlan();
+  eq('the chair is not offered for invitation', plan.invite.map(p => p.email), []);
+  eq('he is shown as already in it, on the other side', plan.asTeacher.map(p => p.email), ['jekim29@pupils.nlcsjeju.kr']);
+  eq('and he is not taken out of it either', plan.remove.map(p => p.email), []);
+  eq('the one who really is a student stays counted', plan.already, 1);
+}
+{
+  /* and if Google will not list the teachers, the sync must still run — as it used to */
+  const { G, api } = seeded();
+  G.__roster = [{ id: '11', email: 'hwyang29@pupils.nlcsjeju.kr', name: 'Hyunwoo Yang' }];
+  const T = G.Classroom.Courses.Teachers;
+  G.Classroom.Courses.Teachers = { list: () => { throw new Error('no'); } };
+  const plan = api.classroomPlan();
+  ok('a plan is still made', !!plan);
+  eq('and it behaves as it did before', plan.invite.map(p => p.email), ['jekim29@pupils.nlcsjeju.kr']);
+  G.Classroom.Courses.Teachers = T;
 }
 
 section('keeping the Classroom class in step with the register');
