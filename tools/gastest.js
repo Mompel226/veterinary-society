@@ -966,6 +966,8 @@ section('the Role column');
 
   const mine = api._handle({ action: 'me', token: 'TOK-JIEUN' });
   eq('the chair is told they may', [mine.officer, mine.chair], [true, true]);
+  eq('and what they are, so the top of the page can say it', mine.role, 'Chair');
+  eq('a member with no office is told so', api._handle({ action: 'me', token: 'TOK-NEW' }).role, '');
   eq('an ordinary member is told they may not', api._handle({ action: 'me', token: 'TOK-NEW' }).officer, false);
 }
 {

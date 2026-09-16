@@ -34,6 +34,12 @@ for the ideas they want the society to take on this year. The page also shows **
 meeting is**, what it will be, and **who came to the ones before** — first names and year groups
 only. Addresses and full names stay in the society's own sheet, with the chair.
 
+**Signing in is at the top of the page**, beside the society's name — not down in the members
+section, which nobody scrolls to before they know what it is for. Signed in, the top line says who
+you are and what you are here: *Signed in as Henry Yuan · chair*. An officer sees the desk for
+running the society; somebody already on the register is told so rather than being asked to join
+again.
+
 **Want to join, or write for issue 2?** Email the chair, Henry Yuan: scyuan29@pupils.nlcsjeju.kr
 
 <details>
