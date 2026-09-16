@@ -218,11 +218,10 @@ Extra columns of your own may sit to the right of the meetings; the script ignor
 🔒 **What the website is shown, and what it is never shown.** The page is sent **preferred
 names, year groups and ticks** — nothing else. The script enforces that rather than trusting the
 sheet: a pupil's name that carries their own surname is cut back to the name they go by before it
-is sent, whatever the cell says, and the tidy-up puts the cell right too. Where two members go by
-the same name — two Henrys — they are told apart by their **real name in brackets**, taken from
-the Korean name column: *Henry (浩然)* and *Henry (思成)*. Never by the surname. A member whose
-name nobody shares is shown alone, so nothing extra is said about anybody who needs no telling
-apart, and a row with no Korean name falls back to the given name they do not go by.
+is sent, whatever the cell says, and the tidy-up puts the cell right too. Where **any two members go by the same name** — two Henrys, three Graces, officers or not — they
+are told apart by their real name in brackets, **written in letters**: *Henry (Haoran)* and
+*Henry (Sicheng)*. Never by the surname. A member whose name nobody shares is shown alone, so
+nothing extra is said about anybody who needs no telling apart.
 Email addresses, surnames and Korean names stay
 in the sheet: they are school information and they never leave it. That rule is checked by a
 test (`node tools/gastest.js`) every time the script is changed.
