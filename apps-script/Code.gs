@@ -54,7 +54,7 @@ var T_REG = 'Register', T_VOTES = 'Votes', T_SET = 'Settings', T_LOG = 'Log', T_
 /* Bumped whenever this file changes in a way the website can see. The menu always runs the code
    you have just saved; the WEBSITE runs the code of the deployed version, which is a different
    thing and a common way to be fooled. The check compares the two and says so. */
-var CODE_STAMP = '2026-09-16g · officers go on the teacher side of the class';
+var CODE_STAMP = '2026-09-16h · who runs it, in a window, and on the register';
 var HEAD = ['Korean name', 'English name', 'Surname', 'Preferred name', 'Email', 'Year', 'Role', 'Joined', 'Would like to do'];
 var NOTE = ['', '', '', 'shown on the site', 'never shown — the first part is enough', 'shown',
             'Chair or Secretary — they run it from the website', 'filled in for you', 'in their own words'];
@@ -111,7 +111,7 @@ function onOpen() {
     .addSubMenu(ui.createMenu('⚙️  Setting up, and checks')
       .addItem('Set the sheet up, or tidy it', 'setup')
       .addItem('Choose the Classroom class', 'chooseCourse')
-      .addItem('Who is the chair?', 'chooseChair')
+      .addItem('Who runs it \u2014 chair and secretary', 'officers')
       .addItem('Install the triggers (a teacher, once)', 'installTriggers')
       .addSeparator()
       .addItem('Check the website can read this', 'checkWebApp')
@@ -144,6 +144,7 @@ function panel(quiet) {
     '<button class="btn" data-do="postNow">📣  Tell the class</button>' +
     '<button class="btn quiet" data-do="checkWebApp">🩺  Check the website</button>' +
     '<button class="btn quiet" data-do="refreshWebsite">🔄  Refresh the website</button>' +
+    '<button class="btn quiet" data-do="officers">👥  Who runs it</button>' +
     '<button class="btn quiet" data-do="syncClassroom">🎒  Update the class</button>' +
     '<button class="btn quiet" data-do="setup">✨  Tidy the sheet</button>' +
     '</div><p class="note" id="s" style="margin-top:12px"></p>' +
@@ -1191,6 +1192,104 @@ function _setChair(picked) {
   _putSetting(S_CHAIR, picked.filter(function (p) { return p.onRegister === false; })
                              .map(function (p) { return p.email; }).join(', '));
   _flush();
+}
+
+/* Everybody who could be an officer: the society's own members, and the teachers of its
+   Google Classroom class who are not on the register yet — which is where a chair or a secretary
+   usually is first, because that is how they are given the class. */
+function _officerChoices() {
+  var out = [], seen = {};
+  _register(new Date()).members.forEach(function (p) {
+    if (p.staff || !p.email) return;
+    seen[p.email] = true;
+    out.push({ email: p.email, label: p.name + (p.year ? '  (' + p.year + ')' : ''), role: p.role || '' });
+  });
+  try {
+    var course = _courseOr(false);
+    if (course && _classroomReady(false)) {
+      _classTeachers(course).forEach(function (t) {
+        if (seen[t.email] || _isStaff(t.email)) return;
+        seen[t.email] = true;
+        out.push({ email: t.email, label: (t.name || t.email) + '  \u2014 teaches the class, not on the register yet', role: '' });
+      });
+    }
+  } catch (e) {}
+  return out;
+}
+
+/* Make these two the officers and nobody else. Anybody chosen who is not on the register is put
+   on it first \u2014 an officer who is not a member cannot be marked present, and being marked
+   present is most of what the register is for. Called from the window below and testable on its
+   own. */
+function setOfficers(chair, secretary) {
+  var sh = SpreadsheetApp.getActive().getSheetByName(T_REG);
+  if (!sh) return 'There is no Register tab yet. Menu \u25B8 Set the sheet up, or tidy it.';
+  chair = String(chair || '').trim() ? _email(chair) : '';
+  secretary = String(secretary || '').trim() ? _email(secretary) : '';
+  if (chair && !_schoolAccount(chair)) return 'That chair is not a school address.';
+  if (secretary && !_schoolAccount(secretary)) return 'That secretary is not a school address.';
+  if (chair && chair === secretary) return 'The chair and the secretary cannot be the same person.';
+
+  /* on the register first, so there is a row to write the role on and a box to tick */
+  var added = [];
+  [chair, secretary].forEach(function (e) {
+    if (!e || _rowOf(sh, C_EMAIL, e)) return;
+    var t = null;
+    try {
+      var c = _courseOr(false);
+      if (c && _classroomReady(false)) t = _classTeachers(c).filter(function (x) { return x.email === e; })[0];
+    } catch (err) {}
+    var shown = (t && t.name) || e.split('@')[0];
+    sh.appendRow(['', (t && t.given) || '', (t && t.family) || '', shown, e,
+                  _isStaff(e) ? 'Teacher' : '', '', new Date(), '']);
+    _dressRow(sh, sh.getLastRow());
+    added.push(shown);
+  });
+
+  /* exactly these two hold an office; anything else anybody wrote there is left as it is */
+  var names = {};
+  _register(new Date()).members.forEach(function (p) {
+    if (p.email && p.email === chair) { names.chair = p.name; if (p.role !== 'Chair') sh.getRange(p.row, C_ROLE).setValue('Chair'); }
+    else if (p.email && p.email === secretary) { names.secretary = p.name; if (p.role !== 'Secretary') sh.getRange(p.row, C_ROLE).setValue('Secretary'); }
+    else if (_officer(p.role)) sh.getRange(p.row, C_ROLE).setValue('');
+  });
+  _putSetting(S_CHAIR, '');            /* the register says it now, so nothing is said twice */
+  _years(sh);
+  _flush();
+
+  var said = [];
+  said.push('Chair: ' + (names.chair || (chair ? chair : 'nobody')));
+  said.push('Secretary: ' + (names.secretary || (secretary ? secretary : 'nobody')));
+  if (added.length) said.push(added.join(' and ') + ' put on the register, so they can be marked present.');
+  _log('Who runs it \u2014 ' + said.join(' \u00B7 '), _me());
+  return said.join('. ') + (added.length ? '' : '.');
+}
+
+/* The window Daniel asked for: pick the two, press Save. Falls back to the old prompt if no
+   drawn window will open on this machine. */
+function officers() {
+  var choices = _officerChoices();
+  var chair = '', secretary = '';
+  choices.forEach(function (c) { if (c.role === 'Chair') chair = c.email; if (c.role === 'Secretary') secretary = c.email; });
+  var opts = function (sel) {
+    return '<option value="">\u2014 nobody \u2014</option>' + choices.map(function (c) {
+      return '<option value="' + c.email + '"' + (c.email === sel ? ' selected' : '') + '>' + c.label + '</option>';
+    }).join('');
+  };
+  var body =
+    '<p class="note">The chair and the secretary get the desk on the society\u2019s website: they can add a meeting and tell the class from there, without needing any permission of their own. Anybody chosen here who is not on the register is put on it, so they can be marked present like everybody else.</p>' +
+    (choices.length ? '' : '<p class="warn">Nobody to choose from yet. Somebody has to put their name down on the website first, or be a teacher of the Classroom class.</p>') +
+    '<p class="eyebrow" style="margin-top:14px">Chair</p><select id="c" style="width:100%;box-sizing:border-box;padding:7px 8px;margin-top:4px;font:inherit">' + opts(chair) + '</select>' +
+    '<p class="eyebrow" style="margin-top:12px">Secretary</p><select id="t" style="width:100%;box-sizing:border-box;padding:7px 8px;margin-top:4px;font:inherit">' + opts(secretary) + '</select>' +
+    '<div class="row" style="margin-top:14px"><button class="btn" id="go">Save</button></div>' +
+    '<p class="note" id="s"></p>' +
+    '<script>document.getElementById("go").addEventListener("click",function(){' +
+    'var s=document.getElementById("s");s.textContent="Working\u2026";this.disabled=true;' +
+    'var b=this;google.script.run.withSuccessHandler(function(t){s.textContent=t;b.disabled=false})' +
+    '.withFailureHandler(function(e){s.textContent=e.message;b.disabled=false})' +
+    '.setOfficers(document.getElementById("c").value,document.getElementById("t").value)});<\/script>';
+  if (_say('Who runs the society', body, 420)) return;
+  chooseChair();                       /* no window here: the plain list, chair only */
 }
 
 function chooseChair() {

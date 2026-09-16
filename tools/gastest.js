@@ -783,6 +783,74 @@ section('the chair, from the website');
 /* Daniel wanted the role beside the year rather than instead of it: he needs to know a Y12
    secretary is in Y12. So it is its own column, with its own drop-down, and it decides who runs
    the society from the website. */
+/* Daniel: "I cannot place two students as either the secretary and the chair within the
+   register, so they do not appear in the register. And I want them to also be able to say I was
+   present here." So choosing an officer puts them on the register if they are not on it — an
+   officer who is not a member has no row, and no row means no box to tick. */
+section('who runs it');
+{
+  const { G, api, reg } = seeded();
+  G.__teachers = [{ id: 't4', email: 'scyuan29@pupils.nlcsjeju.kr', name: 'Henry Yuan' }];
+  const before = api._register(new Date()).members.length;
+
+  const said = api.setOfficers('scyuan29@pupils.nlcsjeju.kr', 'hwyang29@pupils.nlcsjeju.kr');
+  const after = api._register(new Date()).members;
+  eq('the chair was not a member, so he is one now', after.length, before + 1);
+
+  const henry = after.filter(p => p.email === 'scyuan29@pupils.nlcsjeju.kr')[0];
+  ok('he is on the register', !!henry);
+  eq('with the name the class knows him by', henry.name, 'Henry Yuan');
+  eq('as the chair', henry.role, 'Chair');
+  ok('and not as staff, because his address is a pupil one', !henry.staff);
+  ok('it says he was added', /register/.test(said), said);
+
+  eq('the secretary is the one who was already a member', after.filter(p => p.role === 'Secretary').map(p => p.email), ['hwyang29@pupils.nlcsjeju.kr']);
+  ok('both may run it from the website', api._isOfficer('scyuan29@pupils.nlcsjeju.kr') && api._isOfficer('hwyang29@pupils.nlcsjeju.kr'));
+
+  /* and now the point of it: a box to tick */
+  api._newMeeting(new Date(2026, 8, 24, 15, 40), 'One Health');
+  const col = reg.getLastColumn();
+  reg.getRange(henry.row, col).setValue(true);
+  const marked = api._list(null).members.filter(p => p.name === 'Henry Yuan')[0];
+  ok('and the website can show he was there', !!marked);
+}
+{
+  const { api, reg } = seeded();
+  api.setOfficers('jekim29@pupils.nlcsjeju.kr', '');
+  eq('a chair on their own', reg.getRange(3, C.ROLE).getValue(), 'Chair');
+
+  api.setOfficers('hwyang29@pupils.nlcsjeju.kr', '');
+  eq('handing over clears the old one', reg.getRange(3, C.ROLE).getValue(), '');
+  eq('and writes the new', reg.getRange(4, C.ROLE).getValue(), 'Chair');
+
+  api.setOfficers('', '');
+  eq('and nobody at all clears both', [reg.getRange(3, C.ROLE).getValue(), reg.getRange(4, C.ROLE).getValue()], ['', '']);
+}
+{
+  const { api, reg } = seeded();
+  reg.getRange(3, C.ROLE).setValue('Treasurer');
+  api.setOfficers('hwyang29@pupils.nlcsjeju.kr', '');
+  eq('a role this script does not run is left alone', reg.getRange(3, C.ROLE).getValue(), 'Treasurer');
+
+  eq('the same person twice is refused', api.setOfficers('a@pupils.nlcsjeju.kr', 'a@pupils.nlcsjeju.kr'),
+     'The chair and the secretary cannot be the same person.');
+  eq('and an address outside the school', api.setOfficers('someone@gmail.com', ''), 'That chair is not a school address.');
+}
+{
+  /* the window offers the class's teachers as well as the members, because that is where an
+     officer usually is before anybody puts them on the register */
+  const { G, api } = seeded();
+  G.__teachers = [
+    { id: 't4', email: 'scyuan29@pupils.nlcsjeju.kr', name: 'Henry Yuan' },
+    { id: 't1', email: 'dmompelriera@nlcsjeju.kr', name: 'Daniel Mompel Riera' }
+  ];
+  const who = api._officerChoices().map(c => c.email);
+  ok('the members are offered', who.indexOf('jekim29@pupils.nlcsjeju.kr') >= 0);
+  ok('and the pupil who teaches the class', who.indexOf('scyuan29@pupils.nlcsjeju.kr') >= 0);
+  ok('but not a member of staff, who is never an officer', who.indexOf('dmompelriera@nlcsjeju.kr') < 0);
+  ok('and nobody is offered twice', who.length === new Set(who).size);
+}
+
 section('the Role column');
 {
   const { api, reg } = seeded();
