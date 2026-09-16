@@ -129,6 +129,9 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .reg tbody th{display:flex;align-items:baseline;gap:7px;min-width:148px}
 .reg thead th:first-child{left:0;z-index:3;background:#132A2F;text-align:left}
 .reg .yr{font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--moss)}
+/* who runs it, said beside their name — the society's own officers, not the school's */
+.role{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--amber);border:1px solid rgba(245,166,35,.45);border-radius:999px;padding:1px 7px;margin-left:7px}
 .reg tbody tr:nth-child(odd) th,.reg tbody tr:nth-child(odd) td{background:rgba(7,15,21,.35)}
 .reg tbody tr:nth-child(odd) th{background:#11252A}
 .reg .tick{color:var(--green);font-size:15px} .reg .no{color:rgba(169,190,203,.3)}
@@ -194,15 +197,15 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
     <span class="next__plan" id="nextPlan"></span>
   </section>
 
-  <!-- The chair's desk. Only the chair and the teachers are shown it, and showing it is not what
-       makes it safe: the script checks on every request who is signed in, so the buttons do
-       nothing for anybody else. It is here, on the website, rather than in the spreadsheet's own
+  <!-- The officers' desk. Only the chair, the secretary and the teachers are shown it, and
+       showing it is not what makes it safe: the script checks on every request who is signed in,
+       so the buttons do nothing for anybody else. It is here, on the website, rather than in the spreadsheet's own
        menu, because a pupil account cannot authorise that script — the school lets only staff
        grant the Google Classroom permissions it asks for, and the authorisation is all or
        nothing. The web app runs under the teacher's authority, so the chair signs in and nothing
        is ever asked of his account. Settings ▸ Chair is who may see this. -->
   <section class="chair" id="chair" hidden>
-    <div class="band"><h2>The chair’s desk</h2><small>only you and the teachers see this</small></div>
+    <div class="band"><h2>Running the society</h2><small>the chair, the secretary and the teachers see this</small></div>
     <div class="chair__row">
       <form class="form" id="meetForm">
         <label>When is the next meeting?<input id="meetDate" type="datetime-local" required></label>
@@ -438,6 +441,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
       var came = 0; (p.present || []).forEach(function (x) { if (x) came++; });
       return '<tr><th scope="row">' + esc(p.name) +
         (p.year ? '<span class="yr' + (p.staff ? ' staff' : '') + '">' + esc(p.year) + '</span>' : '') +
+        (p.role ? '<span class="role">' + esc(p.role) + '</span>' : '') +
         (ms.length ? '<span class="tally" title="meetings come to">' + came + '/' + ms.length + '</span>' : '') + '</th>' +
         ms.map(function (m, i) {
           var yes = (p.present || [])[i];
@@ -465,9 +469,11 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
   }
 
   /* the desk appears only for whoever the script says may use it, and it says so on every
-     answer — so signing out, or a chair being changed in Settings, takes it away again */
+     answer — so signing out, or the Role column changing, takes it away again. `chair` is the
+     name the answer used first; either will do, so a page and a script deployed minutes apart
+     still agree. */
   function paintChair() {
-    var box = $('chair'); if (box) box.hidden = !(me && state.chair);
+    var box = $('chair'); if (box) box.hidden = !(me && (state.officer || state.chair));
   }
   function chairSay(t) { var m = $('chairMsg'); if (m) m.textContent = t || ''; }
 

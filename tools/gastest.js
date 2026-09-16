@@ -85,6 +85,25 @@ class Sheet {
   getMaxColumns() { return this.maxCols; }
   getMaxRows() { return this.maxRows; }
   insertColumnsAfter(after, n) { this.maxCols += n; return this; }
+  /* a real one: everything from `before` rightwards shifts a column, values, formats, widths and
+     all, because that is what the Role migration relies on and a stub would prove nothing */
+  insertColumnBefore(before) {
+    const lastC = this.getLastColumn(), lastR = this.getLastRow();
+    for (let c = lastC; c >= before; c--) {
+      for (let r = 1; r <= lastR; r++) {
+        const v = this.cells.get(this._k(r, c));
+        if (v === undefined) this.cells.delete(this._k(r, c + 1)); else this.cells.set(this._k(r, c + 1), v);
+        this.cells.delete(this._k(r, c));
+        const f = this.formats[r + ',' + c];
+        if (f !== undefined) { this.formats[r + ',' + (c + 1)] = f; delete this.formats[r + ',' + c]; }
+        const lk = this.look[r + ',' + c];
+        if (lk !== undefined) { this.look[r + ',' + (c + 1)] = lk; delete this.look[r + ',' + c]; }
+      }
+      if (this.widths[c] !== undefined) { this.widths[c + 1] = this.widths[c]; delete this.widths[c]; }
+    }
+    this.maxCols += 1;
+    return this;
+  }
   appendRow(vals) { const r = this.getLastRow() + 1; vals.forEach((v, i) => this._set(r, i + 1, v)); return this; }
   deleteRow(r) {
     const last = this.getLastRow(), lastC = this.getLastColumn();
@@ -222,6 +241,11 @@ function eq(what, got, want) { ok(what, JSON.stringify(got) === JSON.stringify(w
 function section(t) { console.log('\n' + t); }
 
 /* a society with a register, three meetings (two past, one to come) and two members */
+/* The Register's columns by name, the same as Code.gs holds them. The tests must not count on
+   their fingers either: adding Role moved five of these, and a number left behind in here would
+   have quietly gone on passing while asserting the wrong cell. */
+const C = { KOREAN: 1, ENGLISH: 2, SURNAME: 3, SHOWN: 4, EMAIL: 5, YEAR: 6, ROLE: 7, JOINED: 8, NOTE: 9, MEET: 10 };
+
 function seeded(now = new Date(2026, 8, 14, 9, 0)) {
   const { G, api } = load(now);
   api.setup();
@@ -229,14 +253,14 @@ function seeded(now = new Date(2026, 8, 14, 9, 0)) {
   const st = G.__ss.getSheetByName('Settings');
   st.getRange(api._settingRow(st, 'Google Client ID'), 2).setValue('CID');
   st.getRange(api._settingRow(st, 'Classroom course ID'), 2).setValue('COURSE1');
-  reg.appendRow(['지은', 'Jieun', 'Kim', 'Jieun', 'jekim29@pupils.nlcsjeju.kr', 'Y11', new Date(2026, 8, 1), 'suturing']);
-  reg.appendRow(['현우', 'Hyunwoo', 'Yang', 'Hyunwoo', 'hwyang29@pupils.nlcsjeju.kr', 'Year 11', new Date(2026, 8, 1), '']);
+  reg.appendRow(['지은', 'Jieun', 'Kim', 'Jieun', 'jekim29@pupils.nlcsjeju.kr', 'Y11', '', new Date(2026, 8, 1), 'suturing']);
+  reg.appendRow(['현우', 'Hyunwoo', 'Yang', 'Hyunwoo', 'hwyang29@pupils.nlcsjeju.kr', 'Year 11', '', new Date(2026, 8, 1), '']);
   api._newMeeting(new Date(2026, 8, 3, 15, 40), 'Clinical case: the lame horse · B12');
   api._newMeeting(new Date(2026, 8, 10, 15, 40), 'Suturing on practice pads · B12');
   api._newMeeting(new Date(2026, 8, 17, 15, 40), 'Taking blood from the mould · B12');
-  /* who came: Jieun both, Hyunwoo the second only, in the two past columns (I and J) */
-  reg.getRange(3, 9).setValue(true); reg.getRange(3, 10).setValue('✓');
-  reg.getRange(4, 9).setValue(false); reg.getRange(4, 10).setValue('y');
+  /* who came: Jieun both, Hyunwoo the second only, in the two past columns (J and K) */
+  reg.getRange(3, 10).setValue(true); reg.getRange(3, 11).setValue('✓');
+  reg.getRange(4, 10).setValue(false); reg.getRange(4, 11).setValue('y');
   G.__tokens['TOK-JIEUN'] = { aud: 'CID', exp: Math.floor(now.getTime() / 1000) + 3600, email_verified: 'true', email: 'jekim29@pupils.nlcsjeju.kr', name: 'Jieun Kim', given_name: 'Jieun', family_name: 'Kim' };
   G.__tokens['TOK-NEW'] = { aud: 'CID', exp: Math.floor(now.getTime() / 1000) + 3600, email_verified: 'true', email: 'sy4kim31@pupils.nlcsjeju.kr', name: 'Sungyoon Kim', given_name: 'Sungyoon', family_name: 'Kim' };
   G.__tokens['TOK-TEACHER'] = { aud: 'CID', exp: Math.floor(now.getTime() / 1000) + 3600, email_verified: 'true', email: 'dmompelriera@nlcsjeju.kr', name: 'Daniel Mompel Riera', given_name: 'Daniel', family_name: 'Mompel Riera' };
@@ -246,13 +270,67 @@ function seeded(now = new Date(2026, 8, 14, 9, 0)) {
   return { G, api, reg, st };
 }
 
+/* Daniel's register was built before Role existed. Inserting the column moves Joined, the note
+   and every meeting column one to the right; if anything were left behind, a meeting column would
+   be read as somebody's note and a whole term of ticks would vanish. */
+section('a register built before Role');
+{
+  const { G, api } = load();
+  const ss = G.__ss;
+  const reg = ss.insertSheet('Register', 0);
+  const OLD = ['Korean name', 'English name', 'Surname', 'Preferred name', 'Email', 'Year', 'Joined', 'Would like to do'];
+  reg.appendRow(OLD);
+  reg.appendRow(['', '', '', 'shown on the site', 'never shown', 'shown', 'filled in for you', 'in their own words']);
+  reg.appendRow(['지은', 'Jieun', 'Kim', 'Jieun', 'jekim29@pupils.nlcsjeju.kr', 'Y11', new Date(2026, 8, 1), 'suturing']);
+  reg.appendRow(['현우', 'Hyunwoo', 'Yang', 'Hyunwoo', 'hwyang29@pupils.nlcsjeju.kr', 'Y11', new Date(2026, 8, 1), 'blood']);
+  /* two meetings, in the old first meeting column (I) and the one after it */
+  reg.getRange(1, 9).setValue(new Date(2026, 8, 3, 15, 40));
+  reg.getRange(2, 9).setValue('Clinical case: the lame horse');
+  reg.getRange(1, 10).setValue(new Date(2026, 8, 10, 15, 40));
+  reg.getRange(2, 10).setValue('Suturing');
+  reg.getRange(3, 9).setValue(true);  reg.getRange(3, 10).setValue(true);
+  reg.getRange(4, 9).setValue(false); reg.getRange(4, 10).setValue(true);
+
+  /* Until it is migrated, the new code reads the wrong columns of the old sheet — it finds one
+     meeting where there are two, because what used to be the first is now where the note is.
+     That is exactly why the migration has to run before anything reads a row. */
+  /* the new code reads the old shape correctly even before the tidy-up, because the website may
+     well be redeployed first — the meetings are simply one column to the left */
+  const before = api._register(new Date(2026, 8, 14, 9, 0));
+  eq('unmigrated, both meetings are still found', before.meetings.length, 2);
+  eq('unmigrated, Jieun came to both', before.members[0].marks, [true, true]);
+  eq('unmigrated, Hyunwoo to the second only', before.members[1].marks, [false, true]);
+  eq('unmigrated, nobody has a role, because there is no column for one', before.members.map(p => p.role), ['', '']);
+  eq('unmigrated, what they wrote is still theirs', api._list(null).members.length, 2);
+
+  api.setup();
+
+  eq('the heading gains Role in the right place', reg.getRange(1, 1, 1, 9).getValues()[0],
+     ['Korean name', 'English name', 'Surname', 'Preferred name', 'Email', 'Year', 'Role', 'Joined', 'Would like to do']);
+  ok('the Role column is empty for everybody', !String(reg.getRange(3, C.ROLE).getValue()).trim() && !String(reg.getRange(4, C.ROLE).getValue()).trim());
+  ok('the day they joined moved with them', reg.getRange(3, C.JOINED).getValue() instanceof Date);
+  eq('and so did what they wrote', [reg.getRange(3, C.NOTE).getValue(), reg.getRange(4, C.NOTE).getValue()], ['suturing', 'blood']);
+  eq('the meetings moved one to the right', api._asDate(reg.getRange(1, C.MEET).getValue()).getDate(), 3);
+  eq('with their plans', reg.getRange(2, C.MEET).getValue(), 'Clinical case: the lame horse');
+
+  const after = api._register(new Date(2026, 8, 14, 9, 0));
+  eq('still two meetings, not three', after.meetings.length, 2);
+  eq('Jieun still came to both', after.members[0].marks, [true, true]);
+  eq('Hyunwoo still to the second only', after.members[1].marks, [false, true]);
+  eq('and nobody lost their year', [after.members[0].year, after.members[1].year], ['Y11', 'Y11']);
+
+  api.setup();
+  eq('running it again inserts nothing', reg.getRange(1, 1, 1, 9).getValues()[0][C.ROLE - 1], 'Role');
+  eq('and the meetings stay where they are', api._register(new Date(2026, 8, 14, 9, 0)).meetings.length, 2);
+}
+
 section('the sheet is set up');
 {
   const { G, api } = load();
   api.setup();
   const reg = G.__ss.getSheetByName('Register');
-  eq('headings', reg.getRange(1, 1, 1, 8).getValues()[0],
-     ['Korean name', 'English name', 'Surname', 'Preferred name', 'Email', 'Year', 'Joined', 'Would like to do']);
+  eq('headings', reg.getRange(1, 1, 1, 9).getValues()[0],
+     ['Korean name', 'English name', 'Surname', 'Preferred name', 'Email', 'Year', 'Role', 'Joined', 'Would like to do']);
   ok('the email column is marked as never shown', String(reg.getRange(2, 5).getValue()).indexOf('never shown') === 0);
   ok('Votes, Settings and Log exist', !!G.__ss.getSheetByName('Votes') && !!G.__ss.getSheetByName('Settings') && !!G.__ss.getSheetByName('Log'));
   api.setup();      /* twice must not double anything */
@@ -326,16 +404,16 @@ section('the sheet is dressed');
   eq('the headings are the society’s ink', reg.look_of(1, 1).bg, '#12262B');
   eq('written in cream', reg.look_of(1, 4).colour, '#F3E7C9');
   eq('the note under them is quiet', reg.look_of(2, 5).style, 'italic');
-  eq('a meeting date is centred over its ticks', reg.look_of(1, 9).align, 'center');
+  eq('a meeting date is centred over its ticks', reg.look_of(1, C.MEET).align, 'center');
   eq('the preferred name is the one that stands out', reg.look_of(3, 4).weight, 'bold');
   eq('the address is written small and grey', reg.look_of(3, 5).size, 9.5);
-  eq('the joining date reads as a date', reg.formats['3,7'], 'd mmm yyyy');
+  eq('the joining date reads as a date', reg.formats['3,' + C.JOINED], 'd mmm yyyy');
   ok('the name columns stay in view while you tick', reg.frozen[0] === 2 && reg.frozen[1] === 4);
   ok('there is room for a year of meetings', reg.getMaxColumns() >= 48);
 
   eq('one rule paints the ticks green', reg.cf.length, 1);
   eq('and that is the colour', reg.cf[0].bg, '#DCF5E4');
-  ok('it starts at the first tick box', reg.cf[0].formula === '=I3=TRUE', reg.cf[0].formula);
+  ok('it starts at the first tick box', reg.cf[0].formula === '=J3=TRUE', reg.cf[0].formula);
   ok('and covers every meeting column', reg.cf[0].ranges[0].nc >= 40);
   eq('but only the rows with somebody in them', reg.cf[0].ranges[0].nr, 2);
 
@@ -366,8 +444,8 @@ section('the sheet is dressed');
   api._handle({ action: 'join', token: 'TOK-NEW', year: 'Year 9', note: 'suturing' });
   const row = reg.getLastRow();
   eq('a student who signs up gets the same look', reg.look_of(row, 4).weight, 'bold');
-  eq('and a tick box in every meeting', [reg.getRange(row, 9).getValue(), reg.getRange(row, 10).getValue(), reg.getRange(row, 11).getValue()], [false, false, false]);
-  eq('with the date they joined formatted', reg.formats[row + ',7'], 'd mmm yyyy');
+  eq('and a tick box in every meeting', [reg.getRange(row, C.MEET).getValue(), reg.getRange(row, C.MEET + 1).getValue(), reg.getRange(row, C.MEET + 2).getValue()], [false, false, false]);
+  eq('with the date they joined formatted', reg.formats[row + ',' + C.JOINED], 'd mmm yyyy');
 }
 
 section('setting up does not stop and wait');
@@ -408,9 +486,9 @@ section('a row written by hand, and the day somebody joined');
   api.onRegisterEdit({ range: reg.getRange(row, 4) });
   eq('the row dresses itself', reg.look_of(row, 4).weight, 'bold');
   ok('it is banded like its neighbours', !!reg.look_of(row, 1).bg);
-  ok('the day they arrived is filled in', reg.getRange(row, 7).getValue() instanceof Date);
-  eq('and reads as a date', reg.formats[row + ',7'], 'd mmm yyyy');
-  eq('it gets a tick box for every meeting', reg.getRange(row, 9).getValue(), false);
+  ok('the day they arrived is filled in', reg.getRange(row, C.JOINED).getValue() instanceof Date);
+  eq('and reads as a date', reg.formats[row + ',' + C.JOINED], 'd mmm yyyy');
+  eq('it gets a tick box for every meeting', reg.getRange(row, C.MEET).getValue(), false);
   const v = reg.validations.filter(x => x.c === 6);
   eq('and the year list now reaches it', v[v.length - 1].r + v[v.length - 1].nr - 1 >= row, true);
 
@@ -434,7 +512,7 @@ section('a row written by hand, and the day somebody joined');
   reg.appendRow(['', 'Sarah', 'Jiang', 'Sarah', 'mjiang30@pupils.nlcsjeju.kr', 'Y10', '', '']);
   reg.appendRow(['', 'Anna', 'Wise', 'Anna', 'anwise28@pupils.nlcsjeju.kr', 'Y12', '', '']);
   api.setup();
-  ok('setup fills in the blanks', reg.getRange(3, 7).getValue() instanceof Date && reg.getRange(4, 7).getValue() instanceof Date);
+  ok('setup fills in the blanks', reg.getRange(3, C.JOINED).getValue() instanceof Date && reg.getRange(4, C.JOINED).getValue() instanceof Date);
   const was = reg.getRange(3, 7).getValue();
   api.setup();
   eq('and does not move a date it has already written', reg.getRange(3, 7).getValue(), was);
@@ -492,8 +570,8 @@ section('what the website is told — and what it is not');
   ok('no email address anywhere in the answer', !/@/.test(text), text.slice(0, 400));
   ok('no surname', !/Kim|Yang/.test(text.replace(/"name":"[^"]*"/g, '')) && !/"name":"[^"]*Kim"/.test(text), text.slice(0, 400));
   ok('no Korean name', !/[가-힣]/.test(text));
-  eq('members are a first name, a year, whether they are staff, and ticks',
-     Object.keys(out.members[0]).sort(), ['name', 'present', 'staff', 'year']);
+  eq('members are a first name, a year, a role, whether they are staff, and ticks',
+     Object.keys(out.members[0]).sort(), ['name', 'present', 'role', 'staff', 'year']);
   eq('the first member', [out.members[0].name, out.members[0].year], ['Jieun', 'Y11']);
   eq('the next meeting is the one to come', out.next.date, '2026-09-17T15:40');
   eq('its plan travels with it', out.next.plan, 'Taking blood from the mould · B12');
@@ -538,12 +616,12 @@ section('a student signs in');
   const again = api._handle({ action: 'join', token: 'TOK-NEW', year: 'Year 10', note: 'or write for issue 2' });
   eq('signing up twice does not add a second row', reg.getLastRow(), 5);
   eq('but the year is theirs to correct', reg.getRange(5, 6).getValue(), 'Y10');
-  eq('and so is what they wrote', reg.getRange(5, 8).getValue(), 'or write for issue 2');
+  eq('and so is what they wrote', reg.getRange(5, C.NOTE).getValue(), 'or write for issue 2');
 
   const known = api._handle({ action: 'join', token: 'TOK-JIEUN', year: 'Year 11', note: '' });
   eq('a member already on the register is not duplicated', reg.getLastRow(), 5);
   eq('the chair’s spelling of their name is left alone', reg.getRange(3, 4).getValue(), 'Jieun');
-  ok('and their ticks are untouched', reg.getRange(3, 9).getValue() === true);
+  ok('and their ticks are untouched', reg.getRange(3, C.MEET).getValue() === true);
 }
 
 section('an address written as just its first part');
@@ -555,7 +633,7 @@ section('an address written as just its first part');
   const out = api._handle({ action: 'join', token: 'TOK-NEW', year: 'Year 9', note: 'suturing' });
   eq('they are recognised, not added twice', reg.getLastRow(), 5);
   eq('the chair’s own spelling is left in the cell', reg.getRange(5, 5).getValue(), 'sy4kim31');
-  eq('what they wrote reached their row', reg.getRange(5, 8).getValue(), 'suturing');
+  eq('what they wrote reached their row', reg.getRange(5, C.NOTE).getValue(), 'suturing');
   eq('and the page counts them as a member', out.member, true);
   ok('still no address on the way out', !/@/.test(JSON.stringify(out)));
 }
@@ -622,7 +700,7 @@ section('teachers');
     email: 'awise@nlcsjeju.kr', name: 'Anna Wise', given_name: 'Anna', family_name: 'Wise' };
   api._handle({ action: 'join', token: 'TOK-WISE', year: 'Year 9', title: 'Dr', note: 'happy to help' });
   eq('a name the chair wrote is never rewritten', reg.getRange(5, 4).getValue(), 'Ms Wise');
-  eq('but what they say they would like to do is theirs', reg.getRange(5, 8).getValue(), 'happy to help');
+  eq('but what they say they would like to do is theirs', reg.getRange(5, C.NOTE).getValue(), 'happy to help');
 }
 
 section('who may write');
@@ -653,18 +731,18 @@ section('the chair, from the website');
   const st = G.__ss.getSheetByName('Settings');
   st.getRange(api._settingRow(st, 'Chair'), 2).setValue('jekim29@pupils.nlcsjeju.kr');
 
-  ok('a teacher is a chair without being written down', api._isChair('dmompelriera@nlcsjeju.kr'));
-  ok('the chair named in Settings is one', api._isChair('jekim29@pupils.nlcsjeju.kr'));
-  ok('and the capitals do not matter', api._isChair('JEKim29@Pupils.NLCSJeju.kr'));
-  ok('any other pupil is not', !api._isChair('sy4kim31@pupils.nlcsjeju.kr'));
-  ok('and nobody is, when no chair is named', !load().api._isChair('jekim29@pupils.nlcsjeju.kr'));
+  ok('a teacher is a chair without being written down', api._isOfficer('dmompelriera@nlcsjeju.kr'));
+  ok('the chair named in Settings is one', api._isOfficer('jekim29@pupils.nlcsjeju.kr'));
+  ok('and the capitals do not matter', api._isOfficer('JEKim29@Pupils.NLCSJeju.kr'));
+  ok('any other pupil is not', !api._isOfficer('sy4kim31@pupils.nlcsjeju.kr'));
+  ok('and nobody is, when no chair is named', !load().api._isOfficer('jekim29@pupils.nlcsjeju.kr'));
 
   eq('the page is told who may', api._handle({ action: 'me', token: 'TOK-JIEUN' }).chair, true);
   eq('and who may not', api._handle({ action: 'me', token: 'TOK-NEW' }).chair, false);
 
   const before = G.__ss.getSheetByName('Register').getLastColumn();
   const no = api._handle({ action: 'meeting', token: 'TOK-NEW', date: '2026-10-01T15:40', plan: 'Mine' });
-  eq('an ordinary member cannot add a meeting', no.why, 'only the chair or a teacher may do that');
+  eq('an ordinary member cannot add a meeting', no.why, 'only the chair, the secretary or a teacher may do that');
   eq('and nothing was written', G.__ss.getSheetByName('Register').getLastColumn(), before);
 
   const yes = api._handle({ action: 'meeting', token: 'TOK-JIEUN', date: '2026-10-01T15:40', plan: 'One Health' });
@@ -683,7 +761,7 @@ section('the chair, from the website');
   st.getRange(api._settingRow(st, 'Chair'), 2).setValue('jekim29@pupils.nlcsjeju.kr');
   st.getRange(api._settingRow(st, 'Classroom course ID'), 2).setValue('COURSE-1');
 
-  eq('an ordinary member cannot tell the class', api._handle({ action: 'tellClass', token: 'TOK-NEW' }).why, 'only the chair or a teacher may do that');
+  eq('an ordinary member cannot tell the class', api._handle({ action: 'tellClass', token: 'TOK-NEW' }).why, 'only the chair, the secretary or a teacher may do that');
   eq('nothing was posted', G.__classroom.length, 0);
 
   const out = api._handle({ action: 'tellClass', token: 'TOK-JIEUN' });
@@ -701,28 +779,87 @@ section('the chair, from the website');
   eq('and nothing was posted', G.__classroom.length, 0);
 }
 
+/* Daniel wanted the role beside the year rather than instead of it: he needs to know a Y12
+   secretary is in Y12. So it is its own column, with its own drop-down, and it decides who runs
+   the society from the website. */
+section('the Role column');
+{
+  const { api, reg } = seeded();
+  eq('nobody has a role to begin with', api._register(new Date()).members.map(p => p.role), ['', '']);
+  ok('and nobody but a teacher may run it', !api._isOfficer('jekim29@pupils.nlcsjeju.kr'));
+
+  reg.getRange(3, C.ROLE).setValue('Chair');
+  ok('the chair may', api._isOfficer('jekim29@pupils.nlcsjeju.kr'));
+  ok('the other one still may not', !api._isOfficer('hwyang29@pupils.nlcsjeju.kr'));
+  eq('and their year is untouched by it', api._register(new Date()).members[0].year, 'Y11');
+
+  reg.getRange(4, C.ROLE).setValue('Secretary');
+  ok('the secretary may too', api._isOfficer('hwyang29@pupils.nlcsjeju.kr'));
+
+  reg.getRange(4, C.ROLE).setValue('Treasurer');
+  ok('a role this script does not know is kept', api._register(new Date()).members[1].role, 'Treasurer');
+  ok('but it carries no powers', !api._isOfficer('hwyang29@pupils.nlcsjeju.kr'));
+
+  reg.getRange(4, C.ROLE).setValue('co-chair');
+  eq('the word inside is what counts', api._register(new Date()).members[1].role, 'Chair');
+  ok('so a co-chair may run it', api._isOfficer('hwyang29@pupils.nlcsjeju.kr'));
+
+  reg.getRange(4, C.ROLE).setValue('secretery');
+  eq('spelt however', api._register(new Date()).members[1].role, 'Secretary');
+}
+{
+  const { api, reg } = seeded();
+  reg.getRange(3, C.ROLE).setValue('Chair');
+  reg.getRange(4, C.ROLE).setValue('Secretary');
+  const out = api._list(null);
+  eq('the website is told the roles', out.members.map(p => p.role), ['Chair', 'Secretary']);
+  ok('and still no address anywhere in it', !/@/.test(JSON.stringify(out)));
+
+  const mine = api._handle({ action: 'me', token: 'TOK-JIEUN' });
+  eq('the chair is told they may', [mine.officer, mine.chair], [true, true]);
+  eq('an ordinary member is told they may not', api._handle({ action: 'me', token: 'TOK-NEW' }).officer, false);
+}
+{
+  /* clearing the chair must clear the cell, not just the Settings row it used to live in */
+  const { G, api, reg } = seeded();
+  G.__answer = ['1'];
+  api.chooseChair();
+  eq('named', reg.getRange(3, C.ROLE).getValue(), 'Chair');
+  G.__answer = [''];
+  api.chooseChair();
+  eq('and cleared off their row as well', reg.getRange(3, C.ROLE).getValue(), '');
+  ok('so they cannot run it any more', !api._isOfficer('jekim29@pupils.nlcsjeju.kr'));
+
+  reg.getRange(4, C.ROLE).setValue('Secretary');
+  G.__answer = ['1'];
+  api.chooseChair();
+  eq('and naming a chair leaves the secretary alone', reg.getRange(4, C.ROLE).getValue(), 'Secretary');
+}
+
 section('picking the chair off the register');
 {
-  const { G, api } = seeded();
+  const { G, api, reg } = seeded();
   G.__answer = ['2'];
   api.chooseChair();
   const st = G.__ss.getSheetByName('Settings');
-  eq('the second member is the chair now', st.getRange(api._settingRow(st, 'Chair'), 2).getValue(), 'hwyang29@pupils.nlcsjeju.kr');
-  ok('and the website will let them in', api._isChair('hwyang29@pupils.nlcsjeju.kr'));
-  ok('while the other one is back out', !api._isChair('jekim29@pupils.nlcsjeju.kr'));
+  /* it is written on their row, where you can see it — not tucked away in Settings */
+  eq('the second member is the chair now', reg.getRange(4, C.ROLE).getValue(), 'Chair');
+  eq('and Settings holds nobody, because they have a row', st.getRange(api._settingRow(st, 'Chair'), 2).getValue(), '');
+  ok('and the website will let them in', api._isOfficer('hwyang29@pupils.nlcsjeju.kr'));
+  ok('while the other one is back out', !api._isOfficer('jekim29@pupils.nlcsjeju.kr'));
 
   G.__answer = ['1, 2'];
   api.chooseChair();
-  ok('a shared chair is two of them', api._isChair('jekim29@pupils.nlcsjeju.kr') && api._isChair('hwyang29@pupils.nlcsjeju.kr'));
+  ok('a shared chair is two of them', api._isOfficer('jekim29@pupils.nlcsjeju.kr') && api._isOfficer('hwyang29@pupils.nlcsjeju.kr'));
 
   G.__answer = ['9'];
   api.chooseChair();
-  ok('a number that is not on the list changes nothing', api._isChair('jekim29@pupils.nlcsjeju.kr'));
+  ok('a number that is not on the list changes nothing', api._isOfficer('jekim29@pupils.nlcsjeju.kr'));
 
   G.__answer = [''];
   api.chooseChair();
-  ok('and empty means no chair at all', !api._isChair('jekim29@pupils.nlcsjeju.kr'));
-  ok('but a teacher is still a teacher', api._isChair('dmompelriera@nlcsjeju.kr'));
+  ok('and empty means no chair at all', !api._isOfficer('jekim29@pupils.nlcsjeju.kr'));
+  ok('but a teacher is still a teacher', api._isOfficer('dmompelriera@nlcsjeju.kr'));
 }
 {
   /* The chair had not put his name down, so he was on no list and could not be named — and a
@@ -730,25 +867,25 @@ section('picking the chair off the register');
   const { G, api } = seeded();
   G.__answer = ['scyuan29@pupils.nlcsjeju.kr'];
   api.chooseChair();
-  ok('an address does as well as a number', api._isChair('scyuan29@pupils.nlcsjeju.kr'));
+  ok('an address does as well as a number', api._isOfficer('scyuan29@pupils.nlcsjeju.kr'));
 
   G.__answer = ['scyuan29'];
   api.chooseChair();
-  ok('and so does the first part of one', api._isChair('scyuan29@pupils.nlcsjeju.kr'));
+  ok('and so does the first part of one', api._isOfficer('scyuan29@pupils.nlcsjeju.kr'));
 
   G.__answer = ['1, scyuan29@pupils.nlcsjeju.kr'];
   api.chooseChair();
-  ok('a number and an address together', api._isChair('jekim29@pupils.nlcsjeju.kr') && api._isChair('scyuan29@pupils.nlcsjeju.kr'));
+  ok('a number and an address together', api._isOfficer('jekim29@pupils.nlcsjeju.kr') && api._isOfficer('scyuan29@pupils.nlcsjeju.kr'));
 
   G.__answer = ['someone@gmail.com'];
   api.chooseChair();
-  ok('but not an address outside the school', !api._isChair('someone@gmail.com'));
-  ok('and that leaves the chair as it was', api._isChair('jekim29@pupils.nlcsjeju.kr'));
+  ok('but not an address outside the school', !api._isOfficer('someone@gmail.com'));
+  ok('and that leaves the chair as it was', api._isOfficer('jekim29@pupils.nlcsjeju.kr'));
 
   /* a number off the end of the list is a slip, not somebody called "20" */
   G.__answer = ['20'];
   api.chooseChair();
-  ok('a number nobody is stays a mistake', !api._isChair('20@pupils.nlcsjeju.kr'));
+  ok('a number nobody is stays a mistake', !api._isOfficer('20@pupils.nlcsjeju.kr'));
 }
 
 section('votes');

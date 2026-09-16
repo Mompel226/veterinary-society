@@ -54,11 +54,19 @@ var T_REG = 'Register', T_VOTES = 'Votes', T_SET = 'Settings', T_LOG = 'Log', T_
 /* Bumped whenever this file changes in a way the website can see. The menu always runs the code
    you have just saved; the WEBSITE runs the code of the deployed version, which is a different
    thing and a common way to be fooled. The check compares the two and says so. */
-var CODE_STAMP = '2026-09-16d · the chair can be named before he has signed up';
-var HEAD = ['Korean name', 'English name', 'Surname', 'Preferred name', 'Email', 'Year', 'Joined', 'Would like to do'];
+var CODE_STAMP = '2026-09-16e · the register says who runs the society';
+var HEAD = ['Korean name', 'English name', 'Surname', 'Preferred name', 'Email', 'Year', 'Role', 'Joined', 'Would like to do'];
 var NOTE = ['', '', '', 'shown on the site', 'never shown — the first part is enough', 'shown',
-            'filled in for you', 'in their own words'];
-var MEET_COL = HEAD.length + 1;       /* I: the first meeting column */
+            'Chair or Secretary — they run it from the website', 'filled in for you', 'in their own words'];
+/* Every column of the Register by name. Nothing may count them out on its fingers: adding Role
+   moved Joined, the note and every meeting column one to the right, and a number left behind
+   would have written a date into somebody's year or a tick into their note. */
+var C_KOREAN = 1, C_ENGLISH = 2, C_SURNAME = 3, C_SHOWN = 4, C_EMAIL = 5,
+    C_YEAR = 6, C_ROLE = 7, C_JOINED = 8, C_NOTE = 9;
+var MEET_COL = HEAD.length + 1;       /* J: the first meeting column */
+/* What a member may be, beyond a member. An officer runs the society from the website: the
+   chair's desk is theirs, so they can add a meeting and tell the class. Blank is the usual. */
+var ROLES = ['', 'Chair', 'Secretary'];
 /* How long a meeting lasts, when its column carries a time. It is what tells the site the
    difference between a meeting that has not happened yet, one that is happening now, and one
    that is over and whose ticks belong in the register. A column with a date but no time is a
@@ -197,10 +205,30 @@ function postPending() {
 /* Setting up and tidying up are the same job: make sure every tab is there and every heading is
    right, fill in what the sheet can know for itself, and put the look back. It changes nothing
    anybody has written, so it is safe to run whenever something looks wrong. */
+/* A register built before Role has its Joined column where Role goes now. One column inserted
+   there moves Joined, the note and EVERY MEETING COLUMN one to the right, ticks and all, and
+   Google Sheets carries the values, the formats, the tick boxes and the widths with them. It has
+   to happen before anything reads a row, or a meeting column would be read as somebody's note.
+   Done once: afterwards the heading already says Role and this does nothing. */
+function _migrateRole(sh) {
+  if (!sh || sh.getLastRow() < 1) return false;
+  var span = Math.min(Math.max(sh.getLastColumn(), 1), HEAD.length);
+  var head = sh.getRange(1, 1, 1, span).getValues()[0].map(function (v) { return String(v || '').trim(); });
+  if (head[C_ROLE - 1] === 'Role') return false;         /* already has it */
+  if (head[C_ROLE - 1] !== 'Joined') return false;       /* not the old shape — leave it alone */
+  sh.insertColumnBefore(C_ROLE);
+  sh.getRange(1, C_ROLE).setValue(HEAD[C_ROLE - 1]);
+  sh.getRange(2, C_ROLE).setValue(NOTE[C_ROLE - 1]);
+  _log('The register gained its Role column; the meetings moved one to the right', _me());
+  return true;
+}
+
 function setup() {
   var ss = SpreadsheetApp.getActive();
   var reg = ss.getSheetByName(T_REG) || ss.insertSheet(T_REG, 0);
   if (reg.getLastRow() < 1) { reg.appendRow(HEAD); reg.appendRow(NOTE); }
+  _migrateRole(reg);
+  reg.getRange(1, 1, 1, HEAD.length).setValues([HEAD]);
   _tab(ss, T_VOTES, ['When', 'Email', 'Idea', 'In words']);
   _tab(ss, T_LOG, ['When', 'What', 'By']);
   var st = ss.getSheetByName(T_SET) || ss.insertSheet(T_SET);
@@ -238,7 +266,7 @@ function _startHere(ss) {
     ['step',  '2.  Tell the class', 'Panel \u25B8 \uD83D\uDCE3 Tell the class. A teacher posts it to Google Classroom there and then; if the chair presses it, the teacher\u2019s computer posts it within five minutes.'],
     ['step',  '3.  After the meeting', 'Register tab \u25B8 tick the box for everyone who came. A ticked box turns green, and the website shows who came to what \u2014 as soon as the meeting has finished, not the next day.'],
     ['band',  'Now and then', ''],
-    ['step',  'Who is the chair', 'Panel \u25B8 \u2699\uFE0F Setting up, and checks \u25B8 Who is the chair? Pick them off the register. They then get the chair\u2019s desk on the website \u2014 add a meeting, tell the class \u2014 which is how they run the society, because a pupil cannot be given permission to use this menu.'],
+    ['step',  'Who runs it', 'The Role column: choose Chair or Secretary from the drop-down beside somebody\u2019s year. Either of them gets the desk on the website \u2014 add a meeting, tell the class \u2014 which is how a pupil runs the society, because a pupil cannot be given permission to use this menu. Panel \u25B8 \u2699\uFE0F Setting up, and checks \u25B8 Who is the chair? does the same thing, and can name somebody who has not put their name down yet.'],
     ['step',  'Somebody new', 'They sign up on the website themselves, or you type them into the next empty row of the Register \u2014 the row dresses itself.'],
     ['step',  'Keep the class in step', 'Panel \u25B8 \uD83C\uDF92 Update the class. It shows who to invite and who to take out before it does anything. A teacher only.'],
     ['step',  'Something looks wrong', '\u2728 Tidy the sheet puts the look back and changes nothing you wrote. \uD83E\uDE7A Check the website says whether the page and this sheet are talking.'],
@@ -282,14 +310,14 @@ function _stampJoined(sh) {
   var last = _lastMember(sh); if (last < DATA_ROW) return;
   var rows = last - DATA_ROW + 1;
   var names = sh.getRange(DATA_ROW, 1, rows, HEAD.length).getValues();
-  var joined = sh.getRange(DATA_ROW, 7, rows, 1).getValues();
+  var joined = sh.getRange(DATA_ROW, C_JOINED, rows, 1).getValues();
   var now = new Date(), any = false;
   for (var i = 0; i < rows; i++) {
     var somebody = false;
     for (var c = 0; c < HEAD.length; c++) if (String(names[i][c]).trim()) { somebody = true; break; }
     if (somebody && !String(joined[i][0]).trim()) { joined[i][0] = now; any = true; }
   }
-  if (any) sh.getRange(DATA_ROW, 7, rows, 1).setValues(joined);
+  if (any) sh.getRange(DATA_ROW, C_JOINED, rows, 1).setValues(joined);
 }
 
 /* ---------- how the sheet looks ----------
@@ -332,7 +360,7 @@ function _dressRegister(sh) {
   _heads(sh, 1, HEAD.length);
   sh.getRange(2, 1, 1, HEAD.length).setBackground('#EDF3F5').setFontColor(MUTED).setFontStyle('italic').setFontSize(9.5).setWrap(true);
   sh.setRowHeight(2, 26);
-  [130, 130, 130, 150, 240, 70, 110, 320].forEach(function (w, i) { sh.setColumnWidth(i + 1, w); });
+  [130, 130, 130, 150, 240, 70, 100, 110, 320].forEach(function (w, i) { sh.setColumnWidth(i + 1, w); });
   sh.setFrozenRows(2); sh.setFrozenColumns(4);
 
   /* the meeting columns: the date above, what the meeting is below, a tick per member */
@@ -350,11 +378,12 @@ function _dressRegister(sh) {
   if (last >= DATA_ROW) {
     var rows = last - DATA_ROW + 1, wide = Math.max(HEAD.length, lastCol);
     sh.getRange(DATA_ROW, 1, rows, HEAD.length).setFontColor('#1B2226').setWrap(false);
-    sh.getRange(DATA_ROW, 4, rows, 1).setFontWeight('bold');
-    sh.getRange(DATA_ROW, 5, rows, 1).setFontColor(MUTED).setFontSize(9.5);
-    sh.getRange(DATA_ROW, 6, rows, 1).setHorizontalAlignment('center');
-    sh.getRange(DATA_ROW, 7, rows, 1).setNumberFormat('d mmm yyyy').setHorizontalAlignment('center');
-    sh.getRange(DATA_ROW, 8, rows, 1).setWrap(true);
+    sh.getRange(DATA_ROW, C_SHOWN, rows, 1).setFontWeight('bold');
+    sh.getRange(DATA_ROW, C_EMAIL, rows, 1).setFontColor(MUTED).setFontSize(9.5);
+    sh.getRange(DATA_ROW, C_YEAR, rows, 1).setHorizontalAlignment('center');
+    sh.getRange(DATA_ROW, C_ROLE, rows, 1).setHorizontalAlignment('center');
+    sh.getRange(DATA_ROW, C_JOINED, rows, 1).setNumberFormat('d mmm yyyy').setHorizontalAlignment('center');
+    sh.getRange(DATA_ROW, C_NOTE, rows, 1).setWrap(true);
     /* banded by hand rather than with a banding: a banding is a thing on the sheet that would
        have to be found and replaced every time a row is added */
     var bands = [];
@@ -392,7 +421,12 @@ function _years(sh, last) {
   if (rows < 1) rows = 1;
   var rule = SpreadsheetApp.newDataValidation().requireValueInList(YEARS, true)
     .setAllowInvalid(false).setHelpText('Y7 to Y13, or Teacher').build();
-  sh.getRange(DATA_ROW, 6, rows, 1).setDataValidation(rule);
+  sh.getRange(DATA_ROW, C_YEAR, rows, 1).setDataValidation(rule);
+  /* the role sits beside the year and is not one of them: an officer is in a year like anybody
+     else, and a society changes its officers without anybody changing year */
+  var roles = SpreadsheetApp.newDataValidation().requireValueInList(ROLES.filter(String), true)
+    .setAllowInvalid(true).setHelpText('Chair or Secretary, or leave it empty').build();
+  sh.getRange(DATA_ROW, C_ROLE, rows, 1).setDataValidation(roles);
 }
 /* the last row with a person on it — not the last row Sheets happens to have touched */
 function _lastMember(sh) {
@@ -617,22 +651,31 @@ function _register(now) {
   var ss = SpreadsheetApp.getActive(), sh = ss.getSheetByName(T_REG), out = { meetings: [], members: [], tz: ss.getSpreadsheetTimeZone() };
   if (!sh) return out;
   var lastCol = sh.getLastColumn(), lastRow = sh.getLastRow();
-  if (lastCol >= MEET_COL) {
-    var heads = sh.getRange(1, MEET_COL, 2, lastCol - MEET_COL + 1).getValues();
+  /* A register built before Role has its meetings one column to the left, and nothing says the
+     tidy-up that moves them will have been run before the website is redeployed. So read the
+     sheet that is there, not the one that ought to be: everything before Role sits in the same
+     place in both, and the old shape simply has no role to read. */
+  var span = Math.min(Math.max(lastCol, 1), HEAD.length);
+  var head = sh.getRange(1, 1, 1, span).getValues()[0].map(function (v) { return String(v || '').trim(); });
+  var beforeRole = head[C_ROLE - 1] === 'Joined';
+  var meetCol = beforeRole ? MEET_COL - 1 : MEET_COL;
+  if (lastCol >= meetCol) {
+    var heads = sh.getRange(1, meetCol, 2, lastCol - meetCol + 1).getValues();
     for (var c = 0; c < heads[0].length; c++) {
       var d = _asDate(heads[0][c]); if (!d) continue;
-      out.meetings.push({ col: MEET_COL + c, date: d, plan: String(heads[1][c] || '').trim(), over: _isOver(d, now) });
+      out.meetings.push({ col: meetCol + c, date: d, plan: String(heads[1][c] || '').trim(), over: _isOver(d, now) });
     }
   }
   if (lastRow >= DATA_ROW) {
     var rows = sh.getRange(DATA_ROW, 1, lastRow - DATA_ROW + 1, lastCol).getValues();
     rows.forEach(function (r, i) {
-      var name = String(r[3] || r[1] || r[0] || '').trim();
-      var email = _email(r[4]);
+      var name = String(r[C_SHOWN - 1] || r[C_ENGLISH - 1] || r[C_KOREAN - 1] || '').trim();
+      var email = _email(r[C_EMAIL - 1]);
       if (!name && !email) return;
-      var year = _year(r[5]), staff = _isStaff(email) || year === 'Teacher';
+      var year = _year(r[C_YEAR - 1]), staff = _isStaff(email) || year === 'Teacher';
       out.members.push({
         row: DATA_ROW + i, name: name, year: staff ? 'Teacher' : year, email: email, staff: staff,
+        role: beforeRole ? '' : _role(r[C_ROLE - 1]),
         marks: out.meetings.map(function (m) { return _present(r[m.col - 1]); })
       });
     });
@@ -668,6 +711,20 @@ function _present(v) {
   if (v === true) return true; if (v === false || v == null) return false;
   return /^(✓|✔|√|1|p|y|yes|present|o|here|came)$/i.test(String(v).trim());
 }
+/* What somebody wrote in the Role column. "co-chair", "Vice Chair" and "secretery" are all
+   meant, so the word inside is what counts; anything else is kept as they typed it, shown on the
+   site, and carries no powers — a society may want a Treasurer without that being this script's
+   business. */
+function _role(v) {
+  var t = String(v == null ? '' : v).trim();
+  if (!t) return '';
+  var l = t.toLowerCase();
+  if (l.indexOf('chair') >= 0) return 'Chair';
+  if (l.indexOf('secret') >= 0) return 'Secretary';     /* secretary, secretery, secretry */
+  return t.slice(0, 20);
+}
+/* the two that run the society: the chair's desk on the website is theirs */
+function _officer(role) { return role === 'Chair' || role === 'Secretary'; }
 function _year(v) {
   var s = String(v || '').trim();
   if (/teacher|staff/i.test(s)) return 'Teacher';
@@ -687,10 +744,14 @@ function _isStaff(email) { return (String(email || '').split('@')[1] || '') === 
    authority, so the chair signs in and nothing is ever asked of his own Google account - which
    is what stops a school that lets only staff authorise scripts from shutting him out of his own
    society. A teacher is always allowed, whether or not anybody wrote them down. */
-function _isChair(email) {
+function _isOfficer(email) {
   var e = String(email || '').trim().toLowerCase();
   if (!e) return false;
   if (_isStaff(e)) return true;
+  /* the register is where it is said: Role = Chair or Secretary */
+  var on = _register(new Date()).members.filter(function (p) { return p.email === e; })[0];
+  if (on && _officer(on.role)) return true;
+  /* and Settings, for an officer who has not put their name down yet */
   return String(_setting(S_CHAIR) || '').toLowerCase().split(/[\s,;]+/).filter(String).indexOf(e) >= 0;
 }
 
@@ -731,11 +792,11 @@ function _handle(d) {
       /* a teacher is a teacher because of their address; a pupil who picks Teacher is not one */
       var year = _isStaff(who.email) ? 'Teacher' : (_year(d.year) === 'Teacher' ? '' : _year(d.year));
       var note = String(d.note || '').slice(0, 300);
-      var row = _rowOf(sh, 5, who.email);
+      var row = _rowOf(sh, C_EMAIL, who.email);
       if (row) {
         /* already on the register: the year and the note are theirs to change, the names are the chair's */
-        if (year) sh.getRange(row, 6).setValue(year);
-        if (note) sh.getRange(row, 8).setValue(note);
+        if (year) sh.getRange(row, C_YEAR).setValue(year);
+        if (note) sh.getRange(row, C_NOTE).setValue(note);
       } else {
         /* the name the site will show: a pupil by their first name, a teacher by title and surname */
         var shown;
@@ -745,7 +806,7 @@ function _handle(d) {
         } else {
           shown = who.given || who.name || who.email.split('@')[0];
         }
-        sh.appendRow(['', who.given || '', who.family || '', shown, who.email, year, new Date(), note]);
+        sh.appendRow(['', who.given || '', who.family || '', shown, who.email, year, '', new Date(), note]);
         _dressRow(sh, sh.getLastRow());
       }
       _flush();
@@ -756,7 +817,7 @@ function _handle(d) {
        the meeting is written by the teacher's hand, and the announcement goes out under the
        teacher's name, which is the only way Google Classroom will carry it anyway. */
     if (action === 'meeting' || action === 'tellClass') {
-      if (!_isChair(who.email)) return { ok: false, why: 'only the chair or a teacher may do that' };
+      if (!_isOfficer(who.email)) return { ok: false, why: 'only the chair, the secretary or a teacher may do that' };
 
       if (action === 'meeting') {
         var when = _asDate(d.date);
@@ -813,14 +874,15 @@ function _dressRow(sh, row) {
     for (var c = 0; c < wide; c++) line.push(band);
     sh.getRange(row, 1, 1, wide).setBackgrounds([line]);
     sh.getRange(row, 1, 1, HEAD.length).setFontColor('#1B2226');
-    sh.getRange(row, 4).setFontWeight('bold');
-    sh.getRange(row, 5).setFontColor(MUTED).setFontSize(9.5);
-    sh.getRange(row, 6).setHorizontalAlignment('center');
-    sh.getRange(row, 7).setNumberFormat('d mmm yyyy').setHorizontalAlignment('center');
-    sh.getRange(row, 8).setWrap(true);
+    sh.getRange(row, C_SHOWN).setFontWeight('bold');
+    sh.getRange(row, C_EMAIL).setFontColor(MUTED).setFontSize(9.5);
+    sh.getRange(row, C_YEAR).setHorizontalAlignment('center');
+    sh.getRange(row, C_ROLE).setHorizontalAlignment('center');
+    sh.getRange(row, C_JOINED).setNumberFormat('d mmm yyyy').setHorizontalAlignment('center');
+    sh.getRange(row, C_NOTE).setWrap(true);
     sh.setRowHeight(row, 26);
     if (lastCol >= MEET_COL) sh.getRange(row, MEET_COL, 1, lastCol - MEET_COL + 1).insertCheckboxes().setHorizontalAlignment('center');
-    if (!String(sh.getRange(row, 7).getValue()).trim()) sh.getRange(row, 7).setValue(new Date());
+    if (!String(sh.getRange(row, C_JOINED).getValue()).trim()) sh.getRange(row, C_JOINED).setValue(new Date());
     _years(sh);
   } catch (e) {}
 }
@@ -881,7 +943,7 @@ function _list(who) {
       return { date: _stamp(m.date, tz), time: _hasTime(m.date), plan: m.plan, came: came };
     }),
     members: reg.members.map(function (p) {
-      return { name: p.name, year: p.year, staff: !!p.staff,
+      return { name: p.name, year: p.year, staff: !!p.staff, role: p.role || '',
                present: past.map(function (m) { return !!p.marks[reg.meetings.indexOf(m)]; }) };
     }),
     votes: {}, mine: [], member: false
@@ -890,7 +952,8 @@ function _list(who) {
   if (who) {
     out.name = who.given || who.name;
     out.member = reg.members.some(function (p) { return p.email === who.email; });
-    out.chair = _isChair(who.email);
+    out.officer = _isOfficer(who.email);
+    out.chair = out.officer;         /* the old name, so a page and a script deployed minutes apart agree */
     out.staff = _isStaff(who.email);
   }
   var vs = SpreadsheetApp.getActive().getSheetByName(T_VOTES);
@@ -1109,30 +1172,51 @@ function _announcement(reg) {
 /* Who the chair is, picked off the register rather than typed. It is kept in Settings ▸ Chair,
    which is a plain cell anybody can read or correct by hand; this is only the easy way in. What
    it buys them is the chair's desk on the website — see _isChair. */
+/* Make exactly these people the chair, and nobody else. Written on the register, because that
+   is where you can see it; Settings carries only the ones with no row to write it in. Every way
+   of clearing it comes through here too, so a chair cannot be dropped in one place and left
+   behind in the other. A secretary is never touched. */
+function _setChair(picked) {
+  var sh = SpreadsheetApp.getActive().getSheetByName(T_REG);
+  var wanted = {};
+  picked.forEach(function (p) { wanted[p.email] = true; });
+  if (sh) {
+    _register(new Date()).members.forEach(function (p) {
+      if (wanted[p.email]) { if (p.role !== 'Chair') sh.getRange(p.row, C_ROLE).setValue('Chair'); }
+      else if (p.role === 'Chair') sh.getRange(p.row, C_ROLE).setValue('');
+    });
+  }
+  _putSetting(S_CHAIR, picked.filter(function (p) { return p.onRegister === false; })
+                             .map(function (p) { return p.email; }).join(', '));
+  _flush();
+}
+
 function chooseChair() {
   var people = _register(new Date()).members.filter(function (p) { return !p.staff && p.email; });
-  var now = String(_setting(S_CHAIR) || '').toLowerCase();
+  var holds = people.filter(function (p) { return p.role === 'Chair'; }).map(function (p) { return p.name; })
+                .concat(String(_setting(S_CHAIR) || '').split(/[\s,;]+/).filter(String));
   var ui = SpreadsheetApp.getUi();
   var list = people.map(function (p, i) {
     return (i + 1) + '.  ' + p.name + (p.year ? '  (' + p.year + ')' : '') +
-           (now.indexOf(p.email) >= 0 ? '   \u2190 chair now' : '');
+           (p.role ? '  \u2014 ' + p.role : '');
   }).join('\n');
   /* The chair may not have put their name down yet, and a society should not have to wait for
-     that before it has a chair. So an address does as well as a number, and the one who holds it
-     is named above the list whether or not they are on it. */
-  var head = (now ? 'The chair now: ' + now + '\n\n' : '') +
+     that before it has a chair. So an address does as well as a number, and whoever holds it is
+     named above the list whether or not they are on it. */
+  var head = (holds.length ? 'The chair now: ' + holds.join(', ') + '\n\n' : '') +
              (people.length ? list + '\n\nType the number, or their school address if they are not on the list yet.'
                             : 'Nobody on the register has an address against them yet.\n\nType the chair\u2019s school address.');
   var a = ui.prompt('Who is the chair?',
     head + ' Two of them, separated by a comma, if the chair is shared. ' +
-    'Leave it empty for no chair at all.', ui.ButtonSet.OK_CANCEL);
+    'Leave it empty for no chair at all. (The Secretary is the Role column\u2019s other choice, ' +
+    'and this never changes it.)', ui.ButtonSet.OK_CANCEL);
   if (a.getSelectedButton() !== ui.Button.OK) return;
 
   var txt = String(a.getResponseText()).trim();
   if (!txt) {
-    _putSetting(S_CHAIR, '');
+    _setChair([]);
     _log('No chair is named now', _me());
-    _toast('Nobody is the chair now. Only teachers can run the society from the website.');
+    _toast('Nobody is the chair now. The secretary and the teachers can still run it.');
     return;
   }
   var picked = [], bad = [], seen = {};
@@ -1149,12 +1233,12 @@ function chooseChair() {
     take(known || { name: e, email: e, onRegister: false });
   });
   if (bad.length || !picked.length) { _ui('That was not one of the numbers on the list: ' + (bad.join(', ') || txt)); return; }
+
+  _setChair(picked);
   var names = picked.map(function (p) { return p.name; }).join(' and ');
   var strangers = picked.filter(function (p) { return p.onRegister === false; });
-  _putSetting(S_CHAIR, picked.map(function (p) { return p.email; }).join(', '));
   _log('The chair is ' + names, _me());
-  _flush();
-  _toast(names + ' can now run the society from the website: sign in there and the chair\u2019s desk appears.' +
+  _toast(names + ' can now run the society from the website: sign in there and the desk appears.' +
     (strangers.length ? ' They are not on the register yet \u2014 put their name down on the website too, so they show up with everybody else.' : ''));
 }
 
