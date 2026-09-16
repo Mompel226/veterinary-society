@@ -191,6 +191,7 @@ function makeGlobals(now) {
       Invitations: {
         list: (opts) => ({ invitations: G.__invites.map((e, i) => (e ? { id: 'inv' + i, userId: e, role: 'STUDENT' } : null)).filter(Boolean) }),
         create: (res) => { if (G.__inviteFails[res.userId]) throw new Error(G.__inviteFails[res.userId]);
+          if (String(res.role).toUpperCase() === 'TEACHER') G.__teacherInvites.push(res.userId);
           G.__invites.push(res.userId); return { id: 'inv' + (G.__invites.length - 1) }; },
         remove: (id) => { const i = Number(String(id).replace('inv', ''));
           if (!(i >= 0) || !G.__invites[i]) throw new Error('no such invitation');
@@ -200,7 +201,7 @@ function makeGlobals(now) {
     HtmlService: { createHtmlOutput: (html) => { const o = { html, setWidth: () => o, setHeight: () => o, setTitle: () => o }; return o; } },
     Logger: { log: () => {} },
     __answer: [], __webAppUrl: '', __webReply: null, __dialogs: [], __sidebars: [],
-    __roster: [], __teachers: [], __invites: [], __removed: [], __cancelled: [], __inviteFails: {},
+    __roster: [], __teachers: [], __invites: [], __teacherInvites: [], __removed: [], __cancelled: [], __inviteFails: {},
     __noDialogs: false, __asked: [], __answerYesNo: [], __menus: []
   };
   /* a Date that answers "now" with the test's now, while every real date still passes
@@ -1246,6 +1247,52 @@ section('teachers brought in from the class');
   ok('and he is not staff', !henry.staff);
   eq('his year is left for the teacher to set', henry.year, '');
   ok('so the site still counts him a member', api._list(null).members.some(p => p.name === 'Henry Yuan' && !p.staff));
+}
+
+/* Daniel: "chairs and secretaries are added as teachers, so they should be exported from there,
+   not from the students part." Quite so — an officer belongs on the TEACHER side of the class,
+   and offering them a student's invitation puts them on the wrong one. */
+section('officers go on the teacher side of the class');
+{
+  const { G, api, reg } = seeded();
+  reg.getRange(3, C.ROLE).setValue('Chair');
+  G.__roster = [];                                  /* nobody in the class yet */
+  G.__teachers = [];
+  const plan = api.classroomPlan();
+  eq('the chair is not offered a student invitation', plan.invite.map(p => p.email), ['hwyang29@pupils.nlcsjeju.kr']);
+  eq('he is asked to teach it instead', plan.teachers.map(p => p.email), ['jekim29@pupils.nlcsjeju.kr']);
+  ok('and nobody thinks he was a student', !plan.teachers[0].wasStudent);
+
+  api.classroomApplyTeachers();
+  eq('the invitation is a teacher one', G.__teacherInvites, ['jekim29@pupils.nlcsjeju.kr']);
+  eq('and nobody was taken out of anything', G.__removed.length, 0);
+}
+{
+  /* somebody made an officer after they had already joined as a student: Google will not have
+     one person as both, so they have to come off the student list first */
+  const { G, api, reg } = seeded();
+  reg.getRange(4, C.ROLE).setValue('Secretary');
+  G.__roster = [{ id: '11', email: 'hwyang29@pupils.nlcsjeju.kr', name: 'Hyunwoo Yang' }];
+  G.__teachers = [];
+  const plan = api.classroomPlan();
+  eq('the secretary is to be asked to teach it', plan.teachers.map(p => p.email), ['hwyang29@pupils.nlcsjeju.kr']);
+  ok('and it knows he is on the student list', plan.teachers[0].wasStudent);
+  eq('he is not on the list to be taken out, though', plan.remove.map(p => p.email), []);
+
+  api.classroomApplyTeachers();
+  eq('off the student list', G.__removed.map(r => r.email), ['hwyang29@pupils.nlcsjeju.kr']);
+  eq('and asked to teach it', G.__teacherInvites, ['hwyang29@pupils.nlcsjeju.kr']);
+}
+{
+  /* an officer already teaching it is left completely alone */
+  const { G, api, reg } = seeded();
+  reg.getRange(3, C.ROLE).setValue('Chair');
+  G.__roster = [];
+  G.__teachers = [{ id: '99', email: 'jekim29@pupils.nlcsjeju.kr', name: 'Jieun Kim' }];
+  const plan = api.classroomPlan();
+  eq('nothing to ask', plan.teachers.map(p => p.email), []);
+  eq('nothing to invite him to', plan.invite.map(p => p.email), ['hwyang29@pupils.nlcsjeju.kr']);
+  eq('and he is shown as already teaching it', plan.asTeacher.map(p => p.email), ['jekim29@pupils.nlcsjeju.kr']);
 }
 
 section('a member who teaches the class');
