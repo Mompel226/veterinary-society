@@ -79,7 +79,7 @@ The four you will use are at the top; setting up and checking are folded into a 
 | 🪑 **Who is the chair?** | Under *Setting up, and checks*. Lists the register and lets you pick; what they get is the chair's desk on the website. |
 | 📣 **Post the next meeting now** | Announces that meeting in Google Classroom. A **teacher** posts it there and then; when the **chair** presses it, the teacher's computer posts it within five minutes, under the teacher's name. Nothing to tick. |
 | 👀 **Preview that announcement** | Shows the words first, without sending anything. |
-| 🎒 **Update who is in the class** | Compares the register with the Google Classroom class and shows both lists — who to invite, who to take out — before doing anything. It names the class and links to it, so you can be sure it is the right one. **A teacher only.** |
+| 🎒 **Update who is in the class** | Compares the register with the Google Classroom class and shows the lists — who to invite as students, who to ask to teach it (the chair and the secretary), who to take out — before doing anything. It names the class and links to it, so you can be sure it is the right one. **A teacher only.** |
 | ⚙️ **Setting up, and checks** | A submenu, for the things done once or when something looks wrong: **Set the sheet up, or tidy it** (one job — see below), **Choose the Classroom class**, **Install the triggers**, **Check the website can read this**, **Refresh the website now**, **Test the pop-up window**. |
 
 **To add a meeting:** menu **🐴 Veterinary Society ▸ 📅 Add the next meeting**, type the date and
@@ -138,6 +138,14 @@ reads the register, asks Google who is in the class, and shows you two lists by 
 invite* (on the register, not in the class) and *to take out* (in the class, not on the
 register) — before it touches anything. Then you press one of two buttons: invite the new ones,
 or invite and take the others out. Nobody is removed unless you ask for that second one.
+
+**The chair and the secretary go on the teacher side**, not the student one: that is how an
+officer gets to post in the class and see who is in it. So they are never offered a student's
+invitation — they appear under *to ask to teach it*, with their own button. If somebody is made
+an officer after they had already joined as a student, the same button takes them off the student
+list first, because Google will not have one person as both a teacher and a student of one class.
+That is the only thing in this window that removes anybody without you asking for a removal, and
+it says so before you press it.
 
 Two things Google decides, not us. First, **a script may not simply put somebody in a class**: it
 sends an **invitation**, and they are a member only once they press *Join*. Until then they are in

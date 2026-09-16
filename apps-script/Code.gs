@@ -54,7 +54,7 @@ var T_REG = 'Register', T_VOTES = 'Votes', T_SET = 'Settings', T_LOG = 'Log', T_
 /* Bumped whenever this file changes in a way the website can see. The menu always runs the code
    you have just saved; the WEBSITE runs the code of the deployed version, which is a different
    thing and a common way to be fooled. The check compares the two and says so. */
-var CODE_STAMP = '2026-09-16f · teachers can be brought in from the class';
+var CODE_STAMP = '2026-09-16g · officers go on the teacher side of the class';
 var HEAD = ['Korean name', 'English name', 'Surname', 'Preferred name', 'Email', 'Year', 'Role', 'Joined', 'Would like to do'];
 var NOTE = ['', '', '', 'shown on the site', 'never shown — the first part is enough', 'shown',
             'Chair or Secretary — they run it from the website', 'filled in for you', 'in their own words'];
@@ -1491,17 +1491,27 @@ function classroomPlan() {
   var course = _courseOr(false); if (!course || !_classroomReady(false)) return null;
   var reg = _register(new Date());
   var now = _classNow(course);
-  var want = {}, wantList = [], asTeacher = [];
+  var have = {};
+  now.students.forEach(function (st) { if (st.email) have[st.email] = st; });
+  var want = {}, wantList = [], asTeacher = [], asTeacherWanted = [];
   reg.members.forEach(function (p) {
     if (p.staff || !p.email) return;                    /* teachers are not students of the class */
     if (want[p.email]) return;
+    want[p.email] = true;                               /* on the register: never "take out" */
     /* already in the class, on the other side of it: leave them exactly alone */
-    if (now.teachers[p.email]) { want[p.email] = true; asTeacher.push({ email: p.email, name: p.name }); return; }
-    want[p.email] = true; wantList.push({ email: p.email, name: p.name });
+    if (now.teachers[p.email]) { asTeacher.push({ email: p.email, name: p.name, role: p.role }); return; }
+    /* An officer belongs on the TEACHER side of the class: that is how a chair or a secretary
+       gets to post in it and see who is there. Offering them a student's invitation would put
+       them on the wrong side, and Google will not then let them be moved without being taken
+       out of it first. */
+    if (_officer(p.role)) {
+      asTeacherWanted.push({ email: p.email, name: p.name, role: p.role, wasStudent: !!have[p.email] });
+      return;
+    }
+    wantList.push({ email: p.email, name: p.name });
   });
-  var have = {};
-  now.students.forEach(function (st) { if (st.email) have[st.email] = st; });
-  var plan = { course: course, invite: [], remove: [], already: 0, pending: 0, pendingList: [], asTeacher: asTeacher, name: '', link: '' };
+  var plan = { course: course, invite: [], teachers: asTeacherWanted, remove: [], already: 0,
+               pending: 0, pendingList: [], asTeacher: asTeacher, name: '', link: '' };
   wantList.forEach(function (p) {
     if (have[p.email]) { plan.already++; return; }
     if (now.invited[p.email]) { plan.pending++; plan.pendingList.push(p); return; }
@@ -1541,12 +1551,16 @@ function syncClassroom() {
   var body = where +
     '<p style="margin-top:12px"><b>To invite</b> — on the register, not in the class</p>' + list(plan.invite, 'Nobody. Everyone on the register is in the class already.') +
     '<p style="margin-top:12px"><b>To take out</b> — in the class, not on the register</p>' + list(plan.remove, 'Nobody.') +
+    (plan.teachers.length ? '<p style="margin-top:12px"><b>To ask to teach it</b> \u2014 the chair and the secretary belong on the teacher side' +
+      (plan.teachers.some(function (p) { return p.wasStudent; }) ? ', and one of them has to come off the student list first' : '') +
+      '</p>' + list(plan.teachers, '') : '') +
     (plan.asTeacher.length ? '<p style="margin-top:12px"><b>In the class already, as teachers of it</b> \u2014 left alone</p>' + list(plan.asTeacher, '') : '') +
     (plan.pending ? '<p style="margin-top:12px"><b>Invited, not yet accepted</b> — they are in Google Classroom under <i>Invited</i> until they press Join</p>' + list(plan.pendingList, '') : '') +
     '<p class="note">' + plan.already + ' already in · teachers are left alone.</p>' +
     '<div class="row" style="margin-top:12px">' +
     (plan.invite.length ? '<button class="btn" id="inv">Invite the ' + plan.invite.length + ' new one' + (plan.invite.length === 1 ? '' : 's') + '</button>' : '') +
     (plan.remove.length ? '<button class="btn quiet" id="both">Invite, and take out the ' + plan.remove.length + '</button>' : '') +
+    (plan.teachers.length ? '<button class="btn" id="tea">Ask the ' + plan.teachers.length + ' to teach it</button>' : '') +
     (plan.pending ? '<button class="btn quiet" id="undo">Take back the ' + plan.pending + ' invitation' + (plan.pending === 1 ? '' : 's') + '</button>' : '') +
     '</div><p class="note" id="s"></p>' +
     '<script>function go(rm){var s=document.getElementById("s");s.textContent="Working\u2026";' +
@@ -1556,6 +1570,10 @@ function syncClassroom() {
     '.classroomApply(rm)}' +
     'var i=document.getElementById("inv"); if(i)i.addEventListener("click",function(){go(false)});' +
     'var b=document.getElementById("both"); if(b)b.addEventListener("click",function(){go(true)});' +
+    'var t=document.getElementById("tea"); if(t)t.addEventListener("click",function(){var s=document.getElementById("s");' +
+    's.textContent="Working\u2026";Array.prototype.forEach.call(document.querySelectorAll("button"),function(b){b.disabled=true});' +
+    'google.script.run.withSuccessHandler(function(x){s.textContent=x})' +
+    '.withFailureHandler(function(e){s.textContent=e.message}).classroomApplyTeachers()});' +
     'var u=document.getElementById("undo"); if(u)u.addEventListener("click",function(){var s=document.getElementById("s");' +
     's.textContent="Working\u2026";google.script.run.withSuccessHandler(function(t){s.textContent=t})' +
     '.withFailureHandler(function(e){s.textContent=e.message}).classroomCancel()});<\/script>';
@@ -1581,6 +1599,16 @@ function syncClassroom() {
       _ui(classroomApply(true));
     }
   }
+  if (plan.teachers.length) {
+    var movers = plan.teachers.filter(function (p) { return p.wasStudent; });
+    if (_askYesNo('Ask ' + plan.teachers.length + ' to teach ' + (plan.name || 'the class') + '?',
+        head + '\nThe chair and the secretary belong on the teacher side of the class:\n' + names(plan.teachers) +
+        (movers.length ? '\n\n' + movers.length + ' of them is on the student list and has to come off it first: ' +
+          'Google will not have one person as both.' : '') +
+        '\n\nEach is a teacher of it once they press Join.')) {
+      _ui(classroomApplyTeachers());
+    }
+  }
   if (plan.pending && _askYesNo('Take back ' + plan.pending + ' invitation(s)?',
       head + '\nInvited, not yet accepted:\n' + names(plan.pendingList) +
       '\n\nTake those invitations back?')) {
@@ -1588,6 +1616,28 @@ function syncClassroom() {
   }
 }
 /* the plan is worked out again here: what a dialog was told a minute ago is not authority */
+/* Put the society's officers on the teacher side of the class. Google will not have one person
+   as both a teacher and a student of the same class, so somebody made an officer after they had
+   already joined as a student has to stop being one first — that is the only thing here that
+   takes anybody out of anything, and it is why it is its own button with its own words. */
+function classroomApplyTeachers() {
+  var plan = classroomPlan();
+  if (!plan) return 'No class chosen.';
+  var course = plan.course, asked = 0, moved = 0, failed = [];
+  plan.teachers.forEach(function (p) {
+    try {
+      if (p.wasStudent) { Classroom.Courses.Students.remove(course, p.email); moved++; }
+      Classroom.Invitations.create({ courseId: course, userId: p.email, role: 'TEACHER' });
+      asked++;
+    } catch (e) { failed.push(p.email + ': ' + e.message); }
+  });
+  var said = asked + ' asked to teach ' + (plan.name || 'the class') +
+    (moved ? ', ' + moved + ' taken off the student list first' : '') +
+    (failed.length ? ', ' + failed.length + ' would not' : '') + '.';
+  _log('Classroom teachers: ' + said + ' [course ' + course + ']' + (failed.length ? ' (' + failed.join('; ') + ')' : ''), _me());
+  return said + (failed.length ? ' See the Log tab.' : ' They are teachers of it once they press Join.');
+}
+
 function classroomApply(alsoRemove) {
   var plan = classroomPlan();
   if (!plan) return 'No class chosen.';
