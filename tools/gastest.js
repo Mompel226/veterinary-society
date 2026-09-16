@@ -724,6 +724,32 @@ section('picking the chair off the register');
   ok('and empty means no chair at all', !api._isChair('jekim29@pupils.nlcsjeju.kr'));
   ok('but a teacher is still a teacher', api._isChair('dmompelriera@nlcsjeju.kr'));
 }
+{
+  /* The chair had not put his name down, so he was on no list and could not be named — and a
+     society should not have to wait for that before it has a chair. */
+  const { G, api } = seeded();
+  G.__answer = ['scyuan29@pupils.nlcsjeju.kr'];
+  api.chooseChair();
+  ok('an address does as well as a number', api._isChair('scyuan29@pupils.nlcsjeju.kr'));
+
+  G.__answer = ['scyuan29'];
+  api.chooseChair();
+  ok('and so does the first part of one', api._isChair('scyuan29@pupils.nlcsjeju.kr'));
+
+  G.__answer = ['1, scyuan29@pupils.nlcsjeju.kr'];
+  api.chooseChair();
+  ok('a number and an address together', api._isChair('jekim29@pupils.nlcsjeju.kr') && api._isChair('scyuan29@pupils.nlcsjeju.kr'));
+
+  G.__answer = ['someone@gmail.com'];
+  api.chooseChair();
+  ok('but not an address outside the school', !api._isChair('someone@gmail.com'));
+  ok('and that leaves the chair as it was', api._isChair('jekim29@pupils.nlcsjeju.kr'));
+
+  /* a number off the end of the list is a slip, not somebody called "20" */
+  G.__answer = ['20'];
+  api.chooseChair();
+  ok('a number nobody is stays a mistake', !api._isChair('20@pupils.nlcsjeju.kr'));
+}
 
 section('votes');
 {
