@@ -376,7 +376,11 @@ html.ready .mo-fade{animation:fadeUp .9s var(--wait,0s) ease-out both}
     if (b) setTimeout(function () { if (b.parentNode) b.parentNode.removeChild(b); }, 700);
   }
   setTimeout(reveal, 5000);
-  window.addEventListener('error', reveal);
+  /* NOT on window error. "ResizeObserver loop completed with undelivered notifications" is a
+     notice, not a fault, and this page raises it every time the cover is fitted — about fifty
+     milliseconds in, which revealed the page before the list had arrived and put back the very
+     pop-in this is here to stop. The timer above is the safety net, and it is set before
+     anything else in this script can go wrong. */
 
   var toastT = null;
   function toast(m) { var t = $('toast'); if (!t) return; t.textContent = m; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(function () { t.classList.remove('on'); }, 4200); }
