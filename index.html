@@ -43,11 +43,35 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .maker::before{content:"";display:inline-block;width:22px;height:1px;background:var(--amber);opacity:.8;vertical-align:middle;margin-right:10px} .maker strong{font-weight:500;color:var(--chalk)}
 .mark{width:100%;height:auto;display:block}
 /* the mark draws itself once, when the page opens */
-.mo-draw{stroke-dasharray:1000;stroke-dashoffset:0;animation:drawOn var(--t,1.2s) var(--wait,0s) cubic-bezier(.45,0,.2,1) both}
+/* The page waits. Nothing is shown until the society's own list has arrived, because a band and
+   a desk appearing a second later push everything down under a reader who has already started —
+   and somebody who has scrolled past never learns they were there at all. It reveals whole, and
+   it reveals anyway if the list is slow or will not come: a page with no register still tells
+   you what the society is. The mark draws itself on the reveal rather than behind it. */
+.wrap{opacity:0}
+html.ready .wrap{opacity:1;transition:opacity .4s ease}
+.boot{position:fixed;inset:0;z-index:60;display:grid;place-items:center;background:var(--ink);
+  background-image:radial-gradient(70% 50% at 80% -10%,rgba(46,140,110,.18),transparent 70%)}
+.boot span{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--moss);opacity:0;animation:bootIn .3s .45s ease-out forwards}
+@keyframes bootIn{to{opacity:.85}}
+html.ready .boot{opacity:0;pointer-events:none;transition:opacity .35s ease}
+html.still .wrap,html.still.ready .wrap{transition:none}
+html.still .boot{transition:none}
+
+/* The mark draws itself on the reveal, not behind it. The state it rests in is the DRAWN one,
+   and only a page still waiting hides it — so when animation is switched off, by the reader's
+   machine or by ?still, the mark is simply there rather than never arriving. */
+.mo-draw{stroke-dasharray:1000;stroke-dashoffset:0}
+html:not(.ready) .mo-draw{stroke-dashoffset:1000}
+html.ready .mo-draw{animation:drawOn var(--t,1.2s) var(--wait,0s) cubic-bezier(.45,0,.2,1) both}
 @keyframes drawOn{from{stroke-dashoffset:1000}to{stroke-dashoffset:0}}
-.mo-pop{transform-box:fill-box;transform-origin:center;animation:popIn .6s var(--wait,0s) cubic-bezier(.34,1.56,.64,1) both}
+.mo-pop{transform-box:fill-box;transform-origin:center}
+html:not(.ready) .mo-pop{opacity:0}
+html.ready .mo-pop{animation:popIn .6s var(--wait,0s) cubic-bezier(.34,1.56,.64,1) both}
 @keyframes popIn{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
-.mo-fade{animation:fadeUp .9s var(--wait,0s) ease-out both}
+html:not(.ready) .mo-fade{opacity:0}
+html.ready .mo-fade{animation:fadeUp .9s var(--wait,0s) ease-out both}
 @keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 .still .mo-draw,.still .mo-pop,.still .mo-fade{animation:none}
@@ -176,6 +200,8 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 </head>
 <body>
 <script>if (/[?&]still\b/.test(location.search)) document.documentElement.classList.add('still');</script>
+<noscript><style>.wrap{opacity:1}.boot{display:none}</style></noscript>
+<div class="boot" id="boot" aria-hidden="true"><span>loading the society’s list…</span></div>
 <div class="wrap">
   <!-- Signing in belongs at the top of a page, not three screens down inside one section of it:
        whoever signs in should see at once what being signed in gets them — the officers' desk if
@@ -336,6 +362,22 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 (function () {
   var C = window.VETSOC_CONFIG || {}, URL_ = C.scriptUrl || '', CID = C.googleClientId || '';
   var $ = function (id) { return document.getElementById(id); };
+
+  /* The page is shown once, whole, when there is nothing left to arrive — and shown anyway if
+     the list is slow or never comes, because a society page with no register still says what the
+     society is. The timer is set here, before anything else can go wrong, so no fault further
+     down can leave a reader looking at nothing. */
+  var shown = false;
+  function reveal() {
+    if (shown) return;
+    shown = true;
+    document.documentElement.classList.add('ready');
+    var b = $('boot');
+    if (b) setTimeout(function () { if (b.parentNode) b.parentNode.removeChild(b); }, 700);
+  }
+  setTimeout(reveal, 5000);
+  window.addEventListener('error', reveal);
+
   var toastT = null;
   function toast(m) { var t = $('toast'); if (!t) return; t.textContent = m; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(function () { t.classList.remove('on'); }, 4200); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]; }); }
@@ -533,11 +575,11 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
     state = j; wasOver = null; paint(); return true;
   }
   function refresh() {
-    if (!URL_) return;
+    if (!URL_) { reveal(); return; }
     api(me ? { action: 'me', token: me.token, from: location.host } : { action: 'list', from: location.host }).then(function (j) {
       if (me && (!j || !j.ok)) { me = null; try { localStorage.removeItem(KEY); } catch (e) {} paintMe(); paintChair(); return api({ action: 'list' }).then(function (k) { take(k, true); }); }
       take(j, true);
-    }).catch(function () {});
+    }).catch(function () {}).then(reveal, reveal);
   }
   function vote(id, b) {
     if (!URL_) { toast('Voting is not switched on yet.'); return; }
@@ -567,6 +609,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
     $('listNote').textContent = 'not switched on yet';
     $('regNone').textContent = 'The register is not switched on yet.';
     paint();
+    reveal();
   } else {
     refresh();
     $('meetForm').addEventListener('submit', function (e) {

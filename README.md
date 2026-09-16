@@ -34,6 +34,12 @@ for the ideas they want the society to take on this year. The page also shows **
 meeting is**, what it will be, and **who came to the ones before** — first names and year groups
 only. Addresses and full names stay in the society's own sheet, with the chair.
 
+**The page waits before it shows itself.** Nothing appears until the society's list has arrived,
+because a meeting band and an officers' desk appearing a second later push everything down under
+somebody who has already started reading — and anyone who has scrolled past never learns they were
+there. It reveals whole, and it reveals anyway after five seconds if the list is slow or will not
+come: a page with no register still says what the society is.
+
 **Signing in is at the top of the page**, beside the society's name — not down in the members
 section, which nobody scrolls to before they know what it is for. Signed in, the top line says who
 you are and what you are here: *Signed in as Henry Yuan · chair*. An officer sees the desk for
