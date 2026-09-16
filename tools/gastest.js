@@ -805,11 +805,12 @@ section('first names only');
   /* Both go by Henry, so neither may be shown as just "Henry". Daniel's rule: the real name in
      brackets — never the surname. */
   const names = api._list(null).members.map(p => p.name);
-  ok('the first Henry is told apart by his real name', names.indexOf('Henry (浩然)') >= 0, names.join(' | '));
-  ok('and so is the second', names.indexOf('Henry (思成)') >= 0, names.join(' | '));
+  ok('the first Henry is told apart by his real name', names.indexOf('Henry (Haoran)') >= 0, names.join(' | '));
+  ok('and so is the second', names.indexOf('Henry (Sicheng)') >= 0, names.join(' | '));
+  ok('written in letters, not in script', !/[가-힣\u4e00-\u9fff]/.test(JSON.stringify(api._list(null))));
   ok('somebody nobody shares a name with is shown alone', names.indexOf('Jieun') >= 0, names.join(' | '));
 
-  /* and a real name is disclosed ONLY where it is needed to tell two people apart */
+  /* it is for every member, not only the ones who run the society */
   const solo = api._list(null).members.filter(p => p.name.indexOf('(') < 0);
   ok('nobody who needs no telling apart carries one',
      !solo.some(p => /[가-힣\u4e00-\u9fff]/.test(p.name)), solo.map(p => p.name).join(' | '));
@@ -839,6 +840,29 @@ section('first names only');
   const { api, reg } = seeded();
   reg.appendRow(['', 'Benedict', 'Cho', 'Benedict Cho', 'bcho31@pupils.nlcsjeju.kr', 'Y8', '', new Date(2026, 8, 1), '']);
   eq('the first word is what is left', api._register(new Date()).members.filter(p => p.email === 'bcho31@pupils.nlcsjeju.kr')[0].name, 'Benedict');
+}
+
+{
+  /* "make sure that it's for all of the students, not just the chair and the secretary" — two
+     ordinary members who happen to share a name are told apart exactly the same way */
+  const { api, reg } = seeded();
+  reg.appendRow(['', 'Jisoo (Grace)', 'Park', 'Grace', 'jspark30@pupils.nlcsjeju.kr', 'Y9', '', new Date(2026, 8, 1), '']);
+  reg.appendRow(['', 'Eunseo (Grace)', 'Lim', 'Grace', 'eslim31@pupils.nlcsjeju.kr', 'Y10', '', new Date(2026, 8, 1), '']);
+  const names = api._list(null).members.map(p => p.name);
+  ok('one Grace', names.indexOf('Grace (Jisoo)') >= 0, names.join(' | '));
+  ok('and the other', names.indexOf('Grace (Eunseo)') >= 0, names.join(' | '));
+  ok('neither of them runs anything', !api._isOfficer('jspark30@pupils.nlcsjeju.kr'));
+  ok('and no surname came with it', !/Park|Lim/.test(JSON.stringify(api._list(null))));
+}
+{
+  /* three of them, and a row whose Korean name is already written in letters */
+  const { api, reg } = seeded();
+  reg.appendRow(['', 'Jisoo (Grace)', 'Park', 'Grace', 'jspark30@pupils.nlcsjeju.kr', 'Y9', '', new Date(2026, 8, 1), '']);
+  reg.appendRow(['', 'Eunseo (Grace)', 'Lim', 'Grace', 'eslim31@pupils.nlcsjeju.kr', 'Y10', '', new Date(2026, 8, 1), '']);
+  reg.appendRow(['Yerin', 'Grace', 'Song', 'Grace', 'ysong32@pupils.nlcsjeju.kr', 'Y8', '', new Date(2026, 8, 1), '']);
+  const names = api._list(null).members.map(p => p.name);
+  eq('all three are told apart', names.filter(n => n.indexOf('Grace') === 0).sort(),
+     ['Grace (Eunseo)', 'Grace (Jisoo)', 'Grace (Yerin)']);
 }
 
 section('who runs it');
