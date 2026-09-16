@@ -1195,6 +1195,59 @@ section('the panel and the announcement');
    Google will not have one person as both teacher and student of a class, so if the sync cannot
    see the teachers he looks like somebody who is not in the class at all — and every sync offers
    to invite him again, and every invitation is refused. */
+/* Daniel: pull the teachers out of Google Classroom onto the register — but let me choose, a
+   class often carries a head of department who has nothing to do with the society. */
+section('teachers brought in from the class');
+{
+  const { G, api, reg } = seeded();
+  G.__teachers = [
+    { id: 't1', email: 'dmompelriera@nlcsjeju.kr', name: 'Daniel Mompel Riera' },
+    { id: 't2', email: 'jsmith@nlcsjeju.kr',       name: 'Jane Smith' },
+    { id: 't3', email: 'bjones@nlcsjeju.kr',       name: 'Brian Jones' },
+    { id: 't4', email: 'scyuan29@pupils.nlcsjeju.kr', name: 'Henry Yuan' }
+  ];
+  const before = api._register(new Date()).members.length;
+
+  G.__answer = ['2'];
+  api.addTeachers();
+  const after = api._register(new Date()).members;
+  eq('only the one chosen is added', after.length, before + 1);
+  eq('with their name on the site', after[after.length - 1].name, 'Jane Smith');
+  eq('as a teacher', after[after.length - 1].year, 'Teacher');
+  ok('and the others were left in the class', !after.some(p => p.name === 'Brian Jones'));
+
+  G.__answer = ['2'];
+  api.addTeachers();
+  eq('adding the same one twice adds nothing', api._register(new Date()).members.length, before + 1);
+
+  G.__answer = ['9'];
+  api.addTeachers();
+  eq('a number nobody is adds nothing', api._register(new Date()).members.length, before + 1);
+
+  G.__answer = [''];
+  api.addTeachers();
+  eq('and empty adds nobody', api._register(new Date()).members.length, before + 1);
+
+  G.__answer = ['1, 3'];
+  api.addTeachers();
+  const three = api._register(new Date()).members;
+  eq('two at once', three.length, before + 3);
+  ok('both of them', three.some(p => p.name === 'Daniel Mompel Riera') && three.some(p => p.name === 'Brian Jones'));
+}
+{
+  /* the chair of this society teaches its class on a PUPIL account: adding him must not make
+     him staff, or he would vanish out of the members list and out of the class roster */
+  const { G, api, reg } = seeded();
+  G.__teachers = [{ id: 't4', email: 'scyuan29@pupils.nlcsjeju.kr', name: 'Henry Yuan' }];
+  G.__answer = ['1'];
+  api.addTeachers();
+  const henry = api._register(new Date()).members.filter(p => p.email === 'scyuan29@pupils.nlcsjeju.kr')[0];
+  ok('he is on the register', !!henry);
+  ok('and he is not staff', !henry.staff);
+  eq('his year is left for the teacher to set', henry.year, '');
+  ok('so the site still counts him a member', api._list(null).members.some(p => p.name === 'Henry Yuan' && !p.staff));
+}
+
 section('a member who teaches the class');
 {
   const { G, api, reg } = seeded();

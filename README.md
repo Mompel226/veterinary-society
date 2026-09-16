@@ -75,6 +75,7 @@ The four you will use are at the top; setting up and checking are folded into a 
 |---|---|
 | 🗂 **Open the panel** | The panel down the right-hand side: when the next meeting is, how many members and teachers, and buttons for the jobs below. It opens by itself whenever the sheet is opened; this is for putting it back if you close it. |
 | 📅 **Add the next meeting** | Asks the date and what you will do, then makes a new column for it. The website shows it as *Next meeting* straight away. |
+| 🧑‍🏫 **Put a teacher on the register** | Lists whoever teaches the Google Classroom class and lets you pick the ones who belong in the society — a class often carries a head of department who does not. A Classroom teacher on a **pupil** account (the chair here is one) is added as the pupil they are, with the Year left for you to set, rather than being made staff. |
 | 🪑 **Who is the chair?** | Under *Setting up, and checks*. Lists the register and lets you pick; what they get is the chair's desk on the website. |
 | 📣 **Post the next meeting now** | Announces that meeting in Google Classroom. A **teacher** posts it there and then; when the **chair** presses it, the teacher's computer posts it within five minutes, under the teacher's name. Nothing to tick. |
 | 👀 **Preview that announcement** | Shows the words first, without sending anything. |
