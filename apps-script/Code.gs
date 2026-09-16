@@ -54,7 +54,7 @@ var T_REG = 'Register', T_VOTES = 'Votes', T_SET = 'Settings', T_LOG = 'Log', T_
 /* Bumped whenever this file changes in a way the website can see. The menu always runs the code
    you have just saved; the WEBSITE runs the code of the deployed version, which is a different
    thing and a common way to be fooled. The check compares the two and says so. */
-var CODE_STAMP = '2026-09-16e · the register says who runs the society';
+var CODE_STAMP = '2026-09-16f · teachers can be brought in from the class';
 var HEAD = ['Korean name', 'English name', 'Surname', 'Preferred name', 'Email', 'Year', 'Role', 'Joined', 'Would like to do'];
 var NOTE = ['', '', '', 'shown on the site', 'never shown — the first part is enough', 'shown',
             'Chair or Secretary — they run it from the website', 'filled in for you', 'in their own words'];
@@ -106,6 +106,7 @@ function onOpen() {
     .addItem('📣  Tell the class', 'postNow')
     .addItem('👀  Preview that announcement', 'previewAnnouncement')
     .addItem('🎒  Update who is in the class', 'syncClassroom')
+    .addItem('🧑‍🏫  Put a teacher on the register', 'addTeachers')
     .addSeparator()
     .addSubMenu(ui.createMenu('⚙️  Setting up, and checks')
       .addItem('Set the sheet up, or tidy it', 'setup')
@@ -267,6 +268,7 @@ function _startHere(ss) {
     ['step',  '3.  After the meeting', 'Register tab \u25B8 tick the box for everyone who came. A ticked box turns green, and the website shows who came to what \u2014 as soon as the meeting has finished, not the next day.'],
     ['band',  'Now and then', ''],
     ['step',  'Who runs it', 'The Role column: choose Chair or Secretary from the drop-down beside somebody\u2019s year. Either of them gets the desk on the website \u2014 add a meeting, tell the class \u2014 which is how a pupil runs the society, because a pupil cannot be given permission to use this menu. Panel \u25B8 \u2699\uFE0F Setting up, and checks \u25B8 Who is the chair? does the same thing, and can name somebody who has not put their name down yet.'],
+    ['step',  'A teacher of yours', 'Menu \u25B8 \uD83E\uDDD1\u200D\uD83C\uDFEB Put a teacher on the register. It lists whoever teaches the Google Classroom class and you pick the ones who belong here \u2014 a class often carries a head of department who does not.'],
     ['step',  'Somebody new', 'They sign up on the website themselves, or you type them into the next empty row of the Register \u2014 the row dresses itself.'],
     ['step',  'Keep the class in step', 'Panel \u25B8 \uD83C\uDF92 Update the class. It shows who to invite and who to take out before it does anything. A teacher only.'],
     ['step',  'Something looks wrong', '\u2728 Tidy the sheet puts the look back and changes nothing you wrote. \uD83E\uDE7A Check the website says whether the page and this sheet are talking.'],
@@ -1242,6 +1244,75 @@ function chooseChair() {
     (strangers.length ? ' They are not on the register yet \u2014 put their name down on the website too, so they show up with everybody else.' : ''));
 }
 
+/* The teachers of the Classroom class, offered for the register — the ones you choose, not all
+   of them, because a class often carries a head of department or a cover teacher who has nothing
+   to do with the society.
+
+   One thing to be careful of: a Classroom "teacher" is not always a member of staff. The chair of
+   this society is a teacher of its class, on a pupil account. Such a person is added as the pupil
+   they are, with the Year left empty for you to set, rather than being quietly made staff — the
+   register decides who is staff by the address, and being staff hides somebody from the members
+   list and out of the class roster. */
+function addTeachers() {
+  if (!_classroomReady(true)) return;
+  var course = _courseOr(true); if (!course) return;
+  var list;
+  try { list = _classTeachers(course); }
+  catch (e) {
+    if (_isScopeTrouble(e)) { _say('One permission short', _scopeHelp('see who teaches the class'), 560); return; }
+    _say('Google would not say', '<p class="warn">' + e.message + '</p>' +
+      '<p class="note">Only a teacher of the class may see who teaches it. If you are the chair, ask Dr Mompel to run this.</p>', 300);
+    return;
+  }
+  if (!list.length) { _say('Nobody to add', '<p>Google says this class has no teachers it will tell us about.</p>', 260); return; }
+
+  var sh = SpreadsheetApp.getActive().getSheetByName(T_REG);
+  if (!sh) { _ui('There is no Register tab yet. Menu \u25B8 Set the sheet up, or tidy it.'); return; }
+  var on = {};
+  _register(new Date()).members.forEach(function (p) { if (p.email) on[p.email] = true; });
+
+  var ui = SpreadsheetApp.getUi();
+  var lines = list.map(function (t, i) {
+    return (i + 1) + '.  ' + (t.name || t.email) + '  ' + t.email +
+      (on[t.email] ? '   \u2014 on the register already' : (_isStaff(t.email) ? '' : '   \u2014 a pupil account'));
+  }).join('\n');
+  var a = ui.prompt('Which of them go on the register?',
+    lines + '\n\nType the numbers, separated by commas. Leave it empty to add nobody.',
+    ui.ButtonSet.OK_CANCEL);
+  if (a.getSelectedButton() !== ui.Button.OK) return;
+  var txt = String(a.getResponseText()).trim();
+  if (!txt) { _toast('Nobody added.'); return; }
+
+  var picked = [], bad = [], seen = {};
+  txt.split(/[\s,;]+/).filter(String).forEach(function (t) {
+    var n = /^\d+$/.test(t) ? +t : 0;
+    if (!(n >= 1 && n <= list.length)) { bad.push(t); return; }
+    var who = list[n - 1];
+    if (!seen[who.email]) { seen[who.email] = true; picked.push(who); }
+  });
+  if (bad.length) { _ui('That was not one of the numbers on the list: ' + bad.join(', ')); return; }
+
+  var added = [], already = [], pupils = [];
+  picked.forEach(function (t) {
+    if (on[t.email]) { already.push(t.name || t.email); return; }
+    var staff = _isStaff(t.email);
+    var shown = t.name || (t.given + ' ' + t.family).trim() || t.email.split('@')[0];
+    sh.appendRow(['', t.given || '', t.family || '', shown, t.email, staff ? 'Teacher' : '', '', new Date(), '']);
+    _dressRow(sh, sh.getLastRow());
+    on[t.email] = true;
+    added.push(shown);
+    if (!staff) pupils.push(shown);
+  });
+  _years(sh);
+  _flush();
+  _log('From Classroom: ' + (added.length ? added.join(', ') : 'nobody') + ' put on the register', _me());
+
+  var said = added.length ? added.join(', ') + ' added.' : 'Nobody new to add.';
+  if (already.length) said += ' ' + already.join(', ') + ' was on the register already.';
+  if (pupils.length) said += ' ' + pupils.join(', ') + ' is on a pupil account, so set their year \u2014 they are in the class as a teacher, not a member of staff.';
+  _ui(said);
+}
+
 function chooseCourse() {
   if (typeof Classroom === 'undefined') {
     _say('One thing is missing', '<p>The Classroom service is not switched on in this script yet.</p>' +
@@ -1368,6 +1439,22 @@ function _classroomReady(sayIt) {
   return false;
 }
 /* everyone Google thinks is a student of the class, and everyone already invited */
+/* Who teaches the class, with their names. Used twice: to keep a teacher who is on the register
+   from being invited as a student of their own class, and to offer them for the register. */
+function _classTeachers(course) {
+  var out = [], token = null;
+  do {
+    var t = Classroom.Courses.Teachers.list(course, { pageSize: 100, pageToken: token }) || {};
+    ((t.teachers) || []).forEach(function (te) {
+      var pr = te.profile || {}, nm = pr.name || {};
+      var e = String(pr.emailAddress || '').toLowerCase();
+      if (e) out.push({ id: te.userId, email: e, name: nm.fullName || '', given: nm.givenName || '', family: nm.familyName || '' });
+    });
+    token = t.nextPageToken;
+  } while (token);
+  return out;
+}
+
 function _classNow(course) {
   var out = { students: [], teachers: {}, teachersKnown: false, invited: {}, pending: [] }, token = null;
   do {
@@ -1394,15 +1481,7 @@ function _classNow(course) {
      class at all, and every sync offers to invite them again. If Google will not list them we
      carry on without: better a sync that works as it used to than one that will not run. */
   try {
-    token = null;
-    do {
-      var t = Classroom.Courses.Teachers.list(course, { pageSize: 100, pageToken: token }) || {};
-      ((t.teachers) || []).forEach(function (te) {
-        var e = String(((te.profile || {}).emailAddress) || '').toLowerCase();
-        if (e) out.teachers[e] = true;
-      });
-      token = t.nextPageToken;
-    } while (token);
+    _classTeachers(course).forEach(function (t) { out.teachers[t.email] = true; });
     out.teachersKnown = true;
   } catch (e) { _log('Could not list the class teachers: ' + e.message, ''); }
   return out;
