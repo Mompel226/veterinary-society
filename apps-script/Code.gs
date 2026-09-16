@@ -73,7 +73,8 @@ var SITE = 'https://nlcsbiology.com/veterinary-society/';
 var DOMAINS = ['pupils.nlcsjeju.kr', 'nlcsjeju.kr'];
 var PUPILS = '@pupils.nlcsjeju.kr';     /* what a bare name in the Email column means */
 var S_CLIENT = 'Google Client ID', S_COURSE = 'Classroom course ID',
-    S_LAST = 'Last posted', S_SITE = 'The website', S_READ = 'Last read by the website';
+    S_LAST = 'Last posted', S_SITE = 'The website', S_READ = 'Last read by the website',
+    S_CHAIR = 'Chair';
 var WANT_POST = 'postWanted';        /* a chair asking for an announcement a teacher will make */
 var CACHE_KEY = 'list-v2', CACHE_SECONDS = 600;
 var YEARS = ['Y7', 'Y8', 'Y9', 'Y10', 'Y11', 'Y12', 'Y13', 'Teacher'];
@@ -203,7 +204,7 @@ function setup() {
   _tab(ss, T_LOG, ['When', 'What', 'By']);
   var st = ss.getSheetByName(T_SET) || ss.insertSheet(T_SET);
   if (st.getLastRow() < 1) st.appendRow(['Setting', 'Type it here \u2192', 'What it is for']);
-  var want = [[S_CLIENT, CLIENT_ID], [S_COURSE, ''], [S_LAST, ''], [S_READ, ''], [S_SITE, SITE]];
+  var want = [[S_CLIENT, CLIENT_ID], [S_COURSE, ''], [S_CHAIR, ''], [S_LAST, ''], [S_READ, ''], [S_SITE, SITE]];
   want.forEach(function (kv) {
     var row = _settingRow(st, kv[0]);
     if (!row) { st.appendRow(kv); row = st.getLastRow(); }
@@ -443,6 +444,7 @@ function _dressSettings(sh) {
   var help = {};
   help[S_CLIENT] = 'The Google Client ID the Biology labs use. Dr Mompel has it. Without it nobody can sign in.';
   help[S_COURSE] = 'Which class gets the announcement. Menu ▸ Find my Classroom course ID — it is not the number in the Classroom web address.';
+  help[S_CHAIR]  = 'The chair\u2019s school address, so the website lets them add a meeting and tell the class. More than one, separated by commas, if there are joint chairs. A teacher may always do both and does not need listing.';
   help[S_LAST]   = 'Filled in by the script.';
   help[S_READ]   = 'Filled in by the script: the last time the website asked for the register, and which version answered. This is the proof that the page and this sheet are talking.';
   help[S_SITE]   = 'Where the page lives.';
@@ -638,6 +640,8 @@ function _register(now) {
 function _asDate(v) {
   if (v instanceof Date) return isNaN(v.getTime()) ? null : v;
   var s = String(v || '').trim(); if (!s) return null;
+  var iso = /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{1,2}):(\d{2}))?$/.exec(s);   /* 2026-09-17T15:40 - what the website sends */
+  if (iso) return new Date(+iso[1], +iso[2] - 1, +iso[3], +(iso[4] || 0), +(iso[5] || 0));
   var m = /^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})(?:\s+(\d{1,2}):(\d{2}))?$/.exec(s);     /* 17/9/2026 15:40 — day first */
   if (m) { var y = Number(m[3]); if (y < 100) y += 2000; return new Date(y, Number(m[2]) - 1, Number(m[1]), Number(m[4] || 0), Number(m[5] || 0)); }
   var d = new Date(s); return isNaN(d.getTime()) ? null : d;
@@ -676,6 +680,18 @@ function _title(v) {
 /* Who is a teacher is not a matter of what anybody typed: the school gives teachers an address
    without `pupils.` in it, and Google has already proved the address. A pupil cannot claim it. */
 function _isStaff(email) { return (String(email || '').split('@')[1] || '') === STAFF_DOMAIN; }
+/* The chair, and anybody else the teacher names in Settings, may run the society from the
+   WEBSITE. That is the point of doing it there: the web app runs under the teacher's own
+   authority, so the chair signs in and nothing is ever asked of his own Google account - which
+   is what stops a school that lets only staff authorise scripts from shutting him out of his own
+   society. A teacher is always allowed, whether or not anybody wrote them down. */
+function _isChair(email) {
+  var e = String(email || '').trim().toLowerCase();
+  if (!e) return false;
+  if (_isStaff(e)) return true;
+  return String(_setting(S_CHAIR) || '').toLowerCase().split(/[\s,;]+/).filter(String).indexOf(e) >= 0;
+}
+
 /* the next meeting: the first that has not finished yet — so a meeting still counts as next
    while it is going on, and stops the moment it ends */
 function _next(reg) {
@@ -733,6 +749,40 @@ function _handle(d) {
       _flush();
       return _list(who);
     }
+    /* The chair's two jobs, done from the website instead of the sheet's menu. Everything here
+       runs as the teacher who deployed the web app, so the chair needs no permission of his own:
+       the meeting is written by the teacher's hand, and the announcement goes out under the
+       teacher's name, which is the only way Google Classroom will carry it anyway. */
+    if (action === 'meeting' || action === 'tellClass') {
+      if (!_isChair(who.email)) return { ok: false, why: 'only the chair or a teacher may do that' };
+
+      if (action === 'meeting') {
+        var when = _asDate(d.date);
+        if (!when) return { ok: false, why: 'that did not read as a date' };
+        var plan = String(d.plan || '').trim().slice(0, 200);
+        if (!plan) return { ok: false, why: 'say what the meeting will be' };
+        /* the same day twice is nearly always a slip, and a stray column cannot be undone from here */
+        var already = _register(new Date()).meetings.filter(function (m) {
+          return _startOfDay(m.date).getTime() === _startOfDay(when).getTime();
+        })[0];
+        if (already) return { ok: false, why: 'there is already a meeting that day' };
+        _newMeeting(when, plan);
+        _log('Meeting added from the website: ' + _stamp(when, SpreadsheetApp.getActive().getSpreadsheetTimeZone()) + ' \u00B7 ' + plan, who.email);
+        return _list(who);
+      }
+
+      try {
+        announce(who.email);
+        var out = _list(who); out.said = 'The class has been told.'; return out;
+      } catch (e) {
+        var out2 = _list(who);
+        out2.said = /course ID/i.test(e.message)
+          ? 'No Classroom class is chosen yet \u2014 a teacher sets that in the sheet.'
+          : 'Could not post to Classroom: ' + e.message;
+        return out2;
+      }
+    }
+
     if (action === 'vote') {
       var idea = String(d.idea || '').replace(/[^a-z0-9-]/g, '').slice(0, 40);
       if (!idea) return { ok: false, why: 'which idea?' };
@@ -838,6 +888,8 @@ function _list(who) {
   if (who) {
     out.name = who.given || who.name;
     out.member = reg.members.some(function (p) { return p.email === who.email; });
+    out.chair = _isChair(who.email);
+    out.staff = _isStaff(who.email);
   }
   var vs = SpreadsheetApp.getActive().getSheetByName(T_VOTES);
   if (vs && vs.getLastRow() > 1) {

@@ -108,6 +108,14 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .go:disabled{opacity:.55;cursor:default}
 .who-i-am{margin-top:10px;font-size:13px;color:var(--dim)} .who-i-am b{color:var(--chalk);font-weight:500}
 .msg{margin-top:10px;font-size:13px;color:var(--moss);min-height:1.2em}
+/* the chair's desk: quieter than the join panel, because only two or three people ever see it */
+.chair{margin-top:26px}
+.chair[hidden]{display:none}
+.chair__row{margin-top:14px;display:grid;grid-template-columns:minmax(280px,1fr) minmax(0,1fr);gap:16px;align-items:start}
+.chair__row>*{border:1px solid rgba(157,183,174,.28);border-radius:6px;padding:16px 18px;background:rgba(157,183,174,.05)}
+.chair__tell p{font-size:13.5px;color:#D7E3EA}
+.chair .form{margin-top:0}
+.go--quiet{margin-top:14px;color:var(--dim);background:none;border:1px solid rgba(157,183,174,.45)}
 .list{border:1px solid var(--rule);border-radius:6px;background:rgba(255,255,255,.03);padding:14px 16px}
 .list h3{font-family:var(--serif);font-size:20px;font-weight:400;display:flex;align-items:baseline;justify-content:space-between;gap:10px}
 .list h3 small{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;color:var(--mute)}
@@ -150,7 +158,8 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,12px);z-index:30;max-width:min(92vw,520px);background:#F7F6F2;color:#1B2226;padding:11px 18px;border-radius:3px;font-size:13.5px;line-height:1.45;
   box-shadow:0 10px 40px rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:opacity .22s,transform .22s}
 .toast.on{opacity:1;transform:translate(-50%,0)}
-@media (max-width:760px){.head{grid-template-columns:1fr} .head .mark{max-width:380px} .join{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:760px){
+  .chair__row{grid-template-columns:1fr}.head{grid-template-columns:1fr} .head .mark{max-width:380px} .join{grid-template-columns:minmax(0,1fr)}}
 /* Below this width the magazine stands the cover above its words rather than beside them: side
    by side, neither has room. The same number is in the script that matches their heights. */
 @media (max-width:1000px){.mag{flex-direction:column} .cover{align-self:flex-start} .cover img{width:min(300px,100vw - 32px)}}
@@ -183,6 +192,31 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
     <span class="next__when" id="nextWhen"></span>
     <span class="next__soon" id="nextSoon" hidden></span>
     <span class="next__plan" id="nextPlan"></span>
+  </section>
+
+  <!-- The chair's desk. Only the chair and the teachers are shown it, and showing it is not what
+       makes it safe: the script checks on every request who is signed in, so the buttons do
+       nothing for anybody else. It is here, on the website, rather than in the spreadsheet's own
+       menu, because a pupil account cannot authorise that script — the school lets only staff
+       grant the Google Classroom permissions it asks for, and the authorisation is all or
+       nothing. The web app runs under the teacher's authority, so the chair signs in and nothing
+       is ever asked of his account. Settings ▸ Chair is who may see this. -->
+  <section class="chair" id="chair" hidden>
+    <div class="band"><h2>The chair’s desk</h2><small>only you and the teachers see this</small></div>
+    <div class="chair__row">
+      <form class="form" id="meetForm">
+        <label>When is the next meeting?<input id="meetDate" type="datetime-local" required></label>
+        <label>What will you do, and where?<input id="meetPlan" maxlength="200" placeholder="e.g. Suturing on practice pads · B12" required></label>
+        <button class="go" id="meetGo" type="submit">Add the meeting</button>
+      </form>
+      <div class="chair__tell">
+        <p>Tell the class in Google Classroom: when the next meeting is and what it will be, with a
+           link to this page. It goes out under Dr Mompel’s name, because Google lets only a
+           teacher of a class announce in it.</p>
+        <button class="go go--quiet" id="tellGo" type="button">Tell the class</button>
+      </div>
+    </div>
+    <p class="msg" id="chairMsg"></p>
   </section>
 
   <!-- EDIT: what the society does. One card each, written to the person reading: "here you…".
@@ -412,18 +446,33 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
     }).join('') + '</tbody>';
     return head + body;
   }
+  /* The sheet holds people in the order they put their names down, which is no order at all to
+     read. On the page they go oldest year first, Year 13 down to Year 7, and A to Z inside a
+     year. Anything that is not a year at all sinks to the bottom rather than disappearing. */
+  function yearOf(p) { var m = /^Y(\d{1,2})$/.exec(String(p.year || '')); return m ? +m[1] : -1; }
+  function byYear(a, b) {
+    return yearOf(b) - yearOf(a) || String(a.name || '').localeCompare(String(b.name || ''));
+  }
   function paintRegister() {
     var ms = state.meetings || [], all = state.members || [];
-    var pupils = all.filter(function (p) { return !p.staff; });
-    var staff = all.filter(function (p) { return p.staff; });
+    var pupils = all.filter(function (p) { return !p.staff; }).sort(byYear);
+    var staff = all.filter(function (p) { return p.staff; })
+                   .sort(function (a, b) { return String(a.name || '').localeCompare(String(b.name || '')); });
     $('regNone').hidden = all.length > 0;
     $('reg').innerHTML = pupils.length ? regTable('Member', pupils, ms) : '';
     $('staffHead').hidden = $('staffWrap').hidden = !staff.length;
     $('regStaff').innerHTML = staff.length ? regTable('Teacher', staff, ms) : '';
   }
 
+  /* the desk appears only for whoever the script says may use it, and it says so on every
+     answer — so signing out, or a chair being changed in Settings, takes it away again */
+  function paintChair() {
+    var box = $('chair'); if (box) box.hidden = !(me && state.chair);
+  }
+  function chairSay(t) { var m = $('chairMsg'); if (m) m.textContent = t || ''; }
+
   function paint() {
-    paintNext(); paintRegister();
+    paintNext(); paintRegister(); paintChair();
     var all = state.members || [], mt = (state.meetings || []).length;
     var n = all.filter(function (p) { return !p.staff; }).length, t = all.length - n;
     var bits = [];
@@ -450,7 +499,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
   function refresh() {
     if (!URL_) return;
     api(me ? { action: 'me', token: me.token, from: location.host } : { action: 'list', from: location.host }).then(function (j) {
-      if (me && (!j || !j.ok)) { me = null; try { localStorage.removeItem(KEY); } catch (e) {} paintMe(); return api({ action: 'list' }).then(function (k) { take(k, true); }); }
+      if (me && (!j || !j.ok)) { me = null; try { localStorage.removeItem(KEY); } catch (e) {} paintMe(); paintChair(); return api({ action: 'list' }).then(function (k) { take(k, true); }); }
       take(j, true);
     }).catch(function () {});
   }
@@ -473,6 +522,29 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
     paint();
   } else {
     refresh();
+    $('meetForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (!me) return;
+      var b = $('meetGo'); b.disabled = true; chairSay('Adding\u2026');
+      api({ action: 'meeting', token: me.token, date: $('meetDate').value, plan: $('meetPlan').value.trim() })
+        .then(function (j) {
+          b.disabled = false;
+          if (j && j.ok) { take(j, true); $('meetPlan').value = ''; $('meetDate').value = ''; chairSay('Added. Everyone on the register has a box for it now.'); }
+          else chairSay((j && j.why) || 'Could not add that meeting.');
+        })
+        .catch(function () { b.disabled = false; chairSay('Could not reach the society\u2019s list just now.'); });
+    });
+    $('tellGo').addEventListener('click', function () {
+      if (!me) return;
+      var b = $('tellGo'); b.disabled = true; chairSay('Telling the class\u2026');
+      api({ action: 'tellClass', token: me.token })
+        .then(function (j) {
+          b.disabled = false;
+          if (j && j.ok) { take(j, true); chairSay(j.said || 'The class has been told.'); }
+          else chairSay((j && j.why) || 'Could not tell the class.');
+        })
+        .catch(function () { b.disabled = false; chairSay('Could not reach the society\u2019s list just now.'); });
+    });
     $('form').addEventListener('submit', function (e) {
       e.preventDefault();
       if (!me) return;
