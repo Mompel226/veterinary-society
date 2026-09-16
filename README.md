@@ -75,6 +75,7 @@ The four you will use are at the top; setting up and checking are folded into a 
 |---|---|
 | 🗂 **Open the panel** | The panel down the right-hand side: when the next meeting is, how many members and teachers, and buttons for the jobs below. It opens by itself whenever the sheet is opened; this is for putting it back if you close it. |
 | 📅 **Add the next meeting** | Asks the date and what you will do, then makes a new column for it. The website shows it as *Next meeting* straight away. |
+| 🪑 **Who is the chair?** | Under *Setting up, and checks*. Lists the register and lets you pick; what they get is the chair's desk on the website. |
 | 📣 **Post the next meeting now** | Announces that meeting in Google Classroom. A **teacher** posts it there and then; when the **chair** presses it, the teacher's computer posts it within five minutes, under the teacher's name. Nothing to tick. |
 | 👀 **Preview that announcement** | Shows the words first, without sending anything. |
 | 🎒 **Update who is in the class** | Compares the register with the Google Classroom class and shows both lists — who to invite, who to take out — before doing anything. It names the class and links to it, so you can be sure it is the right one. **A teacher only.** |
@@ -102,8 +103,15 @@ in on every request. The website’s script runs under **your** authority, so no
 of his account, and the announcement goes out under your name — which is the only way Google
 Classroom carries it anyway.
 
-Put his school address in **Settings ▸ Chair** (commas between them if there are joint chairs).
-Teachers may always do both and do not need listing.
+**To say who the chair is:** menu ▸ **⚙️ Setting up, and checks ▸ Who is the chair?** It lists the
+register — name and year, with an arrow against whoever holds it now — and you type the number.
+Two numbers separated by a comma if the chair is shared; leave it empty for no chair at all. It
+writes the address into **Settings ▸ Chair**, which is a plain cell you can also read or correct
+by hand. A teacher may always do both jobs and never needs listing — which is why, once the
+script is deployed, **you** see the desk on the website without doing anything.
+
+The chair is not a year group, so it is not one of the choices in the Year column: the chair is in
+a year like everybody else, and a society can change its chair without anybody changing year.
 
 **After the meeting:** tick the box for everyone who came. The website shows the ticks, and each
 member's tally beside their name. You can tick them the moment the meeting ends; you do not have
