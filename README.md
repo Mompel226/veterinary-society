@@ -402,3 +402,19 @@ the eye, with a forelock and mane. The pig, the hen and the cow are the magazine
 <br>
 
 <sub>Made by Dr Daniel Mompel Riera, Biology, NLCS Jeju, for the society. The page is the society’s to change. *Island Immunity* is the work of its writers, who hold the rights to it. The pictures behind the cards are public domain or Creative Commons and are credited on the page itself.</sub>
+
+## Licence
+
+[**AGPL-3.0**](LICENSE). Use it, change it, run it — free, and you never need to ask. If you change it
+and let anyone else use it, *including over a network*, you have to publish your source under the same
+licence.
+
+**The students' own work is not licensed here.** The magazine *Island Immunity*, its articles and
+anything else written or drawn by students remains the copyright of the students who made it. It is
+published here so they can show it and be credited for it — not for reuse. If you want to reproduce
+any of it, ask, and I will put you in touch with the author.
+
+**Not covered:** third-party images and media keep their own licences — see the picture credits.
+
+© 2026 Dr Daniel Mompel Riera. I hold the copyright, so I can grant other terms: if you want to use any of
+this commercially, ask me at <dmompelriera@nlcsjeju.kr>.
