@@ -1055,6 +1055,42 @@ section('votes');
   ok('nothing dangerous was stored', !JSON.stringify(api._list(null).votes).includes('<'));
 }
 
+section('three ideas at most for each voter');
+{
+  const { G, api } = seeded();
+  const vs = () => G.__ss.getSheetByName('Votes');
+  const rowsOf = email => vs().getRange(2, 2, Math.max(1, vs().getLastRow() - 1), 2).getValues().filter(r => r[0] === email).length;
+  eq('the limit is one constant, and it is three', G.MAX_IDEAS, 3);
+  let out;
+  ['meet-a-vet', 'wild-jeju', 'one-health'].forEach(i => { out = api._handle({ action: 'vote', token: 'TOK-NEW', idea: i }); });
+  eq('three votes are filed', out.mine.slice().sort(), ['meet-a-vet', 'one-health', 'wild-jeju']);
+  ok('with nothing to say', !out.said, out.said);
+  out = api._handle({ action: 'vote', token: 'TOK-NEW', idea: 'inside' });
+  ok('a fourth is not filed', out.ok && !out.votes['inside'] && out.mine.length === 3 && rowsOf('cfenn33@pupils.nlcsjeju.kr') === 3, JSON.stringify(out.votes));
+  ok('and the voter is told why, in plain words', /^You can vote for up to 3 ideas\. Press one of your votes again/.test(out.said || ''), out.said);
+  out = api._handle({ action: 'vote', token: 'TOK-NEW', idea: 'wild-jeju' });
+  eq('taking one back is always allowed', out.mine.slice().sort(), ['meet-a-vet', 'one-health']);
+  out = api._handle({ action: 'vote', token: 'TOK-NEW', idea: 'inside' });
+  eq('then another may take its place', out.mine.slice().sort(), ['inside', 'meet-a-vet', 'one-health']);
+  out = api._handle({ action: 'vote', token: 'TOK-JIEUN', idea: 'inside' });
+  eq('the limit is each voter’s own: another pupil still votes', out.votes['inside'], 2);
+  for (let n = 0; n < 20; n++) api._handle({ action: 'vote', token: 'TOK-JIEUN', idea: 'made-up-' + n });
+  eq('twenty made-up ideas from one account: only two get in, up to the limit',
+     Object.keys(api._list(null).votes).filter(k => k.startsWith('made-up-')).length, 2);
+  /* votes filed before the limit existed stay; that voter can only take back until under it */
+  vs().appendRow([new Date(2026, 8, 1), 'broe31@pupils.nlcsjeju.kr', 'first-aid', 'First aid']);
+  ['debate', 'wild-jeju', 'one-health'].forEach(i => vs().appendRow([new Date(2026, 8, 1), 'broe31@pupils.nlcsjeju.kr', i, i]));
+  G.__tokens['TOK-BORA'] = Object.assign({}, G.__tokens['TOK-NEW'], { email: 'broe31@pupils.nlcsjeju.kr', name: 'Bora Roe', given_name: 'Bora', family_name: 'Roe' });
+  out = api._handle({ action: 'vote', token: 'TOK-BORA', idea: 'inside' });
+  ok('four old votes are kept, and a fifth is refused', rowsOf('broe31@pupils.nlcsjeju.kr') === 4 && /up to 3/.test(out.said || ''), out.said);
+  api._handle({ action: 'vote', token: 'TOK-BORA', idea: 'debate' });
+  out = api._handle({ action: 'vote', token: 'TOK-BORA', idea: 'inside' });
+  ok('three left is still the limit', rowsOf('broe31@pupils.nlcsjeju.kr') === 3 && /up to 3/.test(out.said || ''), out.said);
+  api._handle({ action: 'vote', token: 'TOK-BORA', idea: 'first-aid' });
+  out = api._handle({ action: 'vote', token: 'TOK-BORA', idea: 'inside' });
+  ok('under it, the vote goes in', rowsOf('broe31@pupils.nlcsjeju.kr') === 3 && out.mine.includes('inside') && !out.said, JSON.stringify(out.mine));
+}
+
 section('a new meeting column');
 {
   const { G, api, reg } = seeded();
@@ -1326,7 +1362,7 @@ section('the panel and the announcement');
   api.previewAnnouncement();
   const html = G.__dialogs.map(d => d.html).join(' ');
   ok('the preview shows the words themselves', html.includes('Taking blood from the mould'), html.slice(0, 200));
-  ok('and says how to send them', html.includes('Settings B4'));
+  ok('and says how to send them, with no tick box', html.includes('Tell the class') && !html.includes('Settings B4'));
 }
 {
   const { G, api } = seeded();

@@ -170,7 +170,7 @@ html.ready .mo-fade{animation:fadeUp .9s var(--wait,0s) ease-out both}
 .reg-head{margin-top:16px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--moss);font-weight:500}
 .reg .staff{color:var(--amber)}
 .list .none{margin-top:10px;color:var(--mute);font-size:13.5px}
-/* the next meeting, read from the register: the first column whose date is today or later */
+/* the next meeting, read from the register: the first meeting not yet over (Code.gs _next) */
 .next{margin-top:26px;display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px;
   border:1px solid rgba(74,222,128,.4);border-left:4px solid var(--green);border-radius:6px;
   padding:14px 18px;background:linear-gradient(90deg,rgba(74,222,128,.12),rgba(74,222,128,.03))}
@@ -250,7 +250,8 @@ html.ready .mo-fade{animation:fadeUp .9s var(--wait,0s) ease-out both}
        menu, because a pupil account cannot authorise that script — the school lets only staff
        grant the Google Classroom permissions it asks for, and the authorisation is all or
        nothing. The web app runs under the teacher's authority, so the chair signs in and nothing
-       is ever asked of his account. Settings ▸ Chair is who may see this. -->
+       is ever asked of his account. Who may see this: any teacher, anyone whose Role on the
+       Register is Chair or Secretary, or an address in Settings ▸ Chair (Code.gs _isOfficer). -->
   <section class="chair" id="chair" hidden>
     <div class="band"><h2>Running the society</h2><small>the chair, the secretary and the teachers see this</small></div>
     <div class="chair__row">
@@ -358,7 +359,7 @@ html.ready .mo-fade{animation:fadeUp .9s var(--wait,0s) ease-out both}
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="config.js"></script>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://accounts.google.com/gsi/client?hl=en-GB" async defer></script>
 <script>
 /* ---- leave this alone unless you know what you are doing ----
    Sign-in, the list of who is interested, and the votes. All of it talks to the society's own
@@ -615,7 +616,7 @@ html.ready .mo-fade{animation:fadeUp .9s var(--wait,0s) ease-out both}
     if (!URL_) { toast('Voting is not switched on yet.'); return; }
     if (!me) { toast('Sign in below first, then vote.'); $('gsi').scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
     b.disabled = true;
-    api({ action: 'vote', token: me.token, idea: id }).then(function (j) { b.disabled = false; take(j); }).catch(function () { b.disabled = false; toast('Could not reach the society\u2019s list just now.'); });
+    api({ action: 'vote', token: me.token, idea: id }).then(function (j) { b.disabled = false; if (take(j) && j.said) toast(j.said); }).catch(function () { b.disabled = false; toast('Could not reach the society\u2019s list just now.'); });
   }
 
   setInterval(function () { try { paintNext(); } catch (e) {} }, 1000);

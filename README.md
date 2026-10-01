@@ -30,7 +30,8 @@ issue 1, four Jeju farm animals and the diseases that threaten them, written and
 the society.
 
 On the page, a student signs in with the school Google account, puts their name down, and votes
-for the ideas they want the society to take on this year. The page also shows **when the next
+for the ideas they want the society to take on this year, up to three each (pressing a vote again
+takes it back). The page also shows **when the next
 meeting is**, what it will be, and **who came to the ones before** — first names and year groups
 only. Addresses and full names stay in the society's own sheet, with the chair.
 
@@ -86,23 +87,22 @@ Row 2 holds **what the meeting is**: *Suturing on practice pads · B12*. Members
 
 #### The 🐴 Veterinary Society menu, item by item
 
-It sits at the top of the spreadsheet, beside Help. You will use the first three; the rest are
-there when you need them.
-
-The four you will use are at the top; setting up and checking are folded into a submenu.
+It sits at the top of the spreadsheet, beside Help. The two after the panel — 📅 **Add a meeting**
+and 📣 **Tell the class** — are the weekly ones; the rest are there when you need them, and setting
+up and checking are folded into a submenu.
 
 | | What it does |
 |---|---|
 | 🗂 **Open the panel** | The panel down the right-hand side: when the next meeting is, how many members and teachers, and buttons for the jobs below. It opens by itself whenever the sheet is opened; this is for putting it back if you close it. |
-| 📅 **Add the next meeting** | Asks the date and what you will do, then makes a new column for it. The website shows it as *Next meeting* straight away. |
+| 📅 **Add a meeting** | Asks the date and what you will do, then makes a new column for it. The website shows it as *Next meeting* straight away. |
 | 🧑‍🏫 **Put a teacher on the register** | Lists whoever teaches the Google Classroom class and lets you pick the ones who belong in the society — a class often carries a head of department who does not. A Classroom teacher on a **pupil** account (the chair here is one) is added as the pupil they are, with the Year left for you to set, rather than being made staff. |
 | 👥 **Who runs it** | Chair and secretary, from two drop-downs. Offers the members and the class's teachers, and puts anybody chosen onto the register so they can be marked present. In the panel, and under *Setting up, and checks*. |
-| 📣 **Post the next meeting now** | Announces that meeting in Google Classroom. A **teacher** posts it there and then; when the **chair** presses it, the teacher's computer posts it within five minutes, under the teacher's name. Nothing to tick. |
+| 📣 **Tell the class** | Announces the next meeting in Google Classroom. A **teacher** posts it there and then; when the **chair** presses it, the teacher's computer posts it within five minutes, under the teacher's name. Nothing to tick. |
 | 👀 **Preview that announcement** | Shows the words first, without sending anything. |
 | 🎒 **Update who is in the class** | Compares the register with the Google Classroom class and shows the lists — who to invite as students, who to ask to teach it (the chair and the secretary), who to take out — before doing anything. It names the class and links to it, so you can be sure it is the right one. **A teacher only.** |
-| ⚙️ **Setting up, and checks** | A submenu, for the things done once or when something looks wrong: **Set the sheet up, or tidy it** (one job — see below), **Choose the Classroom class**, **Install the triggers**, **Check the website can read this**, **Refresh the website now**, **Test the pop-up window**. |
+| ⚙️ **Setting up, and checks** | A submenu, for the things done once or when something looks wrong: **Set the sheet up, or tidy it** (one job — see below), **Choose the Classroom class**, **Who runs it — chair and secretary**, **Install the triggers (a teacher, once)**, **Check the website can read this**, **Refresh the website now**, **Test the pop-up window**. |
 
-**To add a meeting:** menu **🐴 Veterinary Society ▸ 📅 Add the next meeting**, type the date and
+**To add a meeting:** menu **🐴 Veterinary Society ▸ 📅 Add a meeting**, type the date and
 what you will do. A new column appears with a tick box on every member's row. Within a minute
 the website says *Next meeting — Thursday 17 September, 15:40*, what it is, and **how long until
 it starts**, counting down as the day gets closer.
@@ -142,14 +142,15 @@ year group still shows too — a Y12 secretary is still in Y12. Any other word y
 kept and shown, and carries nothing with it, so a society may have a Treasurer without this
 script having an opinion about it.
 
-**Or from the menu**, which is the way to name somebody who has not signed up yet:
-menu ▸ **⚙️ Setting up, and checks ▸ Who is the chair?** It lists the
-register — name and year, with an arrow against whoever holds it now — and you type the number.
-**If the chair has not put their name down yet they are not on that list, so type their school
-address instead** (the first part of it is enough). Two of either, separated by a comma, if the
-chair is shared; leave it empty for no chair at all. It
-writes the address into **Settings ▸ Chair**, which is a plain cell you can also read or correct
-by hand. A teacher may always do both jobs and never needs listing — which is why, once the
+**Or from the menu**: menu ▸ **⚙️ Setting up, and checks ▸ Who runs it — chair and secretary**
+(the panel's **👥 Who runs it** opens the same window). It has two drop-downs, chair and secretary,
+offering the register's members and the class's teachers, and puts anybody chosen onto the register
+so they can be marked present. Where a drawn window cannot open, a plain list asks for the chair
+instead: it lists the register — name and year, with an arrow against whoever holds it now — and
+you type the number, **or the school address of somebody who has not put their name down yet** (the
+first part of it is enough). Two, separated by a comma, if the chair is shared; leave it empty for
+no chair at all. An address typed there goes into **Settings ▸ Chair**, which is a plain cell you
+can also read or correct by hand. A teacher may always do both jobs and never needs listing — which is why, once the
 script is deployed, **you** see the desk on the website without doing anything.
 
 The chair is not a year group, so it is not one of the choices in the Year column: the chair is in
@@ -289,7 +290,7 @@ sheet can know for itself, puts the look back, and clears whatever is left below
 no year lists, tick boxes or banding on rows that hold nobody. It never changes a word anybody
 has written, so run it whenever something looks wrong.
 
-**5 · Say where announcements go: menu ▸ Choose the Classroom class.** It asks Google which
+**5 · Say where announcements go: menu ▸ ⚙️ Setting up, and checks ▸ Choose the Classroom class.** It asks Google which
 classes you teach, shows them as a numbered list, and writes the one you pick into Settings. You
 never have to find a course ID: the number in the Classroom web address is *not* it.
 
@@ -308,17 +309,19 @@ is in it:
 ```
 
 Click it and you see three columns: **A** the name of the setting, **B** the box you type in,
-**C** a line saying what it is for. The two you might ever fill in are lit in amber; the three
-the script writes for itself are quieter. Nothing here needs you — it arrives filled in — but
-this is what each row is:
+**C** a line saying what it is for. The three you might ever fill in (Client ID, course, Chair)
+are lit in amber; the three the script writes for itself are quieter. Nothing here needs you — it arrives filled in — but
+this is what each row is. The script finds each row by its name, so on an older sheet the rows
+may stand in another order:
 
-| Cell | Setting (column A) | What is in column B |
+| Cell (on a new sheet) | Setting (column A) | What is in column B |
 |---|---|---|
-| **B2** | Google Client ID | `749068441640-jgh9s0rbg8ed9hl14mtv6kdhg5jg6ddf.apps.googleusercontent.com`, **already written in**. It is not a secret — the same line is in [`config.js`](config.js) on the website — so it lives in the script and is copied here for you. **If the school ever changes it**, type the new one into **B2**: what is in the sheet wins over what is in the script. Blank it and nobody can sign in. |
-| **B3** | Classroom course ID | written by menu ▸ *Choose the Classroom class* (step 5). |
-| **B4** | Last posted | written by the script — when it last posted, and for which meeting. Also shown in the panel. |
-| **B5** | Last read by the website | written by the script — the last time the page asked this sheet for the register, and which version answered. This is the proof that the two are talking. |
-| **B6** | The website | where the page lives. The panel has a link to it. |
+| **B2** | Google Client ID | `749068441640-jgh9s0rbg8ed9hl14mtv6kdhg5jg6ddf.apps.googleusercontent.com`, **already written in**. It is not a secret — the same line is in [`config.js`](config.js) on the website — so it lives in the script and is copied here for you. **If the school ever changes it**, type the new one into its box: what is in the sheet wins over what is in the script. Blank it and nobody can sign in. |
+| **B3** | Classroom course ID | written by menu ▸ ⚙️ *Setting up, and checks ▸ Choose the Classroom class* (step 5). |
+| **B4** | Chair | an address, if you name the chair here rather than in the Register's Role column (see *Who runs it* above). |
+| **B5** | Last posted | written by the script — when it last posted, and for which meeting. Also shown in the panel. |
+| **B6** | Last read by the website | written by the script — the last time the page asked this sheet for the register, and which version answered. This is the proof that the two are talking. |
+| **B7** | The website | where the page lives. The panel has a link to it. |
 
 Only ever type in **column B**. Columns A and C are labels; if one gets edited by accident, menu
 ▸ *Set the sheet up, or tidy it* writes them back.
@@ -332,7 +335,7 @@ Only ever type in **column B**. Columns A and C are labels; if one gets edited b
 > Choose anything narrower and the website gets a Google sign-in page instead of an answer, and
 > shows nothing at all.
 
-**7 · Check it, from the sheet: menu ▸ Check the website can read this.** The script asks its own
+**7 · Check it, from the sheet: menu ▸ ⚙️ Setting up, and checks ▸ Check the website can read this.** The script asks its own
 web address the way a stranger would, and tells you either *Working*, with the address to paste,
 or exactly what to change. Use the address it gives you: `script.google.com/macros/s/…`, not the
 `script.google.com/a/macros/<school>/s/…` form the editor may show, which makes a visitor sign in
@@ -341,10 +344,11 @@ to the school first.
 **8 · Paste that address** into [`config.js`](config.js) after `scriptUrl`, and commit. Within a
 minute or two the page shows the sign-in button, the register and the votes.
 
-**9 · Install the triggers.** Menu ▸ *Install the triggers*. Do this **in the teacher's own
-account**: an installed trigger runs as whoever installed it, and only a teacher of the class
-may post an announcement. That is what lets the chair tick one box in the sheet and have the
-announcement go out properly.
+**9 · Install the triggers.** Menu ▸ ⚙️ *Setting up, and checks ▸ Install the triggers (a teacher,
+once)*. Do this **in the teacher's own account**: an installed trigger runs as whoever installed it,
+and only a teacher of the class may post an announcement. That is what lets the chair press 📣 **Tell
+the class** (in the panel or on the website) and have the announcement go out under the teacher's
+name within five minutes.
 
 #### After you change the script
 
@@ -367,7 +371,7 @@ says *Working, but a version behind* when the deployment is running older code.
 | The page shows *"Sign-in and voting are not switched on yet"* | `config.js` has no address in `scriptUrl` yet (step 8), or the commit has not reached GitHub Pages — give it a minute. |
 | The page shows nothing where the register should be, and `scriptUrl` **is** filled in | The deployment is not open to **Anyone** (step 6). Menu ▸ 🩺 *Check the website can read this* will say so — Google answers **401** or **404** to a request that carries no sign-in. If **Anyone** is not offered in the deployment settings at all, the school has turned anonymous web apps off; say so and the page can be changed to sign people in before it asks for anything. |
 | You redeployed and got a new address | Each **New deployment** makes a new `/exec`, and opening one of them to *Anyone* does nothing for the others. **Manage deployments ▸ pencil ▸ Deploy** updates the existing one and keeps its address. Keep one deployment and archive the rest (⋮ ▸ Archive). |
-| *Check the website can read this* says 404, but the site plainly works | Google will not let a script ask its own web address without signing in: it answers its own machinery **404**. So the check trusts the record instead — every time the page reads the register, the sheet writes the moment into **Settings B6** — and says *Working, the website read the register N minutes ago*. |
+| *Check the website can read this* says 404, but the site plainly works | Google will not let a script ask its own web address without signing in: it answers its own machinery **404**. So the check trusts the record instead — every time the page reads the register, the sheet writes the moment into **Settings ▸ Last read by the website** — and says *Working, the website read the register N minutes ago*. |
 | The **chair** gets *you do not have permission* on every menu item, though he is an Editor of the sheet | **He does not need the menu — see *The chair does all this from the website* above, and put his address in Settings ▸ Chair.** Why it happens: being an Editor of a sheet lets somebody **edit the sheet**. Running the script bound to it is a separate thing: everyone who uses the menu has to authorise the script **in their own account**, and you cannot do that for them. What usually stops a pupil is the **Google Classroom permissions** in the manifest — `classroom.rosters` and `classroom.profile.emails` are what Google calls *sensitive*, and a school that has set pupils to **“only trusted apps”** — while leaving staff unrestricted — blocks them from granting those, which is exactly why it works for you and not for him. The authorisation is all-or-nothing, so it takes *Add a meeting* down with it, even though adding a meeting only touches the sheet. Three ways out: ask IT to mark the script trusted (**Admin console ▸ Security ▸ Access and data control ▸ API controls ▸ Manage third-party app access**, add this script's OAuth client as *Trusted*), which needs no change here; or let the chair do these jobs **from the website**, where the script already runs under the teacher's authority and he only signs in; or split the Classroom work into a second script that only the teacher authorises. |
 | *Specified permissions are not sufficient to call …* | The script's **manifest** does not ask for that permission yet, so Google never offered it. Script editor ▸ **⚙ Project Settings** ▸ tick **Show "appsscript.json" manifest file in editor**; open **appsscript.json** in the file list; replace all of it with [`apps-script/appsscript.json`](apps-script/appsscript.json) from here; **Save**; run the same menu item again and **Review permissions ▸ Allow**. The script shows you the same steps, with the manifest to copy, whenever it hits this. Nothing is lost. |
 | The editor sits on *Execution started* and nothing happens | A script run from the editor is waiting for a click in the **spreadsheet** window. Switch to it. Better: run these from the menu. |
@@ -376,6 +380,30 @@ says *Working, but a version behind* when the deployment is running older code.
 
 **If the sheet ever has to move** to another account: open a copy there and do steps 2 to 8
 again, then paste the new `/exec` address into `config.js`. Nothing else changes.
+
+</details>
+
+<details>
+<summary><b>Changing the page</b> — for members</summary>
+
+<br>
+
+The page belongs to the society, and any member may change it: a new idea to vote on, a card about
+what you do, the next issue of the magazine. Every change reaches the page the same way, as a
+**pull request** that Dr Mompel Riera reads and merges. Nobody else can change this repository
+directly: every site on nlcsbiology.com shares one address and one sign-in, so each change is
+checked before it goes live.
+
+1. **Make a GitHub account** (free), and open this repository on GitHub.
+2. **Open `index.html` and press the pencil** (*Edit this file*). GitHub makes your own copy of the
+   repository for you. The places meant to be changed are marked `EDIT` in the comments.
+3. **Make your change**, then press *Commit changes…* and *Propose changes*, then *Create pull
+   request*. Say in one sentence what you changed and why.
+4. **Dr Mompel Riera reads every line you changed.** He merges it, and the page shows it within a
+   few minutes, or he tells you what to change first.
+
+A new picture goes in `assets/` in the same pull request, with its credit on the page. It must be one
+you may use: public domain, CC0 or CC BY.
 
 </details>
 
@@ -401,7 +429,7 @@ the eye, with a forelock and mane. The pig, the hen and the cow are the magazine
 
 <br>
 
-<sub>Made by Dr Daniel Mompel Riera, Biology, NLCS Jeju, for the society. The page is the society’s to change. *Island Immunity* is the work of its writers, who hold the rights to it. The pictures behind the cards are public domain or Creative Commons and are credited on the page itself.</sub>
+<sub>Made by Dr Daniel Mompel Riera, Biology, NLCS Jeju, for the society. The page is the society’s to change, by pull request (see *Changing the page*). *Island Immunity* is the work of its writers, who hold the rights to it. The pictures behind the cards are public domain or Creative Commons and are credited on the page itself.</sub>
 
 ## Licence
 

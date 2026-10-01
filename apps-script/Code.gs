@@ -3,11 +3,13 @@
    ------------------------------------------------------------
    This lives in the society's OWN Google Sheet (Extensions ▸ Apps Script), the one the chair is
    given, and is deployed as a web app that the page at nlcsbiology.com/veterinary-society/
-   talks to. The sheet has four tabs:
+   talks to. The sheet has five tabs: Start here (made by setup, it explains the sheet),
+   Register, Votes, Settings and Log.
 
      Register   one row per member, one column per meeting.
                 A Korean name · B English name · C Surname · D Preferred name · E Email · F Year
-                · G Joined · H Would like to do · then a column per meeting, from I onwards.
+                · G Role · H Joined · I Would like to do · then a column per meeting, from J
+                onwards (MEET_COL). Use the C_* names below, never a letter or a number.
                 Row 1 holds the headings and, over each meeting column, THE DATE of that meeting
                 (a date cell, with a time if there is one). Row 2 holds, under each date, what
                 the meeting is: "Suturing on practice pads · B12". Members start on row 3.
@@ -16,9 +18,10 @@
                 and jbloggs@pupils.nlcsjeju.kr are the same person. A bare name is a pupil's;
                 write a teacher's address out in full — no `pupils.` in it is what makes them
                 staff, and the website lists them apart from the members.
-     Votes      when · email · idea            (a second vote on the same idea takes it back)
+     Votes      When · Email · Idea · In words   (a second vote on the same idea takes it back)
      Settings   three columns: the name of the setting, THE BOX YOU TYPE IN, and a line saying
-                what it is for. The Google Client ID, the Classroom course, and the "post" box.
+                what it is for. Rows (found by name): Client ID, Classroom course, Chair, Last
+                posted, Last read by the website, The website.
      Log        what was posted to Classroom, and when
 
    WHAT THE PAGE IS TOLD, AND WHAT IT IS NOT. The page shows preferred names, year groups, the
@@ -31,18 +34,20 @@
    written with a date alone lasts the day. While it is running the page says so; the moment it
    finishes, the page stops calling it next and its column joins the register, ticks and all.
    That is deliberate: the ticks for a meeting held this morning have to show this morning.
-   Tick "Post the next meeting to Google Classroom" in Settings and it is announced there too.
+   Panel or menu ▸ 📣 Tell the class announces it in Google Classroom too.
 
    SETTING IT UP — the Start here tab says the same, and so does the README:
      1. Extensions ▸ Apps Script, paste this whole file, Save.
      2. Go back to the spreadsheet and RELOAD it. A "Veterinary Society" menu appears.
-     3. Menu ▸ Set up the tabs. Allow the permissions it asks for. (Run it from the menu, not
+     3. Menu ▸ ⚙️ Setting up, and checks ▸ Set the sheet up, or tidy it. Allow the permissions
+        it asks for. (Run it from the menu, not
         from the script editor: a script run from the editor that asks you something waits for
         an answer in the spreadsheet window, which looks like it has hung.)
-     4. Menu ▸ Choose the Classroom class, to say where announcements go.
+     4. Menu ▸ ⚙️ Setting up, and checks ▸ Choose the Classroom class, to say where announcements go.
      5. Deploy ▸ New deployment ▸ Web app ▸ execute as Me, access Anyone ▸ copy the /exec address
         into config.js on the site.
-     6. Dr Mompel, in his own account: Veterinary Society ▸ Install the triggers (once). The
+     6. Dr Mompel, in his own account: menu ▸ ⚙️ Setting up, and checks ▸ Install the triggers (a
+        teacher, once). The
         Classroom post is made by whoever installed them, so it must be a teacher of the class.
    ============================================================ */
 /* The Google Client ID the school's Biology pages sign in with. It is not a secret — it is
@@ -54,7 +59,7 @@ var T_REG = 'Register', T_VOTES = 'Votes', T_SET = 'Settings', T_LOG = 'Log', T_
 /* Bumped whenever this file changes in a way the website can see. The menu always runs the code
    you have just saved; the WEBSITE runs the code of the deployed version, which is a different
    thing and a common way to be fooled. The check compares the two and says so. */
-var CODE_STAMP = '2026-09-16l · signing in lives at the top of the page';
+var CODE_STAMP = '2026-10-01a · three ideas at most for each voter';
 var HEAD = ['Korean name', 'English name', 'Surname', 'Preferred name', 'Email', 'Year', 'Role', 'Joined', 'Would like to do'];
 var NOTE = ['', '', '', 'shown on the site', 'never shown — the first part is enough', 'shown',
             'Chair or Secretary — they run it from the website', 'filled in for you', 'in their own words'];
@@ -67,6 +72,11 @@ var MEET_COL = HEAD.length + 1;       /* J: the first meeting column */
 /* What a member may be, beyond a member. An officer runs the society from the website: the
    chair's desk is theirs, so they can add a meeting and tell the class. Blank is the usual. */
 var ROLES = ['', 'Chair', 'Secretary'];
+/* How many different ideas one person may vote for at once (Daniel, 1 Oct 2026). It keeps the count
+   worth reading, and it stops one signed-in account filing any number of made-up ideas into the
+   Votes tab. Taking a vote back (pressing it again) is always allowed, so a voter at the limit can
+   move a vote; votes filed before the limit existed are left as they are. */
+var MAX_IDEAS = 3;
 /* How long a meeting lasts, when its column carries a time. It is what tells the site the
    difference between a meeting that has not happened yet, one that is happening now, and one
    that is over and whose ticks belong in the register. A column with a date but no time is a
@@ -293,15 +303,15 @@ function _startHere(ss) {
     ['step',  '2.  Tell the class', 'Panel \u25B8 \uD83D\uDCE3 Tell the class. A teacher posts it to Google Classroom there and then; if the chair presses it, the teacher\u2019s computer posts it within five minutes.'],
     ['step',  '3.  After the meeting', 'Register tab \u25B8 tick the box for everyone who came. A ticked box turns green, and the website shows who came to what \u2014 as soon as the meeting has finished, not the next day.'],
     ['band',  'Now and then', ''],
-    ['step',  'Who runs it', 'The Role column: choose Chair or Secretary from the drop-down beside somebody\u2019s year. Either of them gets the desk on the website \u2014 add a meeting, tell the class \u2014 which is how a pupil runs the society, because a pupil cannot be given permission to use this menu. Panel \u25B8 \u2699\uFE0F Setting up, and checks \u25B8 Who is the chair? does the same thing, and can name somebody who has not put their name down yet.'],
+    ['step',  'Who runs it', 'The Role column: choose Chair or Secretary from the drop-down beside somebody\u2019s year. Either of them gets the desk on the website \u2014 add a meeting, tell the class \u2014 which is how a pupil runs the society, because a pupil cannot be given permission to use this menu. Panel \u25B8 \uD83D\uDC65 Who runs it (or menu \u25B8 \u2699\uFE0F Setting up, and checks \u25B8 Who runs it \u2014 chair and secretary) does the same thing, and can also pick a teacher of the class who is not on the register yet.'],
     ['step',  'A teacher of yours', 'Menu \u25B8 \uD83E\uDDD1\u200D\uD83C\uDFEB Put a teacher on the register. It lists whoever teaches the Google Classroom class and you pick the ones who belong here \u2014 a class often carries a head of department who does not.'],
     ['step',  'Somebody new', 'They sign up on the website themselves, or you type them into the next empty row of the Register \u2014 the row dresses itself.'],
     ['step',  'Keep the class in step', 'Panel \u25B8 \uD83C\uDF92 Update the class. It shows who to invite and who to take out before it does anything. A teacher only.'],
     ['step',  'Something looks wrong', '\u2728 Tidy the sheet puts the look back and changes nothing you wrote. \uD83E\uDE7A Check the website says whether the page and this sheet are talking.'],
     ['band',  'Once, to switch it on', ''],
     ['step',  'The website\u2019s address', 'Script editor \u25B8 Deploy \u25B8 New deployment \u25B8 Web app, execute as Me, access Anyone. Put the /exec address into config.js in the veterinary-society repository.'],
-    ['step',  'Which class', 'Menu \u25B8 \uD83C\uDF93 Choose the Classroom class. A teacher only.'],
-    ['step',  'Let the chair announce', 'Menu \u25B8 \uD83D\uDD14 Install the triggers, in the teacher\u2019s own account. Only a teacher may announce in Classroom, and an installed trigger runs as whoever installed it.'],
+    ['step',  'Which class', 'Menu \u25B8 \u2699\uFE0F Setting up, and checks \u25B8 Choose the Classroom class. A teacher only.'],
+    ['step',  'Let the chair announce', 'Menu \u25B8 \u2699\uFE0F Setting up, and checks \u25B8 Install the triggers, in the teacher\u2019s own account. Only a teacher may announce in Classroom, and an installed trigger runs as whoever installed it.'],
     ['note',  'The website', SITE]
   ];
   sh.getRange(1, 1, lines.length, 2).setValues(lines.map(function (l) { return [l[1], l[2]]; }));
@@ -507,7 +517,7 @@ function _dressSettings(sh) {
   sh.setFrozenRows(1);
   var help = {};
   help[S_CLIENT] = 'The Google Client ID the Biology labs use. Dr Mompel has it. Without it nobody can sign in.';
-  help[S_COURSE] = 'Which class gets the announcement. Menu ▸ Find my Classroom course ID — it is not the number in the Classroom web address.';
+  help[S_COURSE] = 'Which class gets the announcement. Menu ▸ ⚙️ Setting up, and checks ▸ Choose the Classroom class — it is not the number in the Classroom web address.';
   help[S_CHAIR]  = 'The chair\u2019s school address, so the website lets them add a meeting and tell the class. More than one, separated by commas, if there are joint chairs. A teacher may always do both and does not need listing.';
   help[S_LAST]   = 'Filled in by the script.';
   help[S_READ]   = 'Filled in by the script: the last time the website asked for the register, and which version answered. This is the proof that the page and this sheet are talking.';
@@ -525,7 +535,7 @@ function _dressSettings(sh) {
     sh.setRowHeights(2, last - 1, 46);
   }
   sh.setColumnWidth(1, 300); sh.setColumnWidth(2, 380); sh.setColumnWidth(3, 460);
-  /* the two that a person fills in are lit; the two the script writes are quieter */
+  /* the three that a person fills in (Client ID, course, Chair) are lit; the three the script writes are quieter */
   [S_LAST, S_READ, S_SITE].forEach(function (k) {
     var r = _settingRow(sh, k);
     if (r) { sh.getRange(r, 1).setBackground('#F3F7F8').setFontColor(MUTED); sh.getRange(r, 2).setFontColor(MUTED).setFontSize(10); }
@@ -924,14 +934,24 @@ function _handle(d) {
       var idea = String(d.idea || '').replace(/[^a-z0-9-]/g, '').slice(0, 40);
       if (!idea) return { ok: false, why: 'which idea?' };
       var vs = _tab(ss, T_VOTES, ['When', 'Email', 'Idea', 'In words']);
-      var last = vs.getLastRow(), found = 0;
+      var last = vs.getLastRow(), found = 0, others = {};
       if (last > 1) {
         var rows = vs.getRange(2, 2, last - 1, 2).getValues();
         for (var i = rows.length - 1; i >= 0; i--) {
-          if (String(rows[i][0]).toLowerCase() === who.email && String(rows[i][1]) === idea) { vs.deleteRow(i + 2); found++; }
+          if (String(rows[i][0]).toLowerCase() !== who.email) continue;
+          if (String(rows[i][1]) === idea) { vs.deleteRow(i + 2); found++; }
+          else others[String(rows[i][1])] = true;
         }
       }
-      if (!found) vs.appendRow([new Date(), who.email, idea, _inWords(idea)]);
+      if (!found) {
+        /* a new vote, from somebody already backing MAX_IDEAS other ideas: nothing is filed */
+        if (Object.keys(others).length >= MAX_IDEAS) {
+          var full = _list(who);
+          full.said = 'You can vote for up to ' + MAX_IDEAS + ' ideas. Press one of your votes again to take it back, then vote for this one.';
+          return full;
+        }
+        vs.appendRow([new Date(), who.email, idea, _inWords(idea)]);
+      }
       _flush();
       return _list(who);
     }
@@ -1522,10 +1542,10 @@ function chooseCourse() {
 }
 function previewAnnouncement() {
   var a = _announcement(_register(new Date()));
-  if (!a) { _say('Nothing to announce', '<p>There is no meeting in the diary that is today or later.</p><p class="note">Add one first: 📅 Add the next meeting.</p>', 240); return; }
+  if (!a) { _say('Nothing to announce', '<p>There is no meeting in the diary that is today or later.</p><p class="note">Add one first: 📅 Add a meeting.</p>', 240); return; }
   _say('This is what the class will see',
     '<div class="url" style="white-space:pre-wrap;word-break:normal">' + a.text.replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }) + '</div>' +
-    '<p class="note">Post it with 📣 Tell the class, or by ticking the box in Settings B4.</p>', 420, a.text);
+    '<p class="note">Post it with 📣 Tell the class.</p>', 420, a.text);
 }
 /* posts the next meeting to the class; runs as whoever installed the triggers, so that is the teacher */
 function announce(by) {
@@ -1854,9 +1874,9 @@ function classroomCancel() {
 }
 
 /* ---------- triggers: installed once, by the teacher ----------
-   An installable trigger runs as the person who installed it. That is what lets the chair tick
-   one box and have the announcement go out under the teacher's name, and what lets any edit of
-   the register reach the website at once. */
+   An installable trigger runs as the person who installed it. That is what lets the chair press
+   📣 Tell the class and have the announcement go out under the teacher's name, what lets any edit
+   of the register reach the website at once, and what opens the panel with the sheet. */
 function installTriggers() {
   var ss = SpreadsheetApp.getActive();
   ScriptApp.getProjectTriggers().forEach(function (t) {
@@ -1868,7 +1888,7 @@ function installTriggers() {
   ScriptApp.newTrigger('openPanel').forSpreadsheet(ss).onOpen().create();
   var who = _me();
   _say('Installed',
-    '<p><span class="ok">Done.</span> Two things now work:</p>' +
+    '<p><span class="ok">Done.</span> Three things now work:</p>' +
     '<ul><li>the panel opens by itself whenever the sheet is opened</li>' +
     '<li>every edit reaches the website at once</li>' +
     '<li>when the chair presses <b>Tell the class</b>, the announcement goes out as <b>' + (who || 'you') + '</b> within five minutes</li></ul>' +
