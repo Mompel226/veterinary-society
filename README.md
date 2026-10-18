@@ -245,7 +245,7 @@ are told apart by their real name in brackets, **written in letters**: *Henry (H
 nothing extra is said about anybody who needs no telling apart.
 Email addresses, surnames and Korean names stay
 in the sheet: they are school information and they never leave it. That rule is checked by a
-test (`node tools/gastest.js`) every time the script is changed.
+test on Daniel's computer every time the script is changed.
 
 </details>
 
@@ -418,9 +418,10 @@ you may use: public domain, CC0 or CC BY.
 | `config.js` | the two addresses the page needs: the Google Client ID and the script’s `/exec` address |
 | `apps-script/Code.gs` | the script that keeps the register, the meetings and the votes, and posts to Classroom |
 | `apps-script/appsscript.json` | the services and permissions that script needs |
-| `tools/gastest.js` | proves the script keeps its rules — `node tools/gastest.js` |
 | `assets/` | the magazine, its cover, the pictures behind the cards, and the mark |
-| `tools/mark.py` | the numbers the mark is drawn from |
+
+Two more files stay on Daniel's computer, not here: the test that proves the script keeps its rules, and the
+numbers the mark is drawn from.
 
 The mark is a horse’s head drawn in one line, from the poll round the muzzle and up the cheek to
 the eye, with a forelock and mane. The pig, the hen and the cow are the magazine’s other animals.
