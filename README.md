@@ -430,7 +430,7 @@ the eye, with a forelock and mane. The pig, the hen and the cow are the magazine
 
 <br>
 
-<sub>Made by Dr Daniel Mompel Riera, Biology, NLCS Jeju, for the society. The page is the society’s to change, by pull request (see *Changing the page*). *Island Immunity* is the work of its writers, who hold the rights to it. The pictures behind the cards are public domain or Creative Commons and are credited on the page itself.</sub>
+<sub>Made by Dr Daniel Mompel Riera for the society. The page is the society’s to change, by pull request (see *Changing the page*). *Island Immunity* is the work of its writers, who hold the rights to it. The pictures behind the cards are public domain or Creative Commons and are credited on the page itself.</sub>
 
 ## Licence
 
